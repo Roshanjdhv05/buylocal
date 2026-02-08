@@ -18,6 +18,8 @@ const CreateStore = () => {
         lat: profile?.lat || null,
         lng: profile?.lng || null,
         est_delivery_time: '30-45 mins',
+        whatsapp: '',
+        instagram: '',
     });
 
     const [banner, setBanner] = useState(null);
@@ -179,12 +181,12 @@ const CreateStore = () => {
                             </div>
                         </div>
                         <div className="input-group">
-                            <label>Delivery Time</label>
+                            <label>Delivery Days</label>
                             <div className="with-icon">
                                 <Truck size={18} />
                                 <input
                                     type="text"
-                                    placeholder="e.g. 20-30 mins"
+                                    placeholder="e.g. 2-3 days"
                                     value={formData.est_delivery_time}
                                     onChange={(e) => setFormData({ ...formData, est_delivery_time: e.target.value })}
                                 />
@@ -199,6 +201,26 @@ const CreateStore = () => {
                             value={formData.address}
                             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                         />
+                    </div>
+                    <div className="grid-2" style={{ marginTop: '1rem' }}>
+                        <div className="input-group">
+                            <label>WhatsApp Number</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. +91 9876543210"
+                                value={formData.whatsapp}
+                                onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                            />
+                        </div>
+                        <div className="input-group">
+                            <label>Instagram Username</label>
+                            <input
+                                type="text"
+                                placeholder="e.g. shop_handle"
+                                value={formData.instagram}
+                                onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
+                            />
+                        </div>
                     </div>
                 </section>
 

@@ -1396,6 +1396,54 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+}
+
+.pro-card-actions {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    opacity: 0;
+    transition: all 0.2s ease;
+}
+
+.pro-card-image:hover .pro-card-actions {
+    opacity: 1;
+}
+
+.pro-action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.pro-action-btn:hover {
+    transform: scale(1.1);
+}
+
+.pro-action-btn.edit {
+    background: white;
+    color: #4f46e5;
+}
+
+.pro-action-btn.delete {
+    background: #ef4444;
+    color: white;
 }
 
 .pro-card-image img {

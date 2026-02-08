@@ -1,21 +1,42 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Save, Eye, Upload, Check, Info, Plus, CloudUpload, X } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Upload, Check, Info, Plus, CloudUpload, X, Tag } from 'lucide-react';
 import './DashboardStyles.css'; // Re-use dashboard styles + new specific styles
 
-const AddProduct = ({ onBack }) => {
+const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = null }) => {
     const [formData, setFormData] = useState({
         name: '',
         category: '',
-        ageGroup: '',
+        ageGroup: 'Adults',
         sizes: [],
-        deliveryTime: '3-5',
+        deliveryTime: '2-3',
         codEnabled: true,
         description: '',
         onlinePrice: '',
         marketPrice: '',
-        images: []
+        images: [],
+        section: ''
     });
 
+    useEffect(() => {
+        if (initialData) {
+            setFormData({
+                id: initialData.id,
+                name: initialData.name || '',
+                category: initialData.category || '',
+                ageGroup: initialData.age_group || 'Adults',
+                sizes: initialData.sizes || [],
+                deliveryTime: initialData.delivery_time || '2-3',
+                codEnabled: initialData.cod_available ?? true,
+                description: initialData.description || '',
+                onlinePrice: initialData.online_price || '',
+                marketPrice: initialData.offline_price || '',
+                images: initialData.images || [],
+                section: initialData.section || ''
+            });
+        }
+    }, [initialData]);
+
+    const [customSize, setCustomSize] = useState('');
     const [availableSizes] = useState(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
 
     const handleSizeToggle = (size) => {
@@ -25,6 +46,17 @@ const AddProduct = ({ onBack }) => {
                 ? prev.sizes.filter(s => s !== size)
                 : [...prev.sizes, size]
         }));
+    };
+
+    const handleAddCustomSize = (e) => {
+        if (e) e.preventDefault();
+        if (customSize.trim() && !formData.sizes.includes(customSize.trim())) {
+            setFormData(prev => ({
+                ...prev,
+                sizes: [...prev.sizes, customSize.trim()]
+            }));
+            setCustomSize('');
+        }
     };
 
     const handleImageUpload = (e) => {
@@ -51,13 +83,19 @@ const AddProduct = ({ onBack }) => {
                         <ArrowLeft size={20} />
                     </button>
                     <div>
-                        <h1>Add New Product</h1>
+                        <h1>{initialData ? 'Edit Product' : 'Add New Product'}</h1>
                         <span className="auto-save-text">Draft auto-saved 2 mins ago</span>
                     </div>
                 </div>
                 <div className="header-right">
-                    <button className="btn-secondary">Preview</button>
-                    <button className="btn-primary">Save Product</button>
+                    <button className="btn-secondary" onClick={onBack}>Cancel</button>
+                    <button
+                        className="btn-primary"
+                        onClick={() => onAdd(formData)}
+                        disabled={uploading}
+                    >
+                        {uploading ? 'Saving...' : 'Save Product'}
+                    </button>
                 </div>
             </header>
 
@@ -81,30 +119,71 @@ const AddProduct = ({ onBack }) => {
                         </div>
 
                         <div className="form-group">
-                            <label>Category</label>
-                            <select
+                            <label>Category (e.g. Trendy Men's Wear)</label>
+                            <input
+                                type="text"
+                                placeholder="Enter custom category..."
                                 value={formData.category}
                                 onChange={e => setFormData({ ...formData, category: e.target.value })}
-                            >
-                                <option value="">Select Category</option>
-                                <option value="clothing">Clothing</option>
-                                <option value="electronics">Electronics</option>
-                                <option value="home">Home & Living</option>
-                            </select>
+                            />
                         </div>
 
                         <div className="form-group">
-                            <label>Available Sizes</label>
-                            <div className="size-selector">
-                                {availableSizes.map(size => (
+                            <label>Store Section / Collection</label>
+                            <div className="input-with-icon" style={{ position: 'relative' }}>
+                                <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
+                                    <Tag size={18} />
+                                </div>
+                                <select
+                                    value={formData.section}
+                                    onChange={e => setFormData({ ...formData, section: e.target.value })}
+                                    style={{ paddingLeft: '2.5rem', width: '100%', height: '45px', borderRadius: '8px', border: '1px solid var(--border)' }}
+                                >
+                                    <option value="">No Section (General Collection)</option>
+                                    {sections.map(sec => (
+                                        <option key={sec.id} value={sec.name}>{sec.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <p className="help-text">Select a collection. Create new ones in the "Quick Sections" card on your dashboard.</p>
+                        </div>
+
+                        <div className="form-group full-width">
+                            <label>Sizes (Select or Add New Number/Text)</label>
+                            <div className="size-management" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                <div className="size-selector" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                                    {[...new Set([...availableSizes, ...formData.sizes])].map(size => (
+                                        <button
+                                            key={size}
+                                            type="button"
+                                            className={`size-btn ${formData.sizes.includes(size) ? 'active' : ''}`}
+                                            onClick={() => handleSizeToggle(size)}
+                                            style={{ minWidth: '50px', padding: '8px 12px' }}
+                                        >
+                                            {size}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="custom-size-adder" style={{ display: 'flex', gap: '8px' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Add custom size (e.g. 8, 9, XL)"
+                                        value={customSize}
+                                        onChange={(e) => setCustomSize(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && handleAddCustomSize(e)}
+                                        style={{ maxWidth: '250px', flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}
+                                    />
                                     <button
-                                        key={size}
-                                        className={`size-btn ${formData.sizes.includes(size) ? 'active' : ''}`}
-                                        onClick={() => handleSizeToggle(size)}
+                                        type="button"
+                                        className="btn-secondary"
+                                        onClick={handleAddCustomSize}
+                                        style={{ height: '42px', padding: '0 1.5rem', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}
                                     >
-                                        {size}
+                                        <Plus size={18} style={{ marginRight: '4px' }} /> Add
                                     </button>
-                                ))}
+                                </div>
+                                <p className="help-text">Click existing tags to select, or type a value above for unique sizes.</p>
                             </div>
                         </div>
 
@@ -257,10 +336,16 @@ const AddProduct = ({ onBack }) => {
 
             {/* Bottom Bar */}
             <div className="add-product-footer">
-                <button className="btn-text text-red-500">Discard Changes</button>
+                <button className="btn-text text-red-500" onClick={onBack}>Discard Changes</button>
                 <div className="footer-actions">
                     <button className="btn-secondary">Save as Draft</button>
-                    <button className="btn-primary">Add Product</button>
+                    <button
+                        className="btn-primary"
+                        onClick={() => onAdd(formData)}
+                        disabled={uploading}
+                    >
+                        {uploading ? 'Adding...' : 'Add Product'}
+                    </button>
                 </div>
             </div>
         </div>

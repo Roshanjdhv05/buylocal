@@ -43,6 +43,7 @@ const Navbar = () => {
     ];
 
     const authLinks = user ? [
+        { name: 'Wishlist', path: '/wishlist', icon: <Heart size={20} /> },
         { name: 'Orders', path: '/orders', icon: <Package size={20} /> },
         { name: 'Following', path: '/followed-stores', icon: <Store size={20} /> },
         { name: 'Profile', path: '/profile', icon: <User size={20} /> },
@@ -98,7 +99,7 @@ const Navbar = () => {
                             )}
 
                             <button className="icon-btn desktop-only"><Globe size={20} /></button>
-                            <Link to="/followed-stores" className="icon-btn desktop-only"><Heart size={20} /></Link>
+                            <Link to="/wishlist" className="icon-btn desktop-only"><Heart size={20} /></Link>
 
                             <Link to="/cart" className="icon-btn cart-btn">
                                 <ShoppingCart size={20} />

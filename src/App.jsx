@@ -17,6 +17,7 @@ import PublicStore from './pages/Stores/PublicStore';
 import ProductDetails from './pages/Product/ProductDetails';
 import FollowedStores from './pages/Stores/FollowedStores';
 import Profile from './pages/Profile/Profile';
+import Wishlist from './pages/Wishlist/Wishlist';
 
 const ProtectedRoute = ({ children, role }) => {
     const { user, profile, loading } = useAuth();
@@ -52,6 +53,12 @@ function App() {
                         <Route path="/followed-stores" element={
                             <ProtectedRoute>
                                 <FollowedStores />
+                            </ProtectedRoute>
+                        } />
+
+                        <Route path="/wishlist" element={
+                            <ProtectedRoute>
+                                <Wishlist />
                             </ProtectedRoute>
                         } />
 

@@ -25,18 +25,22 @@ const SellerDashboard = () => {
     const [uploading, setUploading] = useState(false);
     const [activeTab, setActiveTab] = useState('overview');
     const [isAddingProduct, setIsAddingProduct] = useState(false);
+    const [editingProduct, setEditingProduct] = useState(null);
     const [isEditingStore, setIsEditingStore] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [bannerUpdating, setBannerUpdating] = useState(false);
     const [editedStore, setEditedStore] = useState({
-        name: '', description: '', address: '', phone: '', city: '', state: '', delivery_time: ''
+        name: '', description: '', address: '', phone: '', city: '', state: '', delivery_time: '', whatsapp: '', instagram: ''
     });
+    const [sections, setSections] = useState([]);
+    const [newSectionName, setNewSectionName] = useState('');
 
     // src/pages/Seller/Dashboard.jsx - REMOVED
 
     const [newProduct, setNewProduct] = useState({
         name: '',
         category: 'Men',
+        section: '', // Added custom section
         online_price: '',
         offline_price: '',
         description: '',
@@ -103,6 +107,23 @@ const SellerDashboard = () => {
 
                 if (ordersError) throw ordersError;
                 setOrders(ordersData || []);
+
+                // Fetch Sections - Non-blocking
+                try {
+                    const { data: sectionsData, error: sectionsError } = await withTimeout(supabase
+                        .from('store_sections')
+                        .select('*')
+                        .eq('store_id', storeData.id)
+                        .order('name'), 5000); // Shorter timeout for non-critical sections
+
+                    if (sectionsError) {
+                        console.warn('Dashboard: Sections fetch failed (maybe table missing):', sectionsError.message);
+                    } else {
+                        setSections(sectionsData || []);
+                    }
+                } catch (secErr) {
+                    console.warn('Dashboard: Sections timed out or failed:', secErr.message);
+                }
             }
         } catch (error) {
             console.error('Dashboard: System error:', error.message);
@@ -163,9 +184,9 @@ const SellerDashboard = () => {
         return publicUrl;
     };
 
-    const handleAddProduct = async (e) => {
-        e.preventDefault();
-        alert('Attempting to add product...'); // Immediate feedback
+    const handleAddProduct = async (productData = newProduct) => {
+        // e?.preventDefault(); // e might not be passed if called from AddProduct component
+        alert('Attempting to add product...');
 
         if (!store) {
             console.error('handleAddProduct: No store found');
@@ -173,55 +194,86 @@ const SellerDashboard = () => {
             return;
         }
 
-        if (!newProduct.online_price) {
+        const onlinePriceVal = productData.online_price || productData.onlinePrice;
+        if (!onlinePriceVal) {
             alert('Please enter an online price.');
             return;
         }
 
-        console.log('handleAddProduct: Starting process');
+        console.log('handleAddProduct: Starting process. Mode:', productData.id ? 'UPDATE' : 'INSERT');
         setUploading(true);
 
         try {
-            // 1. Upload Images
+            // 1. Upload/Process Images
             const imageUrls = [];
-            if (selectedImages.length > 0) {
-                console.log('handleAddProduct: Uploading', selectedImages.length, 'images');
-                for (const file of selectedImages) {
-                    const url = await uploadImage(file);
-                    imageUrls.push(url);
+            const imagesToUpload = productData.images || [];
+
+            if (imagesToUpload.length > 0) {
+                for (const img of imagesToUpload) {
+                    if (typeof img === 'string' && img.startsWith('blob:')) {
+                        const response = await fetch(img);
+                        const blob = await response.blob();
+                        const file = new File([blob], "product_image.jpg", { type: "image/jpeg" });
+                        const url = await uploadImage(file);
+                        imageUrls.push(url);
+                    } else if (img instanceof File) {
+                        const url = await uploadImage(img);
+                        imageUrls.push(url);
+                    } else {
+                        imageUrls.push(img);
+                    }
                 }
             }
-            console.log('handleAddProduct: All images ready:', imageUrls);
 
-            // 2. Insert Product
-            const onlinePrice = parseFloat(newProduct.online_price);
-            if (isNaN(onlinePrice)) throw new Error('Invalid online price');
-
-            const productToInsert = {
-                ...newProduct,
-                store_id: store.id,
+            // 2. Prepare Product Object
+            const onlinePrice = parseFloat(onlinePriceVal);
+            const productToSave = {
+                name: productData.name,
+                category: productData.category,
+                section: productData.section,
                 online_price: onlinePrice,
-                offline_price: newProduct.offline_price ? parseFloat(newProduct.offline_price) : null,
+                offline_price: productData.offline_price ? parseFloat(productData.offline_price) : (productData.marketPrice ? parseFloat(productData.marketPrice) : null),
+                description: productData.description,
+                sizes: productData.sizes,
+                age_group: productData.age_group || productData.ageGroup || 'Adults',
+                cod_available: productData.cod_available ?? productData.codEnabled ?? true,
+                delivery_time: productData.delivery_time || productData.deliveryTime || '2-3 days',
+                store_id: store.id,
                 images: imageUrls
             };
-            console.log('handleAddProduct: Inserting:', productToInsert);
 
-            const { data, error } = await supabase
-                .from('products')
-                .insert([productToInsert])
-                .select();
-
-            if (error) {
-                console.error('handleAddProduct: DB error:', error.message, error);
-                throw error;
+            let result;
+            if (productData.id) {
+                // UPDATE mode
+                result = await supabase
+                    .from('products')
+                    .update(productToSave)
+                    .eq('id', productData.id)
+                    .select();
+            } else {
+                // INSERT mode
+                result = await supabase
+                    .from('products')
+                    .insert([productToSave])
+                    .select();
             }
 
-            console.log('handleAddProduct: Product successfully added:', data[0]);
-            alert('Product added successfully!');
-            setProducts([...products, data[0]]);
+            const { data, error } = result;
+
+            if (error) throw error;
+
+            if (productData.id) {
+                setProducts(products.map(p => p.id === productData.id ? data[0] : p));
+                alert('Product updated successfully!');
+            } else {
+                setProducts([...products, data[0]]);
+                alert('Product added successfully!');
+            }
+
             setIsAddingProduct(false);
+            setEditingProduct(null);
             setNewProduct({
-                name: '', category: 'Men', online_price: '', offline_price: '',
+                name: '', category: '', section: '', online_price: '', offline_price: '',
                 description: '', sizes: [], age_group: 'Adults',
                 cod_available: true, delivery_time: '1-2 days'
             });
@@ -364,6 +416,45 @@ const SellerDashboard = () => {
         }
     };
 
+    const handleCreateSection = async () => {
+        if (!newSectionName.trim() || !store) return;
+        try {
+            const { data, error } = await supabase
+                .from('store_sections')
+                .insert([{ store_id: store.id, name: newSectionName.trim() }])
+                .select();
+
+            if (error) throw error;
+
+            setSections([...sections, data || []].flat());
+            setNewSectionName('');
+            alert('Section created successfully!');
+        } catch (error) {
+            console.error('Error creating section:', error.message);
+            alert('Failed to create section. Did you run the SQL query yet?');
+        }
+    };
+
+    const handleEditProduct = (product) => {
+        setEditingProduct(product);
+        setIsAddingProduct(true);
+    };
+
+    const handleProductDelete = async (productId) => {
+        if (!window.confirm('Are you sure you want to delete this product?')) return;
+        try {
+            const { error } = await supabase
+                .from('products')
+                .delete()
+                .eq('id', productId);
+            if (error) throw error;
+            setProducts(products.filter(p => p.id !== productId));
+            alert('Product deleted successfully');
+        } catch (error) {
+            alert('Error deleting product: ' + error.message);
+        }
+    };
+
     const handleLogout = async () => {
         const { error } = await supabase.auth.signOut();
         if (error) {
@@ -438,7 +529,16 @@ const SellerDashboard = () => {
             {/* Main Content */}
             <main className="dashboard-main">
                 {isAddingProduct ? (
-                    <AddProduct onBack={() => setIsAddingProduct(false)} />
+                    <AddProduct
+                        onBack={() => {
+                            setIsAddingProduct(false);
+                            setEditingProduct(null);
+                        }}
+                        onAdd={handleAddProduct}
+                        uploading={uploading}
+                        sections={sections}
+                        initialData={editingProduct}
+                    />
                 ) : (
                     <>
                         {/* Header */}
@@ -642,9 +742,22 @@ const SellerDashboard = () => {
                                                 ) : (
                                                     <Package size={48} color="#cbd5e1" />
                                                 )}
+                                                <div className="pro-card-actions">
+                                                    <button className="pro-action-btn edit" onClick={() => handleEditProduct(product)}>
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                    <button className="pro-action-btn delete" onClick={() => handleProductDelete(product.id)}>
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
                                             </div>
                                             <div className="pro-card-meta">
                                                 <span className="category-pill">{product.category || 'General'}</span>
+                                                {product.section && (
+                                                    <span className="section-pill" style={{ background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '700' }}>
+                                                        {product.section}
+                                                    </span>
+                                                )}
                                                 <span className={`status-dot ${(product.stock_quantity || 0) <= 0 ? 'out-of-stock' : ''}`}>
                                                     <span className="dot"></span> {(product.stock_quantity || 12) > 0 ? 'Active' : 'Out of Stock'}
                                                 </span>
@@ -806,10 +919,9 @@ const SellerDashboard = () => {
                                                     <input className="settings-input-light light-bg" value={editedStore.name || store?.name || ''} onChange={e => setEditedStore({ ...editedStore, name: e.target.value })} />
                                                 </div>
                                                 <div className="settings-input-group light-bg">
-                                                    <label className="settings-label">Delivery Time (min)</label>
+                                                    <label className="settings-label">Delivery Days</label>
                                                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                        <input className="settings-input-light" style={{ flex: 1 }} value={editedStore.delivery_time || store?.delivery_time || ''} onChange={e => setEditedStore({ ...editedStore, delivery_time: e.target.value })} />
-                                                        <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)', fontWeight: '600' }}>mins</span>
+                                                        <input className="settings-input-light" style={{ flex: 1 }} placeholder="e.g. 2-3 days" value={editedStore.delivery_time || store?.delivery_time || ''} onChange={e => setEditedStore({ ...editedStore, delivery_time: e.target.value })} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -818,6 +930,17 @@ const SellerDashboard = () => {
                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                                     <input className="settings-input-light" style={{ width: '100%' }} value={editedStore.address || store?.address || ''} onChange={e => setEditedStore({ ...editedStore, address: e.target.value })} />
                                                     <MapPin size={18} color="#94a3b8" />
+                                                </div>
+                                            </div>
+
+                                            <div className="form-row-pro-responsive" style={{ marginTop: '1.5rem' }}>
+                                                <div className="settings-input-group light-bg">
+                                                    <label className="settings-label">WhatsApp Number</label>
+                                                    <input className="settings-input-light" placeholder="e.g. +91 9876543210" value={editedStore.whatsapp || store?.whatsapp || ''} onChange={e => setEditedStore({ ...editedStore, whatsapp: e.target.value })} />
+                                                </div>
+                                                <div className="settings-input-group light-bg">
+                                                    <label className="settings-label">Instagram Username</label>
+                                                    <input className="settings-input-light" placeholder="e.g. yourshop_handle" value={editedStore.instagram || store?.instagram || ''} onChange={e => setEditedStore({ ...editedStore, instagram: e.target.value })} />
                                                 </div>
                                             </div>
                                         </div>
@@ -921,6 +1044,45 @@ const SellerDashboard = () => {
                                             <h3 className="qr-title">Customer QR</h3>
                                             <p className="qr-desc">Download and print your store QR for local flyers.</p>
                                             <button className="btn-download-assets">Download Assets</button>
+                                        </div>
+
+                                        <div className="sections-card-pro" style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', marginTop: '2rem' }}>
+                                            <div className="card-header-pro" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                                                <div className="card-icon" style={{ background: '#fef3c7', color: '#d97706', width: '40px', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><PlusCircle size={24} /></div>
+                                                <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Quick Sections</h3>
+                                            </div>
+
+                                            <div className="create-section-input" style={{ marginBottom: '1.5rem' }}>
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="New Section Name (e.g. Trendy)"
+                                                        value={newSectionName}
+                                                        onChange={(e) => setNewSectionName(e.target.value)}
+                                                        style={{ flex: 1, padding: '0.75rem', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.9rem' }}
+                                                    />
+                                                    <button
+                                                        onClick={handleCreateSection}
+                                                        style={{ background: '#d97706', color: 'white', border: 'none', padding: '0 1rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+                                                    >
+                                                        Add
+                                                    </button>
+                                                </div>
+                                                <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px' }}>Create a section first, then select it when adding products.</p>
+                                            </div>
+
+                                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
+                                                Your Collections:
+                                            </p>
+                                            <div className="section-list" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                                {sections.length > 0 ? sections.map(sec => (
+                                                    <span key={sec.id} style={{ background: '#fef3c7', padding: '4px 10px', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', color: '#92400e' }}>
+                                                        {sec.name}
+                                                    </span>
+                                                )) : (
+                                                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>No sections created yet.</span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

@@ -1,13 +1,88 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Heart, Tag, ChevronLeft, ChevronRight, Store } from 'lucide-react';
+import { ShoppingCart, Heart, Tag, ChevronLeft, ChevronRight, Store, Star } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../services/supabase';
+import { useAuth } from '../context/AuthContext';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [rating, setRating] = useState({ avg: 0, count: 0 });
+
+  useEffect(() => {
+    if (user) {
+      checkWishlistStatus();
+    }
+    fetchRating();
+  }, [user, product.id]);
+
+  const fetchRating = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('product_reviews')
+        .select('rating')
+        .eq('product_id', product.id);
+
+      if (data && data.length > 0) {
+        const avg = data.reduce((acc, r) => acc + r.rating, 0) / data.length;
+        setRating({ avg: avg.toFixed(1), count: data.length });
+      }
+    } catch (err) {
+      console.error('Error fetching rating:', err);
+    }
+  };
+
+  const checkWishlistStatus = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('wishlist')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('product_id', product.id)
+        .single();
+
+      if (data) setIsLiked(true);
+      if (error && error.code !== 'PGRST116') throw error;
+    } catch (error) {
+      console.error('Error checking wishlist:', error.message);
+    }
+  };
+
+  const handleToggleWishlist = async (e) => {
+    e.stopPropagation();
+    if (!user) return navigate('/login');
+    if (wishlistLoading) return;
+
+    setWishlistLoading(true);
+    try {
+      if (isLiked) {
+        const { error } = await supabase
+          .from('wishlist')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('product_id', product.id);
+        if (error) throw error;
+        setIsLiked(false);
+      } else {
+        const { error } = await supabase
+          .from('wishlist')
+          .insert([{ user_id: user.id, product_id: product.id }]);
+        if (error) throw error;
+        setIsLiked(true);
+      }
+    } catch (error) {
+      console.error('Wishlist action failed:', error.message);
+      alert('Fail to update wishlist');
+    } finally {
+      setWishlistLoading(false);
+    }
+  };
 
   // Handle image arrays or single strings
   const getImages = () => {
@@ -55,8 +130,12 @@ const ProductCard = ({ product }) => {
     >
       <div className="card-badges">
         <div className="badge-category">{product.category || 'Product'}</div>
-        <button className="badge-wishlist" onClick={(e) => e.stopPropagation()}>
-          <Heart size={16} />
+        <button
+          className={`badge-wishlist ${isLiked ? 'liked' : ''}`}
+          onClick={handleToggleWishlist}
+          disabled={wishlistLoading}
+        >
+          <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
         </button>
       </div>
 
@@ -80,6 +159,11 @@ const ProductCard = ({ product }) => {
         <div className="store-info">
           <Store size={12} className="store-icon" />
           <span className="store-name">{product.storeName || 'Local Store'}</span>
+          {rating.count > 0 && (
+            <span className="rating-badge-card">
+              <Star size={10} fill="currentColor" /> {rating.avg}
+            </span>
+          )}
           {product.distance && product.distance !== Infinity && (
             <span className="store-dist">• {product.distance.toFixed(1)}km away</span>
           )}
@@ -148,6 +232,11 @@ const ProductCard = ({ product }) => {
             transition: var(--transition);
         }
         .badge-wishlist:hover { color: var(--secondary); border-color: var(--secondary); }
+        .badge-wishlist.liked {
+            background: #fef2f2;
+            color: #ef4444;
+            border-color: #fecaca;
+        }
 
         .product-image {
           width: 100%;
@@ -265,6 +354,20 @@ const ProductCard = ({ product }) => {
             background: var(--primary-hover);
             transform: translateY(-2px);
             box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.4);
+        }
+
+        .rating-badge-card {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            background: #fffbeb;
+            color: #d97706;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            border: 1px solid #fde68a;
+            margin-left: auto;
         }
       `}</style>
     </div>

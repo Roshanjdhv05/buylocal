@@ -8,6 +8,7 @@ import {
     Award, ShieldCheck, Globe, Instagram, Twitter, Facebook
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
+import ProductCard from '../../components/ProductCard';
 
 const PublicStore = () => {
     const { user } = useAuth(); // Get user for follow logic
@@ -129,6 +130,16 @@ const PublicStore = () => {
                             <button className="btn-contact-concierge">
                                 <MessageSquare size={18} /> Contact Concierge
                             </button>
+                            {store.whatsapp && (
+                                <a href={`https://wa.me/${store.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="btn-contact-concierge" style={{ background: '#25D366' }}>
+                                    <MessageSquare size={18} /> WhatsApp
+                                </a>
+                            )}
+                            {store.instagram && (
+                                <a href={`https://instagram.com/${store.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="btn-contact-concierge" style={{ background: 'linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)' }}>
+                                    <Instagram size={18} /> Instagram
+                                </a>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -151,8 +162,8 @@ const PublicStore = () => {
                             <Clock size={20} />
                         </div>
                         <div className="stat-texts">
-                            <label>Delivery Time</label>
-                            <p>{store.delivery_time || '48 - 72 Hours'}</p>
+                            <label>Delivery Days</label>
+                            <p>{store.delivery_time || '2 - 3 Days'}</p>
                         </div>
                     </div>
                     <div className="stat-item-luxury glass-card">
@@ -224,51 +235,46 @@ const PublicStore = () => {
                     </section>
                 )}
 
-                {/* BEST SELLERS / PRODUCTS */}
-                <section className="luxury-section">
-                    <div className="section-header-luxury">
-                        <div>
-                            <h2>Best Sellers</h2>
-                            <p className="sub-header">Most loved pieces from our current collection</p>
-                        </div>
-                        <div className="scroll-controls">
-                            <button className="control-btn"><ArrowLeft size={16} /></button>
-                            <button className="control-btn"><ChevronRight size={16} /></button>
-                        </div>
-                    </div>
-
-                    <div className="luxury-products-grid">
-                        {products.length === 0 ? (
-                            <div className="empty-state-luxury glass-card">
-                                <Store size={48} opacity={0.3} />
-                                <p>No pieces curated yet.</p>
+                {/* DYNAMIC SECTIONS / PRODUCTS */}
+                {Object.entries(products.reduce((acc, product) => {
+                    const sectionName = product.section?.trim() || 'General Collection';
+                    if (!acc[sectionName]) acc[sectionName] = [];
+                    acc[sectionName].push(product);
+                    return acc;
+                }, {})).sort(([a], [b]) => {
+                    if (a === 'General Collection') return 1;
+                    if (b === 'General Collection') return -1;
+                    return a.localeCompare(b);
+                }).map(([sectionName, sectionProducts]) => (
+                    <section key={sectionName} className="luxury-section" id={`section-${sectionName.replace(/\s+/g, '-').toLowerCase()}`}>
+                        <div className="section-header-luxury">
+                            <div>
+                                <h2>{sectionName}</h2>
+                                <p className="sub-header">Curated pieces from our {sectionName.toLowerCase()} selection</p>
                             </div>
-                        ) : (
-                            products.map(product => (
-                                <Link to={`/product/${product.id}`} key={product.id} className="luxury-product-card">
-                                    <div className="l-p-img-box">
-                                        {(product.images?.[0] || product.image_urls?.[0]) ? (
-                                            <img src={product.images?.[0] || product.image_urls?.[0]} alt={product.name} />
-                                        ) : (
-                                            <div className="l-p-placeholder">No Visual</div>
-                                        )}
-                                        <div className="quick-add-overlay">
-                                            <button className="btn-quick-add"><ShoppingCart size={18} /> Add to Cart</button>
-                                        </div>
-                                    </div>
-                                    <div className="l-p-info">
-                                        <label className="l-p-cat">{product.category}</label>
-                                        <h4>{product.name}</h4>
-                                        <div className="l-p-price">
-                                            <span className="price-now">₹{Number(product.online_price).toLocaleString()}</span>
-                                            {product.offline_price && <span className="price-before">₹{Number(product.offline_price).toLocaleString()}</span>}
-                                        </div>
-                                    </div>
-                                </Link>
-                            ))
-                        )}
-                    </div>
-                </section>
+                            <div className="scroll-controls">
+                                <button className="control-btn"><ArrowLeft size={16} /></button>
+                                <button className="control-btn"><ChevronRight size={16} /></button>
+                            </div>
+                        </div>
+
+                        <div className="products-grid">
+                            {sectionProducts.map(product => (
+                                <ProductCard key={product.id} product={{ ...product, storeName: store.name }} />
+                            ))}
+                        </div>
+                        <div className="debug-marker" style={{ fontSize: '0.6rem', color: '#eee', marginTop: '10px' }}>v1.1 (Section Grouping Active)</div>
+                    </section>
+                ))}
+
+                {products.length === 0 && (
+                    <section className="luxury-section">
+                        <div className="empty-state-luxury glass-card">
+                            <Store size={48} opacity={0.3} />
+                            <p>No pieces curated yet.</p>
+                        </div>
+                    </section>
+                )}
 
                 {/* OUR LEGACY SECTION */}
                 <section className="legacy-section-wrap glass-card">
@@ -423,23 +429,11 @@ const PublicStore = () => {
                 .multimedia-card:hover .media-overlay { opacity: 1; }
 
                 /* PRODUCTS */
-                .luxury-products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2.5rem; }
-                .luxury-product-card { text-decoration: none; border-radius: 16px; overflow: hidden; transition: 0.3s; }
-                .l-p-img-box { position: relative; aspect-ratio: 0.8; background: #f8fafc; overflow: hidden; border-radius: 20px; }
-                .l-p-img-box img { width: 100%; height: 100%; object-fit: cover; transition: 0.6s; }
-                .quick-add-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.3s; }
-                .btn-quick-add { background: #1a1a1a; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 12px; font-weight: 700; display: flex; align-items: center; gap: 0.6rem; transform: translateY(20px); transition: 0.4s; }
-                
-                .luxury-product-card:hover .l-p-img-box img { transform: scale(1.05); }
-                .luxury-product-card:hover .quick-add-overlay { opacity: 1; }
-                .luxury-product-card:hover .btn-quick-add { transform: translateY(0); }
-
-                .l-p-info { padding: 1.5rem 0; }
-                .l-p-cat { font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 0.5rem; }
-                .l-p-info h4 { font-size: 1.2rem; font-weight: 700; color: #1a1a1a; margin-bottom: 0.6rem; }
-                .l-p-price { display: flex; align-items: center; gap: 1rem; }
-                .price-now { font-size: 1.3rem; font-weight: 800; color: #1a1a1a; }
-                .price-before { font-size: 1rem; color: #94a3b8; text-decoration: line-through; }
+                .products-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+                    gap: 2rem;
+                }
 
                 /* LEGACY */
                 .legacy-section-wrap { background: #f8fafc; border: none; padding: 0; overflow: hidden; margin-top: 4rem; margin-bottom: 6rem; }
