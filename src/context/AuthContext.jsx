@@ -122,8 +122,27 @@ export const AuthProvider = ({ children }) => {
         if (error) throw error;
     };
 
+    const upgradeToSeller = async () => {
+        if (!user) return;
+        try {
+            const { error } = await withTimeout(supabase
+                .from('users')
+                .update({ role: 'seller' })
+                .eq('id', user.id));
+
+            if (error) throw error;
+
+            // Refresh local profile state
+            await fetchProfile(user.id);
+            return true;
+        } catch (error) {
+            console.error('Error upgrading to seller:', error.message);
+            throw error;
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, profile, signUp, signIn, signOut, loading }}>
+        <AuthContext.Provider value={{ user, profile, signUp, signIn, signOut, upgradeToSeller, loading }}>
             {children}
         </AuthContext.Provider>
     );
