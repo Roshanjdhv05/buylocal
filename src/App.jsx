@@ -14,6 +14,7 @@ import CreateStore from './pages/Seller/CreateStore';
 import SellerDashboard from './pages/Seller/Dashboard';
 import Stores from './pages/Stores/Stores';
 import PublicStore from './pages/Stores/PublicStore';
+import StoreSection from './pages/Stores/StoreSection';
 import ProductDetails from './pages/Product/ProductDetails';
 import FollowedStores from './pages/Stores/FollowedStores';
 import Profile from './pages/Profile/Profile';
@@ -41,6 +42,7 @@ function App() {
                         <Route path="/categories" element={<Categories />} />
                         <Route path="/stores" element={<Stores />} />
                         <Route path="/store/:storeId" element={<PublicStore />} />
+                        <Route path="/store/:storeId/section/:sectionName" element={<StoreSection />} />
                         <Route path="/product/:productId" element={<ProductDetails />} />
                         <Route path="/cart" element={<Cart />} />
 

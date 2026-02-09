@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase, withTimeout } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -13,6 +13,7 @@ import ProductCard from '../../components/ProductCard';
 const PublicStore = () => {
     const { user } = useAuth(); // Get user for follow logic
     const { storeId } = useParams();
+    const navigate = useNavigate();
     const [store, setStore] = useState(null);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -253,8 +254,11 @@ const PublicStore = () => {
                                 <p className="sub-header">Curated pieces from our {sectionName.toLowerCase()} selection</p>
                             </div>
                             <div className="scroll-controls">
-                                <button className="control-btn"><ArrowLeft size={16} /></button>
-                                <button className="control-btn"><ChevronRight size={16} /></button>
+                                <button className="control-btn view-all-btn" onClick={() => navigate(`/store/${storeId}/section/${encodeURIComponent(sectionName)}`)}>
+                                    View All
+                                </button>
+                                <button className="control-btn desktop-only"><ArrowLeft size={16} /></button>
+                                <button className="control-btn desktop-only"><ChevronRight size={16} /></button>
                             </div>
                         </div>
 
@@ -470,13 +474,62 @@ const PublicStore = () => {
                 @media (max-width: 768px) {
                     .store-header-main { flex-direction: column; align-items: flex-start; gap: 2rem; }
                     .store-title-wrap h1 { font-size: 2.5rem; }
+                    .hero-actions { 
+                        display: flex !important;
+                        flex-direction: row !important;
+                        flex-wrap: nowrap !important;
+                        overflow-x: auto !important;
+                        width: 100vw !important;
+                        margin-left: -1rem !important;
+                        padding: 0.5rem 1rem 1rem !important;
+                        -webkit-overflow-scrolling: touch;
+                        scrollbar-width: none;
+                        -ms-overflow-style: none;
+                    }
+                    .hero-actions::-webkit-scrollbar { display: none; }
+                    .hero-actions > * { 
+                        flex: 0 0 auto !important;
+                        white-space: nowrap !important;
+                    }
                     .multimedia-card { flex: 0 0 280px; height: 350px; }
-                    .stats-grid-refined { grid-template-columns: 1fr; }
+                    .stats-grid-refined { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+                    .stat-item-luxury { flex-direction: column; align-items: flex-start; padding: 1rem; gap: 0.5rem; }
+                    .stat-icon-wrap { margin-bottom: 0.2rem; }
                     .luxury-hero { height: 75vh; }
                     .legacy-text { padding: 2rem; }
                     .legacy-stats { flex-wrap: wrap; gap: 2rem; }
                     .testimonials-wrap { padding: 2rem; }
                     .t-text { font-size: 1.2rem; }
+
+                    /* Mobile Product Slider */
+                    .products-grid {
+                        display: flex;
+                        overflow-x: auto;
+                        gap: 1rem;
+                        padding-bottom: 1rem;
+                        width: 100vw;
+                        margin-left: -1rem;
+                        padding-left: 1rem;
+                        padding-right: 1rem;
+                        scrollbar-width: none;
+                        -ms-overflow-style: none;
+                    }
+                    .products-grid::-webkit-scrollbar { display: none; }
+                    
+                    /* Force Product Card Width on Mobile */
+                    .products-grid > * {
+                        min-width: 260px; /* Show ~1.5 cards */
+                        flex: 0 0 auto;
+                    }
+
+                    .view-all-btn {
+                        width: auto;
+                        padding: 0 1rem;
+                        border-radius: 20px;
+                        font-size: 0.9rem;
+                        font-weight: 600;
+                    }
+                    .desktop-only { display: none; }
                 }
             `}</style>
         </div>
