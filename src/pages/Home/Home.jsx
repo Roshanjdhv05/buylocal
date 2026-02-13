@@ -14,12 +14,15 @@ const Home = () => {
     const [stores, setStores] = useState([]);
     const [loading, setLoading] = useState(true);
     const [location, setLocation] = useState(null);
+    const [reviews, setReviews] = useState([]);
     const [activeCategory, setActiveCategory] = useState('Trending Near You');
 
     useEffect(() => {
         let mounted = true;
 
         const initHome = async () => {
+            if (mounted) setLoading(true); // Ensure loading is reset on mount
+
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
@@ -36,21 +39,25 @@ const Home = () => {
             if (mounted) setLoading(false);
         };
 
+        const fetchData = async () => {
+            try {
+                const { data: storesData } = await withTimeout(supabase.from('stores').select('*'));
+                const { data: productsData } = await withTimeout(supabase.from('products').select('*'));
+                const { data: reviewsData } = await withTimeout(supabase.from('product_reviews').select('*'));
+
+                if (mounted) {
+                    setStores(storesData || []);
+                    setProducts(productsData || []);
+                    setReviews(reviewsData || []);
+                }
+            } catch (e) {
+                console.error('Fetch error:', e.message);
+            }
+        };
+
         initHome();
         return () => { mounted = false; };
     }, [profile]);
-
-    const fetchData = async () => {
-        try {
-            const { data: storesData } = await withTimeout(supabase.from('stores').select('*'));
-            const { data: productsData } = await withTimeout(supabase.from('products').select('*'));
-
-            setStores(storesData || []);
-            setProducts(productsData || []);
-        } catch (e) {
-            console.error('Fetch error:', e.message);
-        }
-    };
 
     // Process Data
     const nearestStores = stores
@@ -61,16 +68,39 @@ const Home = () => {
         .sort((a, b) => a.distance - b.distance)
         .slice(0, 8); // Top 8 nearest stores
 
-    const recommendedProducts = products
-        .map(product => {
-            const store = stores.find(s => s.id === product.store_id);
-            const distance = location && store
-                ? calculateDistance(location, { lat: store.lat, lng: store.lng })
-                : Infinity;
-            return { ...product, distance, storeName: store?.name };
-        })
-        .sort((a, b) => a.distance - b.distance) // Nearest first
-        .slice(0, 8); // Top 8 products
+    const enrichProduct = (product) => {
+        const store = stores.find(s => s.id === product.store_id);
+        const distance = location && store
+            ? calculateDistance(location, { lat: store.lat, lng: store.lng })
+            : Infinity;
+
+        // Calculate rating
+        const productReviews = reviews.filter(r => r.product_id === product.id);
+        const avgRating = productReviews.length > 0
+            ? productReviews.reduce((acc, r) => acc + r.rating, 0) / productReviews.length
+            : 0;
+
+        return { ...product, distance, storeName: store?.name, avgRating, reviewCount: productReviews.length };
+    };
+
+    const enrichedProducts = products.map(enrichProduct);
+
+    const recommendedProducts = [...enrichedProducts]
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, 8);
+
+    const topRatedProducts = [...enrichedProducts]
+        .filter(p => p.avgRating > 0)
+        .sort((a, b) => b.avgRating - a.avgRating)
+        .slice(0, 8);
+
+    const trendingProducts = [...enrichedProducts]
+        .sort((a, b) => (b.views_count || 0) - (a.views_count || 0))
+        .slice(0, 8);
+
+    const productsUnder99 = enrichedProducts.filter(p => p.online_price < 99).slice(0, 4);
+    const productsUnder199 = enrichedProducts.filter(p => p.online_price < 199).slice(0, 4);
+    const productsUnder299 = enrichedProducts.filter(p => p.online_price < 299).slice(0, 4);
 
     if (loading) return <div className="loader-container"><div className="loader"></div></div>;
 
@@ -132,21 +162,76 @@ const Home = () => {
                     </div>
                 </section>
 
-                {/* Recommended Products */}
+                {/* Top Rated Products */}
+                {topRatedProducts.length > 0 && (
+                    <section className="section-block">
+                        <div className="section-header">
+                            <div className="title-group">
+                                <h2>Top Rated Products</h2>
+                                <p>Loved by your local community</p>
+                            </div>
+                            <Link to="/categories" className="view-all">View All</Link>
+                        </div>
+                        <div className="products-grid">
+                            {topRatedProducts.map(product => (
+                                <ProductCard key={product.id} product={product} />
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* Trending Products */}
                 <section className="section-block">
                     <div className="section-header">
                         <div className="title-group">
-                            <h2>Recommended for You</h2>
-                            <p>Personalized picks from stores you follow</p>
-                        </div>
-                        <div className="sort-dropdown">
-                            <span>Sort:</span>
-                            <select><option>Nearest First</option></select>
+                            <h2>Trending Products</h2>
+                            <p>Most popular items right now</p>
                         </div>
                     </div>
-
                     <div className="products-grid">
-                        {recommendedProducts.map(product => (
+                        {trendingProducts.map(product => (
+                            <ProductCard key={product.id} product={product} />
+                        ))}
+                    </div>
+                </section>
+
+                {/* Price Based Sections */}
+                <section className="section-block">
+                    <div className="section-header">
+                        <div className="title-group">
+                            <h2>Budget Friendly Deals</h2>
+                            <p>Great fashion doesn't have to be expensive</p>
+                        </div>
+                    </div>
+                    <div className="price-segments-grid">
+                        <Link to="/price-filter/99" className="price-segment-card bg-rose">
+                            <h3>Under ₹99</h3>
+                            <p>{productsUnder99.length} Items Available</p>
+                            <ChevronRight size={24} />
+                        </Link>
+                        <Link to="/price-filter/199" className="price-segment-card bg-amber">
+                            <h3>Under ₹199</h3>
+                            <p>{productsUnder199.length} Items Available</p>
+                            <ChevronRight size={24} />
+                        </Link>
+                        <Link to="/price-filter/299" className="price-segment-card bg-indigo">
+                            <h3>Under ₹299</h3>
+                            <p>{productsUnder299.length} Items Available</p>
+                            <ChevronRight size={24} />
+                        </Link>
+                    </div>
+                </section>
+
+                {/* All Products */}
+                <section className="section-block">
+                    <div className="section-header">
+                        <div className="title-group">
+                            <h2>All Products</h2>
+                            <p>Browse everything from your favorite local stores</p>
+                        </div>
+                    </div>
+                    <div className="products-grid">
+                        {enrichedProducts.map(product => (
                             <ProductCard key={product.id} product={product} />
                         ))}
                     </div>
@@ -315,8 +400,15 @@ const Home = () => {
         /* Products Grid */
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 2rem;
+        }
+
+        @media (max-width: 640px) {
+            .products-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
         }
 
         /* Business CTA */
@@ -357,6 +449,50 @@ const Home = () => {
             right: -50px;
             bottom: -50px;
             transform: rotate(-15deg);
+        }
+
+        /* Price Segments */
+        .price-segments-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .price-segment-card {
+            padding: 2.5rem 2rem;
+            border-radius: var(--radius-lg);
+            color: white;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            transition: var(--transition);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+        }
+        .price-segment-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-lg); }
+        .price-segment-card h3 { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.5rem; position: relative; z-index: 2; }
+        .price-segment-card p { opacity: 0.9; font-weight: 600; position: relative; z-index: 2; }
+        .price-segment-card svg { position: absolute; right: 1.5rem; bottom: 1.5rem; opacity: 0.3; z-index: 2; transition: var(--transition); }
+        .price-segment-card:hover svg { transform: translateX(5px); opacity: 0.5; }
+        
+        .price-segment-card::after {
+            content: '';
+            position: absolute;
+            top: -20%; right: -10%;
+            width: 150px; height: 150px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .bg-rose { background: linear-gradient(135deg, #f43f5e, #fb7185); }
+        .bg-amber { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+        .bg-indigo { background: linear-gradient(135deg, #6366f1, #818cf8); }
+
+        @media (max-width: 900px) {
+            .price-segments-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 768px) {

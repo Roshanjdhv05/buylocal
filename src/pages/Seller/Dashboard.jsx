@@ -10,7 +10,7 @@ import {
     Upload, X, Image as ImageIcon, Settings,
     Archive, DollarSign, LogOut, User, Home,
     LayoutDashboard, BarChart, ShoppingBag, PlusCircle, ExternalLink, Edit, Clock, Truck,
-    Filter, MoreHorizontal, ChevronLeft, Search, MapPin, Zap, Menu
+    Filter, MoreHorizontal, ChevronLeft, Search, MapPin, Zap, Menu, BookOpen
 } from 'lucide-react';
 import './DashboardStyles.css';
 
@@ -30,9 +30,11 @@ const SellerDashboard = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [bannerUpdating, setBannerUpdating] = useState(false);
     const [editedStore, setEditedStore] = useState({
-        name: '', description: '', address: '', phone: '', city: '', state: '', delivery_time: '', whatsapp: '', instagram: ''
+        name: '', description: '', address: '', phone: '', city: '', state: '', delivery_time: '',
+        whatsapp: '', instagram: '', legacy_heading: '', legacy_description: '', legacy_image_url: ''
     });
     const [sections, setSections] = useState([]);
+    const [legacyImageUploading, setLegacyImageUploading] = useState(false);
     const [newSectionName, setNewSectionName] = useState('');
 
     // src/pages/Seller/Dashboard.jsx - REMOVED
@@ -106,7 +108,24 @@ const SellerDashboard = () => {
                     .order('created_at', { ascending: false }));
 
                 if (ordersError) throw ordersError;
+                if (ordersError) throw ordersError;
                 setOrders(ordersData || []);
+
+                // Initialize editedStore with fetched data
+                setEditedStore({
+                    name: storeData.name || '',
+                    description: storeData.description || '',
+                    address: storeData.address || '',
+                    phone: storeData.phone || '',
+                    city: storeData.city || '',
+                    state: storeData.state || '',
+                    delivery_time: storeData.delivery_time || '',
+                    whatsapp: storeData.whatsapp || '',
+                    instagram: storeData.instagram || '',
+                    legacy_heading: storeData.legacy_heading || '',
+                    legacy_description: storeData.legacy_description || '',
+                    legacy_image_url: storeData.legacy_image_url || ''
+                });
 
                 // Fetch Sections - Non-blocking
                 try {
@@ -186,11 +205,16 @@ const SellerDashboard = () => {
 
     const handleAddProduct = async (productData = newProduct) => {
         // e?.preventDefault(); // e might not be passed if called from AddProduct component
-        alert('Attempting to add product...');
 
         if (!store) {
             console.error('handleAddProduct: No store found');
             alert('Error: Store information not loaded correctly.');
+            return;
+        }
+
+        // Check product limit (50 products)
+        if (!productData.id && products.length >= 50) {
+            alert('Limit reached: Each store can have a maximum of 50 products.');
             return;
         }
 
@@ -395,6 +419,42 @@ const SellerDashboard = () => {
             alert(error.message);
         } finally {
             setUploading(false);
+        }
+    };
+
+    const handleLegacyImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setLegacyImageUploading(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `legacy_${Math.random()}.${fileExt}`;
+            const filePath = `legacy/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('store-gallery')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('store-gallery')
+                .getPublicUrl(filePath);
+
+            const { error: updateError } = await supabase
+                .from('stores')
+                .update({ legacy_image_url: publicUrl })
+                .eq('id', store.id);
+
+            if (updateError) throw updateError;
+            setStore({ ...store, legacy_image_url: publicUrl });
+            setEditedStore(prev => ({ ...prev, legacy_image_url: publicUrl }));
+            alert('Legacy image updated successfully!');
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            setLegacyImageUploading(false);
         }
     };
 
@@ -670,8 +730,18 @@ const SellerDashboard = () => {
                                         <div className="quick-actions-card">
                                             <h3 className="panel-title">Quick Actions</h3>
                                             <div className="action-buttons-stack">
-                                                <button className="btn-action-primary" onClick={() => { setIsAddingProduct(true); }}>
-                                                    <PlusCircle size={18} /> Add Product
+                                                <button
+                                                    className={`btn-action-primary ${products.length >= 50 ? 'disabled' : ''}`}
+                                                    onClick={() => {
+                                                        if (products.length >= 50) {
+                                                            alert('Product limit reached (50/50).');
+                                                        } else {
+                                                            setIsAddingProduct(true);
+                                                        }
+                                                    }}
+                                                    disabled={products.length >= 50}
+                                                >
+                                                    <PlusCircle size={18} /> Add Product ({products.length}/50)
                                                 </button>
                                                 <button className="btn-action-white" onClick={() => setActiveTab('settings')}>
                                                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Edit size={16} /> Edit Store</span>
@@ -703,8 +773,18 @@ const SellerDashboard = () => {
                                         <h2>Product Management</h2>
                                         <p>Add, edit, and organize your storefront inventory.</p>
                                     </div>
-                                    <button className="btn-add-product" onClick={() => setIsAddingProduct(true)}>
-                                        <Plus size={20} /> Add Product
+                                    <button
+                                        className={`btn-add-product ${products.length >= 50 ? 'disabled' : ''}`}
+                                        onClick={() => {
+                                            if (products.length >= 50) {
+                                                alert('Product limit reached (50/50).');
+                                            } else {
+                                                setIsAddingProduct(true);
+                                            }
+                                        }}
+                                        disabled={products.length >= 50}
+                                    >
+                                        <Plus size={20} /> Add Product ({products.length}/50)
                                     </button>
                                 </div>
 
@@ -983,6 +1063,48 @@ const SellerDashboard = () => {
                                                     <PlusCircle size={24} fill="#c084fc" color="white" />
                                                     ADD MEDIA
                                                     <input type="file" hidden multiple accept="image/*" onChange={handleGalleryUpload} />
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div className="settings-card-pro">
+                                            <div className="card-header-pro">
+                                                <div className="card-icon"><BookOpen size={24} /></div>
+                                                <h3>Our Legacy & Story</h3>
+                                            </div>
+                                            <div className="form-row-pro-responsive">
+                                                <div className="settings-input-group light-bg" style={{ width: '100%' }}>
+                                                    <label className="settings-label">Legacy Heading</label>
+                                                    <input
+                                                        className="settings-input-light"
+                                                        placeholder="e.g. Our Legacy"
+                                                        value={editedStore.legacy_heading || store?.legacy_heading || ''}
+                                                        onChange={e => setEditedStore({ ...editedStore, legacy_heading: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="settings-input-group light-bg" style={{ marginTop: '1rem' }}>
+                                                <label className="settings-label">Legacy Description</label>
+                                                <textarea
+                                                    className="settings-input-light"
+                                                    style={{ minHeight: '120px', resize: 'vertical', fontFamily: 'inherit' }}
+                                                    placeholder="Tell your store's story... (Shared across your public store page)"
+                                                    value={editedStore.legacy_description || store?.legacy_description || ''}
+                                                    onChange={e => setEditedStore({ ...editedStore, legacy_description: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="banner-preview-wrapper" style={{ height: '200px', marginTop: '1.5rem' }}>
+                                                {editedStore.legacy_image_url || store?.legacy_image_url ? (
+                                                    <img src={editedStore.legacy_image_url || store?.legacy_image_url} alt="Legacy" className="banner-preview-img" style={{ objectFit: 'cover' }} />
+                                                ) : (
+                                                    <div className="banner-missing">
+                                                        <ImageIcon size={48} />
+                                                        <p>No legacy image uploaded</p>
+                                                    </div>
+                                                )}
+                                                <label className="banner-upload-overlay">
+                                                    {legacyImageUploading ? 'Uploading...' : 'Change Image'}
+                                                    <input type="file" hidden accept="image/*" onChange={handleLegacyImageUpload} disabled={legacyImageUploading} />
                                                 </label>
                                             </div>
                                         </div>

@@ -284,8 +284,8 @@ const PublicStore = () => {
                 <section className="legacy-section-wrap glass-card">
                     <div className="legacy-content">
                         <div className="legacy-text">
-                            <h2>Our Legacy</h2>
-                            <p>Founded in the heart of artistry, {store.name} has been a beacon of luxury craftsmanship for over three decades. We bridge the gap between traditional artistry and modern sophistication, ensuring every piece in our marketplace meets the highest standards of quality and ethical production.</p>
+                            <h2>{store.legacy_heading || 'Our Legacy'}</h2>
+                            <p>{store.legacy_description || `Founded in the heart of artistry, ${store.name} has been a beacon of luxury craftsmanship for over three decades. We bridge the gap between traditional artistry and modern sophistication, ensuring every piece in our marketplace meets the highest standards of quality and ethical production.`}</p>
 
                             <div className="legacy-stats">
                                 <div className="l-stat">
@@ -302,9 +302,15 @@ const PublicStore = () => {
                                 </div>
                             </div>
                         </div>
-                        <div className="legacy-visual">
-                            <div className="legacy-shape"></div>
-                        </div>
+                        {store.legacy_image_url ? (
+                            <div className="legacy-visual" style={{ background: 'none' }}>
+                                <img src={store.legacy_image_url} alt="Legacy" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0 24px 24px 0' }} />
+                            </div>
+                        ) : (
+                            <div className="legacy-visual">
+                                <div className="legacy-shape"></div>
+                            </div>
+                        )}
                     </div>
                 </section>
 
@@ -435,7 +441,7 @@ const PublicStore = () => {
                 /* PRODUCTS */
                 .products-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
                     gap: 2rem;
                 }
 
@@ -501,25 +507,23 @@ const PublicStore = () => {
                     .testimonials-wrap { padding: 2rem; }
                     .t-text { font-size: 1.2rem; }
 
-                    /* Mobile Product Slider */
+                    /* Mobile Product Grid (2 Columns) */
                     .products-grid {
-                        display: flex;
-                        overflow-x: auto;
-                        gap: 1rem;
+                        display: grid;
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 0.75rem;
                         padding-bottom: 1rem;
-                        width: 100vw;
-                        margin-left: -1rem;
-                        padding-left: 1rem;
-                        padding-right: 1rem;
-                        scrollbar-width: none;
-                        -ms-overflow-style: none;
+                        width: 100%;
+                        margin-left: 0;
+                        padding-left: 0;
+                        padding-right: 0;
+                        overflow-x: visible;
                     }
-                    .products-grid::-webkit-scrollbar { display: none; }
                     
                     /* Force Product Card Width on Mobile */
                     .products-grid > * {
-                        min-width: 260px; /* Show ~1.5 cards */
-                        flex: 0 0 auto;
+                        min-width: 0;
+                        flex: 1;
                     }
 
                     .view-all-btn {

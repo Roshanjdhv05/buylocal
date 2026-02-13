@@ -1,9 +1,19 @@
+.btn-action-primary.disabled,
+.btn-add-product.disabled,
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: grayscale(0.5);
+}
+
 /* Dashboard Layout */
 .dashboard-wrapper {
     display: flex;
     min-height: 100vh;
     background-color: #f3f4f6;
     font-family: 'Inter', sans-serif;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 /* Sidebar */
@@ -123,6 +133,9 @@
     margin-left: 260px;
     /* Width of sidebar */
     padding: 2rem;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 /* Header */
@@ -536,285 +549,11 @@
     cursor: pointer;
 }
 
-@media (max-width: 1024px) {
-    .dashboard-sidebar {
-        width: 80px;
-    }
-
-    .sidebar-branding span,
-    .nav-item span,
-    .sidebar-footer {
-        display: none;
-    }
-
-    .sidebar-header-mobile {
-        justify-content: center;
-        padding-right: 0;
-    }
-
-    .dashboard-main {
-        margin-left: 80px;
-    }
-
-    .header-title {
-        font-size: 1.25rem;
-    }
-
-    .stats-grid-new {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .overview-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .settings-layout-pro {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-
-    .form-row-pro-responsive {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-
-    .btn-save-all {
-        width: 100%;
-        margin-top: 1rem;
-        justify-content: center;
-    }
-}
-
 .form-row-pro-responsive {
     display: grid;
     grid-template-columns: 1.5fr 1fr;
     gap: 1.5rem;
     margin-bottom: 1.5rem;
-}
-
-@media (max-width: 640px) {
-
-    /* Header Cleaning */
-    .store-selector {
-        display: none;
-    }
-
-    /* Table to Card Transformation */
-    .orders-table,
-    .orders-table tbody,
-    .orders-table tr,
-    .orders-table td {
-        display: block;
-        width: 100%;
-    }
-
-    .orders-table thead {
-        display: none;
-    }
-
-    .orders-table tr {
-        margin-bottom: 1rem;
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 1rem;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    }
-
-    .orders-table td {
-        padding: 0.5rem 0;
-        border-bottom: 1px dashed #f1f5f9;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        text-align: right;
-    }
-
-    .orders-table td:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-
-    .orders-table td::before {
-        content: attr(data-label);
-        font-weight: 600;
-        color: var(--text-muted);
-        text-align: left;
-        font-size: 0.85rem;
-    }
-
-    .order-id-cell {
-        font-size: 1.1rem;
-        color: var(--primary);
-    }
-}
-
-@media (max-width: 768px) {
-    .dashboard-sidebar {
-        position: fixed;
-        left: -280px;
-        top: 0;
-        bottom: 0;
-        width: 260px;
-        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        display: flex !important;
-        box-shadow: var(--shadow-xl);
-    }
-
-    .dashboard-sidebar.active {
-        left: 0;
-    }
-
-    .sidebar-branding span,
-    .nav-item span,
-    .sidebar-footer {
-        display: block;
-    }
-
-    .sidebar-header-mobile {
-        justify-content: space-between;
-        padding-right: 1rem;
-    }
-
-    .close-sidebar-btn {
-        display: block;
-    }
-
-    .mobile-menu-btn {
-        display: flex;
-    }
-
-    .dashboard-main {
-        margin-left: 0;
-        padding: 1rem;
-    }
-
-    .header-title {
-        font-size: 1.1rem;
-    }
-
-    .user-info-text {
-        display: none;
-    }
-
-    .stats-grid-new {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-
-    .overview-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .orders-page-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-
-    .orders-toolbar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .product-page-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-
-    .products-toolbar {
-        flex-direction: column;
-        align-items: stretch;
-        height: auto;
-        gap: 1rem;
-    }
-
-    .toolbar-left,
-    .toolbar-right {
-        flex-wrap: wrap;
-        width: 100%;
-    }
-
-    /* Order Details Stacking */
-    .order-pro-body {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-        padding: 1.25rem;
-    }
-
-    .order-stats-group {
-        width: 100%;
-        justify-content: space-between;
-        gap: 1rem;
-    }
-
-    .order-pro-actions {
-        width: 100%;
-        align-items: flex-start;
-        margin-top: 1rem;
-        border-top: 1px dashed var(--border);
-        padding-top: 1rem;
-    }
-
-    .btn-group-pro {
-        width: 100%;
-        flex-direction: column;
-    }
-
-    .btn-accept-pro,
-    .btn-reject {
-        width: 100%;
-        justify-content: center;
-    }
-}
-
-@media (max-width: 480px) {
-    .dashboard-header-new {
-        margin-bottom: 1.5rem;
-    }
-
-    .store-selector {
-        padding: 0.4rem 0.75rem;
-    }
-
-    .store-name {
-        max-width: 80px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .stats-grid-new {
-        gap: 0.75rem;
-    }
-
-    .stat-card-new {
-        padding: 1rem;
-    }
-
-    .stat-value {
-        font-size: 1.5rem;
-    }
-
-    /* Order Header Fix for Mobile */
-    .order-pro-header {
-        flex-direction: column-reverse;
-        align-items: flex-start;
-        gap: 0.75rem;
-    }
-
-    .order-pro-id {
-        font-size: 1.25rem;
-    }
-
-    .order-id-block {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
 }
 
 /* Order Management Redesign */
@@ -1245,21 +984,6 @@
     background: rgba(255, 255, 255, 0.3);
 }
 
-@media (max-width: 1024px) {
-    .settings-layout-pro {
-        grid-template-columns: 1fr;
-    }
-
-    .order-pro-body {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-
-    .order-pro-actions {
-        align-items: flex-start;
-    }
-}
-
 /* Product Management Styles */
 .product-page-header {
     display: flex;
@@ -1617,6 +1341,7 @@
 /* Custom Range Slider */
 .custom-range {
     -webkit-appearance: none;
+    appearance: none;
     width: 100%;
     height: 6px;
     background: #e2e8f0;
@@ -1783,9 +1508,14 @@
 
 .header-left h1 {
     font-size: 1.5rem;
-    font-weight: 800;
+}
+
+body {
+    background-color: var(--background);
     color: var(--text-main);
-    line-height: 1.2;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
 }
 
 .auto-save-text {
@@ -2077,4 +1807,412 @@
 .footer-actions {
     display: flex;
     gap: 1rem;
+}
+
+/* RESPONSIVE OVERRIDES (Moved to end for priority) */
+
+@media (max-width: 1024px) {
+    .dashboard-sidebar {
+        width: 80px;
+    }
+
+    .sidebar-branding span,
+    .nav-item span,
+    .sidebar-footer {
+        display: none;
+    }
+
+    .sidebar-header-mobile {
+        justify-content: center;
+        padding-right: 0;
+    }
+
+    .dashboard-main {
+        margin-left: 80px;
+    }
+
+    .header-title {
+        font-size: 1.25rem;
+    }
+
+    .stats-grid-new {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .overview-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* FORCED 1-COLUMN VERTICAL STACK FOR SETTINGS */
+    .settings-layout-pro {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        /* NO SIDE BY SIDE */
+        gap: 2rem !important;
+    }
+
+    /* Allow children to be direct grid items for ordering */
+    .settings-left-col,
+    .operations-sidebar {
+        display: contents !important;
+    }
+
+    /* STRICT ORDER REQUESTED BY USER */
+    .settings-left-col>.settings-card-pro:nth-child(1) {
+        order: 1 !important;
+    }
+
+    /* Store Profile */
+    .settings-left-col>.settings-card-pro:nth-child(2) {
+        order: 2 !important;
+    }
+
+    /* Store Banner */
+    .settings-left-col>.settings-card-pro:nth-child(3) {
+        order: 3 !important;
+    }
+
+    /* Store Gallery */
+    .settings-left-col>.settings-card-pro:nth-child(4) {
+        order: 4 !important;
+    }
+
+    /* Our Legacy */
+
+    .sections-card-pro {
+        order: 5 !important;
+    }
+
+    /* Quick Section */
+    .qr-card-pro {
+        order: 6 !important;
+    }
+
+    /* Customer QR */
+    .ops-card {
+        order: 7 !important;
+    }
+
+    /* Operations (Status, Radius etc) */
+
+    .form-row-pro-responsive {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        /* Stack inputs vertically */
+        gap: 1.5rem !important;
+    }
+
+    .btn-save-all {
+        width: 100% !important;
+        margin-top: 1rem !important;
+        justify-content: center !important;
+    }
+}
+
+/* Target Order details stacking and sidebar at 768px */
+@media (max-width: 768px) {
+    .dashboard-sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        bottom: 0;
+        width: 260px;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex !important;
+        box-shadow: var(--shadow-xl);
+        z-index: 100;
+    }
+
+    .dashboard-sidebar.active {
+        left: 0;
+    }
+
+    .sidebar-branding span,
+    .nav-item span,
+    .sidebar-footer {
+        display: block;
+    }
+
+    .sidebar-header-mobile {
+        justify-content: space-between;
+        padding-right: 1rem;
+    }
+
+    .close-sidebar-btn {
+        display: block;
+    }
+
+    .mobile-menu-btn {
+        display: flex;
+    }
+
+    .dashboard-main {
+        margin-left: 0;
+        padding: 1rem;
+    }
+
+    .header-title {
+        font-size: 1.1rem;
+    }
+
+    .user-info-text {
+        display: none;
+    }
+
+    .stats-grid-new {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .overview-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .orders-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+
+    .orders-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .product-page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+
+    .products-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        height: auto;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+        flex-wrap: wrap;
+        width: 100%;
+        gap: 1rem;
+        justify-content: space-between;
+    }
+
+    /* Order Details Stacking */
+    .order-pro-body {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        padding: 1.25rem;
+    }
+
+    .order-stats-group {
+        width: 100%;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .order-pro-actions {
+        width: 100%;
+        align-items: flex-start;
+        margin-top: 1rem;
+        border-top: 1px dashed var(--border);
+        padding-top: 1rem;
+    }
+
+    .btn-group-pro {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .btn-accept-pro,
+    .btn-reject {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .products-grid-pro {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 1rem !important;
+    }
+}
+
+/* Specific Mobile Refinements at 640px and below */
+@media (max-width: 640px) {
+
+    /* Header Cleaning */
+    .store-selector {
+        display: none;
+    }
+
+    /* Table to Card Transformation */
+    .orders-table,
+    .orders-table tbody,
+    .orders-table tr,
+    .orders-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .orders-table thead {
+        display: none;
+    }
+
+    .orders-table tr {
+        margin-bottom: 1rem;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .orders-table td {
+        padding: 0.5rem 0;
+        border-bottom: 1px dashed #f1f5f9;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: right;
+    }
+
+    .orders-table td:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .orders-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-muted);
+        text-align: left;
+        font-size: 0.85rem;
+    }
+
+    .order-id-cell {
+        font-size: 1.1rem;
+        color: var(--primary);
+    }
+
+    /* Product Management Mobile Refinements */
+    .product-page-header {
+        margin-bottom: 1.25rem !important;
+    }
+
+    .page-title h2 {
+        font-size: 1.4rem !important;
+    }
+
+    .page-title p {
+        font-size: 0.85rem !important;
+    }
+
+    .products-toolbar {
+        padding: 0.75rem !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+        gap: 0.75rem !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+    }
+
+    .bulk-item {
+        font-size: 0.8rem !important;
+    }
+
+    /* Product Grid Mobile (2 Columns) */
+    .products-grid-pro {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.75rem !important;
+        width: 100% !important;
+    }
+
+    .product-card-pro {
+        padding: 0.5rem !important;
+        border-radius: 12px !important;
+    }
+
+    .pro-card-image {
+        margin-bottom: 0.5rem !important;
+    }
+
+    .pro-card-name {
+        font-size: 0.8rem !important;
+        margin-bottom: 0.2rem !important;
+    }
+
+    .pro-price {
+        font-size: 0.9rem !important;
+    }
+
+    .pro-stock {
+        font-size: 0.6rem !important;
+    }
+
+    .category-pill,
+    .status-dot,
+    .General.Collection,
+    .section-pill {
+        font-size: 0.55rem !important;
+        padding: 0.1rem 0.3rem !important;
+    }
+
+    .pro-action-btn {
+        width: 26px !important;
+        height: 26px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-header-new {
+        margin-bottom: 1.5rem;
+    }
+
+    .store-selector {
+        padding: 0.4rem 0.75rem;
+    }
+
+    .store-name {
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .stats-grid-new {
+        gap: 0.75rem;
+    }
+
+    .stat-card-new {
+        padding: 1rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+
+    /* Order Header Fix for Mobile */
+    .order-pro-header {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .order-pro-id {
+        font-size: 1.25rem;
+    }
+
+    .order-id-block {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
 }

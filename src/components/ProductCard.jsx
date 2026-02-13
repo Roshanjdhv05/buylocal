@@ -121,10 +121,29 @@ const ProductCard = ({ product }) => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
+  const handleProductClick = async () => {
+    try {
+      // Increment views_count in background
+      await supabase.rpc('increment_product_views', { product_id: product.id });
+    } catch (err) {
+      // Fallback to manual update if RPC is missing
+      try {
+        const currentViews = product.views_count || 0;
+        await supabase
+          .from('products')
+          .update({ views_count: currentViews + 1 })
+          .eq('id', product.id);
+      } catch (innerErr) {
+        console.warn('Could not increment views:', innerErr.message);
+      }
+    }
+    navigate(`/product/${product.id}`);
+  };
+
   return (
     <div
       className="product-card"
-      onClick={() => navigate(`/product/${product.id}`)}
+      onClick={handleProductClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -185,39 +204,40 @@ const ProductCard = ({ product }) => {
         .product-card {
           position: relative;
           background: white;
-          border-radius: var(--radius-lg);
+          border-radius: 16px;
           overflow: hidden;
-          transition: var(--transition);
+          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
           display: flex;
           flex-direction: column;
           border: 1px solid #f1f5f9;
           height: 100%;
         }
         .product-card:hover {
-          transform: translateY(-4px);
-          box-shadow: var(--shadow-lg);
-          border-color: transparent;
+          transform: translateY(-8px);
+          box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+          border-color: var(--primary);
         }
 
         .card-badges {
             position: absolute;
-            top: 1rem;
-            left: 1rem;
-            right: 1rem;
+            top: 0.75rem;
+            left: 0.75rem;
+            right: 0.75rem;
             display: flex;
             justify-content: space-between;
             z-index: 10;
         }
         .badge-category {
-            background: rgba(255,255,255,0.9);
-            backdrop-filter: blur(4px);
-            padding: 0.25rem 0.6rem;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: 700;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(8px);
+            padding: 0.3rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.65rem;
+            font-weight: 800;
             text-transform: uppercase;
-            color: var(--primary);
+            color: var(--text-main);
             letter-spacing: 0.5px;
+            box-shadow: var(--shadow-sm);
         }
         .badge-wishlist {
             width: 32px;
@@ -230,8 +250,9 @@ const ProductCard = ({ product }) => {
             border: 1px solid var(--border);
             color: var(--text-muted);
             transition: var(--transition);
+            box-shadow: var(--shadow-sm);
         }
-        .badge-wishlist:hover { color: var(--secondary); border-color: var(--secondary); }
+        .badge-wishlist:hover { color: var(--secondary); border-color: var(--secondary); transform: scale(1.1); }
         .badge-wishlist.liked {
             background: #fef2f2;
             color: #ef4444;
@@ -240,20 +261,21 @@ const ProductCard = ({ product }) => {
 
         .product-image {
           width: 100%;
-          height: 200px;
+          aspect-ratio: 1;
           background: #f8fafc;
           position: relative;
           display: flex;
           align-items: center;
           justify-content: center;
+          overflow: hidden;
         }
         .product-image img {
-          width: 85%;
-          height: 85%;
-          object-fit: contain;
-          transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
-        .product-card:hover .product-image img { transform: scale(1.08); }
+        .product-card:hover .product-image img { transform: scale(1.1); }
 
         /* Slider Controls */
         .slider-btn {
@@ -271,12 +293,13 @@ const ProductCard = ({ product }) => {
             cursor: pointer;
             z-index: 5;
             color: var(--text-main);
+            box-shadow: var(--shadow-sm);
         }
         .slider-btn.prev { left: 8px; }
         .slider-btn.next { right: 8px; }
         .slider-dots {
             position: absolute;
-            bottom: 10px;
+            bottom: 12px;
             left: 0; right: 0;
             display: flex;
             justify-content: center;
@@ -284,14 +307,15 @@ const ProductCard = ({ product }) => {
             z-index: 5;
         }
         .dot {
-            width: 6px; height: 6px;
-            background: rgba(0,0,0,0.2);
+            width: 5px; height: 5px;
+            background: rgba(255,255,255,0.5);
             border-radius: 50%;
+            transition: 0.3s;
         }
-        .dot.active { background: var(--primary); }
+        .dot.active { background: white; width: 12px; border-radius: 10px; }
 
         .product-content {
-          padding: 1rem;
+          padding: 1.25rem;
           display: flex;
           flex-direction: column;
           gap: 0.5rem;
@@ -304,71 +328,84 @@ const ProductCard = ({ product }) => {
             gap: 0.35rem;
             color: var(--text-muted);
             font-size: 0.75rem;
+            margin-bottom: 0.25rem;
         }
         .store-icon { color: var(--primary); opacity: 0.8; }
         .store-dist { opacity: 0.7; }
 
         .product-title {
-          font-size: 1rem;
+          font-size: 1.1rem;
           font-weight: 700;
           color: var(--text-main);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          margin-bottom: 0.25rem;
+          margin-bottom: 0.2rem;
         }
 
         .price-row {
             display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
-            margin-bottom: 0.75rem;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
         }
         .current-price {
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: var(--primary);
+            font-size: 1.35rem;
+            font-weight: 850;
+            color: var(--text-main);
         }
         .original-price {
-            font-size: 0.875rem;
+            font-size: 0.9rem;
             color: var(--text-muted);
             text-decoration: line-through;
         }
 
         .btn-add-cart {
             width: 100%;
-            background: var(--primary);
+            background: #0f172a;
             color: white;
             border: none;
-            padding: 0.75rem;
-            border-radius: var(--radius-md);
-            font-weight: 600;
+            padding: 0.85rem;
+            border-radius: 12px;
+            font-weight: 700;
             font-size: 0.9rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
-            transition: var(--transition);
+            gap: 0.6rem;
+            transition: all 0.3s ease;
+            margin-top: auto;
         }
         .btn-add-cart:hover {
-            background: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.4);
+            background: var(--primary);
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
         }
 
         .rating-badge-card {
             display: flex;
             align-items: center;
-            gap: 2px;
+            gap: 3px;
             background: #fffbeb;
             color: #d97706;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.65rem;
-            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 800;
             border: 1px solid #fde68a;
             margin-left: auto;
         }
+
+        @media (max-width: 640px) {
+            .product-card { border-radius: 12px; }
+            .product-content { padding: 0.85rem; }
+            .product-title { font-size: 0.95rem; }
+            .current-price { font-size: 1.1rem; }
+            .store-info { font-size: 0.7rem; }
+            .badge-category { font-size: 0.6rem; padding: 0.2rem 0.5rem; }
+            .btn-add-cart { padding: 0.65rem; font-size: 0.8rem; border-radius: 8px; }
+        }
+
       `}</style>
     </div>
   );

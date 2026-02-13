@@ -30,6 +30,8 @@ const ProtectedRoute = ({ children, role }) => {
     return children;
 };
 
+import PriceFilter from './pages/Home/PriceFilter';
+
 function App() {
     return (
         <AuthProvider>
@@ -44,6 +46,7 @@ function App() {
                         <Route path="/store/:storeId" element={<PublicStore />} />
                         <Route path="/store/:storeId/section/:sectionName" element={<StoreSection />} />
                         <Route path="/product/:productId" element={<ProductDetails />} />
+                        <Route path="/price-filter/:maxPrice" element={<PriceFilter />} />
                         <Route path="/cart" element={<Cart />} />
 
                         <Route path="/orders" element={
