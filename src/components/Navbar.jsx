@@ -39,13 +39,13 @@ const Navbar = () => {
     const navLinks = [
         { name: 'Home', path: '/', icon: <Home size={20} /> },
         { name: 'Stores', path: '/stores', icon: <Store size={20} /> },
+        ...(user ? [{ name: 'Followed', path: '/followed-stores', icon: <Heart size={20} /> }] : []),
         { name: 'Categories', path: '/categories', icon: <Layers size={20} /> },
     ];
 
     const authLinks = user ? [
         { name: 'Wishlist', path: '/wishlist', icon: <Heart size={20} /> },
         { name: 'Orders', path: '/orders', icon: <Package size={20} /> },
-        { name: 'Following', path: '/followed-stores', icon: <Store size={20} /> },
         { name: 'Profile', path: '/profile', icon: <User size={20} /> },
     ] : [
         { name: 'Login', path: '/login', icon: <User size={20} /> },
@@ -61,13 +61,12 @@ const Navbar = () => {
                             <Menu size={24} />
                         </button>
                         <Link to="/" className="logo">
-                            <span className="logo-icon">✿</span> BUY<b>LOCAL</b>
+                            <img src="/logo.png" alt="ByLocal" className="logo-img" />
                         </Link>
                     </div>
 
                     <div className="nav-center">
                         <div className="search-pill">
-                            <i className="search-icon">🔍</i>
                             <input type="text" placeholder="Search for local products, brands, or shops..." />
                         </div>
                     </div>
@@ -121,7 +120,9 @@ const Navbar = () => {
             {/* Mobile Drawer */}
             <div className={`nav-drawer ${isOpen ? 'open' : ''}`}>
                 <div className="drawer-header">
-                    <Link to="/" onClick={toggleMenu} className="logo">BUY<b>LOCAL</b></Link>
+                    <Link to="/" onClick={toggleMenu} className="logo">
+                        <img src="/logo.png" alt="ByLocal" className="logo-img" />
+                    </Link>
                     <button onClick={toggleMenu}><X size={24} /></button>
                 </div>
 
@@ -187,17 +188,17 @@ const Navbar = () => {
           width: 100%;
           gap: 2rem;
         }
-        .logo { 
-            font-size: 1.5rem; 
-            font-weight: 800; 
-            color: var(--text-main); 
+        .logo {
+            flex: none;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            letter-spacing: -0.5px;
         }
-        .logo-icon { color: var(--primary); font-size: 1.8rem; }
-        .logo b { color: var(--text-main); }
+        .logo-img {
+            height: 70px;
+            width: auto;
+            display: block;
+            object-fit: contain;
+        }
         
         .nav-center { flex: 1; display: flex; justify-content: flex-start; max-width: 600px; }
         .search-pill {
@@ -321,12 +322,32 @@ const Navbar = () => {
         }
 
         @media (max-width: 900px) {
+          .navbar {
+            height: 60px;
+            padding: 0 16px;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+          }
+          .nav-content {
+            gap: 1rem;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }
+          .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          }
           .desktop-only { display: none; }
-          .menu-btn { display: block; }
+          .menu-btn { display: flex; align-items: center; padding: 0; margin: 0; }
           .nav-center { display: none; } 
-          .nav-right { gap: 1rem; }
-          .nav-actions { gap: 0.75rem; }
-          .logo { font-size: 1.25rem; }
+          .nav-right { gap: 0.75rem; display: flex; align-items: center; }
+          .nav-actions { gap: 1rem; display: flex; align-items: center; }
+          .logo-img {
+            height: 50px;
+          }
         }
       `}</style>
         </>

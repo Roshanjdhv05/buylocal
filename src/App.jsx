@@ -7,6 +7,8 @@ import { CartProvider } from './context/CartContext';
 import Login from './pages/Auth/Login';
 import Signup from './pages/Auth/Signup';
 import Home from './pages/Home/Home';
+import ForgotPassword from './pages/Auth/ForgotPassword';
+import UpdatePassword from './pages/Auth/UpdatePassword';
 import Categories from './pages/Categories/Categories';
 import Cart from './pages/Cart/Cart';
 import Orders from './pages/Orders/Orders';
@@ -32,6 +34,8 @@ const ProtectedRoute = ({ children, role }) => {
 
 import PriceFilter from './pages/Home/PriceFilter';
 
+import InstallPWA from './components/InstallPWA';
+
 function App() {
     return (
         <AuthProvider>
@@ -41,6 +45,8 @@ function App() {
                         <Route path="/" element={<Home />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Signup />} />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/update-password" element={<UpdatePassword />} />
                         <Route path="/categories" element={<Categories />} />
                         <Route path="/stores" element={<Stores />} />
                         <Route path="/store/:storeId" element={<PublicStore />} />
@@ -95,6 +101,7 @@ function App() {
                         {/* Fallback */}
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
+                    <InstallPWA />
                 </Router>
             </CartProvider>
         </AuthProvider>

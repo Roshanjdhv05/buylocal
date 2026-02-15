@@ -88,6 +88,10 @@ const Login = () => {
                         />
                     </div>
 
+                    <div className="forgot-password-link">
+                        <Link to="/forgot-password">Forgot Password?</Link>
+                    </div>
+
                     {error && <p className="error-message">{error}</p>}
 
                     <button type="submit" className="btn-primary auth-submit" disabled={loading}>
@@ -136,6 +140,9 @@ const Login = () => {
 
         .error-message { color: var(--error); font-size: 0.875rem; margin-bottom: 1rem; }
         .auth-submit { width: 100%; margin-top: 1rem; }
+        .forgot-password-link { text-align: right; margin-top: -0.5rem; margin-bottom: 1rem; }
+        .forgot-password-link a { color: var(--text-muted); font-size: 0.8125rem; transition: var(--transition); }
+        .forgot-password-link a:hover { color: var(--primary); }
         .auth-switch { margin-top: 1.5rem; font-size: 0.9375rem; color: var(--text-muted); }
         .auth-switch a { color: var(--primary); font-weight: 600; }
       `}</style>

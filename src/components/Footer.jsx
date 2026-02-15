@@ -8,7 +8,7 @@ const Footer = () => {
             <div className="container">
                 <div className="footer-content">
                     <div className="footer-brand">
-                        <Link to="/" className="logo">Buy<span>Local</span></Link>
+                        <Link to="/" className="logo"><img src="/logo.png" alt="ByLocal" className="logo-img" /></Link>
                         <p>Connecting you with local merchants for a faster, more sustainable shopping experience. Shop small, dream big.</p>
                     </div>
 
@@ -50,11 +50,11 @@ const Footer = () => {
                     border-top: 1px solid var(--border);
                     margin-top: auto;
                 }
-                .footer-content {
-                    display: grid;
-                    grid-template-columns: 1.5fr 2fr;
-                    gap: 4rem;
-                    margin-bottom: 4rem;
+                .logo-img {
+                    height: 50px;
+                    width: auto;
+                    display: block;
+                    margin-bottom: 1rem;
                 }
                 .footer-brand p {
                     color: var(--text-muted);

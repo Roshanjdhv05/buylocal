@@ -315,10 +315,10 @@ const ProductCard = ({ product }) => {
         .dot.active { background: white; width: 12px; border-radius: 10px; }
 
         .product-content {
-          padding: 1.25rem;
+          padding: 1rem;
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.4rem;
           flex-grow: 1;
         }
 
@@ -334,13 +334,13 @@ const ProductCard = ({ product }) => {
         .store-dist { opacity: 0.7; }
 
         .product-title {
-          font-size: 1.1rem;
+          font-size: 1rem;
           font-weight: 700;
           color: var(--text-main);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          margin-bottom: 0.2rem;
+          margin-bottom: 0.1rem;
         }
 
         .price-row {
@@ -350,12 +350,12 @@ const ProductCard = ({ product }) => {
             margin-bottom: 1rem;
         }
         .current-price {
-            font-size: 1.35rem;
-            font-weight: 850;
+            font-size: 1.2rem;
+            font-weight: 800;
             color: var(--text-main);
         }
         .original-price {
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
             text-decoration: line-through;
         }
@@ -365,14 +365,14 @@ const ProductCard = ({ product }) => {
             background: #0f172a;
             color: white;
             border: none;
-            padding: 0.85rem;
-            border-radius: 12px;
+            padding: 0.75rem;
+            border-radius: 10px;
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.6rem;
+            gap: 0.5rem;
             transition: all 0.3s ease;
             margin-top: auto;
         }

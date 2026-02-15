@@ -122,6 +122,20 @@ export const AuthProvider = ({ children }) => {
         if (error) throw error;
     };
 
+    const sendPasswordResetEmail = async (email) => {
+        const { error } = await withTimeout(supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/update-password`,
+        }));
+        if (error) throw error;
+    };
+
+    const updatePassword = async (newPassword) => {
+        const { error } = await withTimeout(supabase.auth.updateUser({
+            password: newPassword
+        }));
+        if (error) throw error;
+    };
+
     const upgradeToSeller = async () => {
         if (!user) return;
         try {
@@ -142,7 +156,10 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, profile, signUp, signIn, signOut, upgradeToSeller, loading }}>
+        <AuthContext.Provider value={{
+            user, profile, signUp, signIn, signOut, upgradeToSeller,
+            sendPasswordResetEmail, updatePassword, loading
+        }}>
             {children}
         </AuthContext.Provider>
     );

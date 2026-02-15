@@ -7,11 +7,13 @@ import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { MapPin, ArrowRight, ChevronRight, Store } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getRecentlyViewed } from '../../utils/recentlyViewed';
 
 const Home = () => {
     const { profile } = useAuth();
     const [products, setProducts] = useState([]);
     const [stores, setStores] = useState([]);
+    const [recentlyViewed, setRecentlyViewed] = useState([]);
     const [loading, setLoading] = useState(true);
     const [location, setLocation] = useState(null);
     const [reviews, setReviews] = useState([]);
@@ -56,6 +58,7 @@ const Home = () => {
         };
 
         initHome();
+        setRecentlyViewed(getRecentlyViewed());
         return () => { mounted = false; };
     }, [profile]);
 
@@ -161,6 +164,25 @@ const Home = () => {
                         ))}
                     </div>
                 </section>
+
+                {/* Recently Viewed Products */}
+                {recentlyViewed.length > 0 && (
+                    <section className="section-block">
+                        <div className="section-header">
+                            <div className="title-group">
+                                <h2>Your Recently Viewed</h2>
+                                <p>Pick up where you left off</p>
+                            </div>
+                        </div>
+                        <div className="products-grid recently-viewed-grid">
+                            {recentlyViewed.slice(0, 6).map(rv => {
+                                // Find full enriched data
+                                const fullProduct = enrichedProducts.find(p => p.id === rv.id) || rv;
+                                return <ProductCard key={rv.id} product={fullProduct} />;
+                            })}
+                        </div>
+                    </section>
+                )}
 
                 {/* Top Rated Products */}
                 {topRatedProducts.length > 0 && (
@@ -400,8 +422,8 @@ const Home = () => {
         /* Products Grid */
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.25rem;
         }
 
         @media (max-width: 640px) {
@@ -508,6 +530,16 @@ const Home = () => {
             .products-grid {
                 grid-template-columns: repeat(2, 1fr) !important;
                 gap: 0.75rem;
+            }
+            /* Show only 4 products on phone */
+            .recently-viewed-grid > *:nth-child(n+5) {
+                display: none;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .recently-viewed-grid {
+                grid-template-columns: repeat(6, 1fr) !important;
             }
         }
       `}</style>
