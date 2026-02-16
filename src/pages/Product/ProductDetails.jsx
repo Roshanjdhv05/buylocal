@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { supabase, withTimeout } from '../../services/supabase';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
@@ -17,6 +17,7 @@ import { addToRecentlyViewed } from '../../utils/recentlyViewed';
 const ProductDetails = () => {
     const { productId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { addToCart, cartCount } = useCart();
     const { user } = useAuth();
 
@@ -95,7 +96,7 @@ const ProductDetails = () => {
     if (!product && !loading) return <ProductNotFound />;
 
     const handleToggleWishlist = async () => {
-        if (!user) return navigate('/login');
+        if (!user) return navigate('/login', { state: { from: location } });
         if (wishlistLoading) return;
         setWishlistLoading(true);
         try {
@@ -134,7 +135,7 @@ const ProductDetails = () => {
 
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
-        if (!user) return navigate('/login');
+        if (!user) return navigate('/login', { state: { from: location } });
         if (!reviewForm.content.trim()) return alert('Please write something');
 
         setSubmittingReview(true);
@@ -283,10 +284,17 @@ const ProductDetails = () => {
                                 <p className="tax-label">inclusive of all taxes</p>
 
                                 <div className="desktop-actions desktop-only">
-                                    <button className="btn-solid-purple buy-now-btn" onClick={() => { addToCart(product); navigate('/cart'); }}>
+                                    <button className="btn-solid-purple buy-now-btn" onClick={() => {
+                                        if (!user) return navigate('/login', { state: { from: location } });
+                                        addToCart(product);
+                                        navigate('/cart');
+                                    }}>
                                         Buy Now
                                     </button>
-                                    <button className="btn-outline-purple add-cart-btn" onClick={() => addToCart(product)}>
+                                    <button className="btn-outline-purple add-cart-btn" onClick={() => {
+                                        if (!user) return navigate('/login', { state: { from: location } });
+                                        addToCart(product);
+                                    }}>
                                         <ShoppingCart size={20} /> Add to Cart
                                     </button>
                                 </div>
@@ -446,10 +454,17 @@ const ProductDetails = () => {
             {/* STICKY BOTTOM ACTIONS (MOBILE ONLY) */}
             <div className="sticky-action-bar mobile-only">
                 <div className="container action-inner">
-                    <button className="btn-outline-purple" onClick={() => addToCart(product)}>
+                    <button className="btn-outline-purple" onClick={() => {
+                        if (!user) return navigate('/login', { state: { from: location } });
+                        addToCart(product);
+                    }}>
                         ADD TO CART
                     </button>
-                    <button className="btn-solid-purple" onClick={() => { addToCart(product); navigate('/cart'); }}>
+                    <button className="btn-solid-purple" onClick={() => {
+                        if (!user) return navigate('/login', { state: { from: location } });
+                        addToCart(product);
+                        navigate('/cart');
+                    }}>
                         BUY NOW
                     </button>
                 </div>

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import {
     Menu, X, ShoppingCart, User, Home,
-    Layers, Package, LogOut, Store, Globe, Heart, LayoutDashboard
+    Layers, Package, LogOut, Store, Globe, Heart, LayoutDashboard, Search as SearchIcon
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -52,6 +52,17 @@ const Navbar = () => {
         { name: 'Sign Up', path: '/signup', icon: <User size={20} /> },
     ];
 
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const handleSearch = (e) => {
+        if (e.key === 'Enter' || e.type === 'click') {
+            if (searchTerm.trim()) {
+                navigate(`/?search=${encodeURIComponent(searchTerm.trim())}`);
+                setIsOpen(false); // Close mobile menu if open
+            }
+        }
+    };
+
     return (
         <>
             <nav className="navbar">
@@ -67,7 +78,13 @@ const Navbar = () => {
 
                     <div className="nav-center">
                         <div className="search-pill">
-                            <input type="text" placeholder="Search for local products, brands, or shops..." />
+                            <input
+                                type="text"
+                                placeholder="Search for local products, brands, or shops..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyDown={handleSearch}
+                            />
                         </div>
                     </div>
 
@@ -98,6 +115,12 @@ const Navbar = () => {
                             )}
 
                             <button className="icon-btn desktop-only"><Globe size={20} /></button>
+
+                            {/* Mobile Search Icon */}
+                            <Link to="/search" className="icon-btn mobile-search-btn">
+                                <SearchIcon size={22} />
+                            </Link>
+
                             <Link to="/wishlist" className="icon-btn desktop-only"><Heart size={20} /></Link>
 
                             <Link to="/cart" className="icon-btn cart-btn">
@@ -194,7 +217,7 @@ const Navbar = () => {
             align-items: center;
         }
         .logo-img {
-            height: 70px;
+            height: 45px;
             width: auto;
             display: block;
             object-fit: contain;
@@ -275,6 +298,8 @@ const Navbar = () => {
             border-color: #cbd5e1;
         }
 
+        .mobile-search-btn { display: none; }
+
         .seller-promo-pill {
             background: var(--grad-main);
             color: white;
@@ -341,12 +366,15 @@ const Navbar = () => {
             gap: 12px;
           }
           .desktop-only { display: none; }
+          .mobile-search-btn { display: flex; }
           .menu-btn { display: flex; align-items: center; padding: 0; margin: 0; }
           .nav-center { display: none; } 
           .nav-right { gap: 0.75rem; display: flex; align-items: center; }
           .nav-actions { gap: 1rem; display: flex; align-items: center; }
           .logo-img {
-            height: 50px;
+            height: 36px !important;
+            width: auto;
+            object-fit: contain;
           }
         }
       `}</style>

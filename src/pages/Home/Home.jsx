@@ -6,11 +6,14 @@ import ProductCard from '../../components/ProductCard';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { MapPin, ArrowRight, ChevronRight, Store } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { getRecentlyViewed } from '../../utils/recentlyViewed';
 
 const Home = () => {
     const { profile } = useAuth();
+    const [searchParams] = useSearchParams();
+    const searchQuery = searchParams.get('search') || '';
+
     const [products, setProducts] = useState([]);
     const [stores, setStores] = useState([]);
     const [recentlyViewed, setRecentlyViewed] = useState([]);
@@ -88,6 +91,17 @@ const Home = () => {
 
     const enrichedProducts = products.map(enrichProduct);
 
+    // Search Logic
+    const searchResults = searchQuery ? enrichedProducts.filter(p => {
+        const query = searchQuery.toLowerCase();
+        return (
+            p.name?.toLowerCase().includes(query) ||
+            p.description?.toLowerCase().includes(query) ||
+            p.category?.toLowerCase().includes(query) ||
+            p.storeName?.toLowerCase().includes(query)
+        );
+    }) : [];
+
     const recommendedProducts = [...enrichedProducts]
         .sort((a, b) => a.distance - b.distance)
         .slice(0, 8);
@@ -108,6 +122,55 @@ const Home = () => {
     if (loading) return <div className="loader-container"><div className="loader"></div></div>;
 
     const categories = ['Trending Near You', 'Women', 'Men', 'Kids', 'Beauty', 'Footwear', 'Home Decor'];
+
+    // If searching, show only search results
+    if (searchQuery) {
+        return (
+            <div className="home-page">
+                <Navbar />
+                <main className="container main-content" style={{ paddingTop: '2rem' }}>
+                    <div className="section-header">
+                        <div className="title-group">
+                            <h2>Search Results for "{searchQuery}"</h2>
+                            <p>Found {searchResults.length} items matching your search</p>
+                        </div>
+                        {searchResults.length === 0 && (
+                            <Link to="/" className="btn-primary">Clear Search</Link>
+                        )}
+                    </div>
+
+                    {searchResults.length > 0 ? (
+                        <div className="products-grid">
+                            {searchResults.map(product => (
+                                <ProductCard key={product.id} product={product} />
+                            ))}
+                        </div>
+                    ) : (
+                        <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--text-muted)' }}>
+                            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
+                            <h3>No matches found</h3>
+                            <p>Try checking your spelling or using different keywords.</p>
+                        </div>
+                    )}
+                </main>
+                <Footer />
+                <style>{`
+                    .home-page { background: #fafafa; min-height: 100vh; }
+                    .products-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                        gap: 1.25rem;
+                    }
+                    @media (max-width: 640px) {
+                        .products-grid {
+                            grid-template-columns: repeat(2, 1fr);
+                            gap: 0.75rem;
+                        }
+                    }
+                `}</style>
+            </div>
+        );
+    }
 
     return (
         <div className="home-page">

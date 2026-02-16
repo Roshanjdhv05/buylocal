@@ -13,6 +13,7 @@ import Categories from './pages/Categories/Categories';
 import Cart from './pages/Cart/Cart';
 import Orders from './pages/Orders/Orders';
 import CreateStore from './pages/Seller/CreateStore';
+import Search from './pages/Search/Search';
 import SellerDashboard from './pages/Seller/Dashboard';
 import Stores from './pages/Stores/Stores';
 import PublicStore from './pages/Stores/PublicStore';
@@ -43,6 +44,7 @@ function App() {
                 <Router>
                     <Routes>
                         <Route path="/" element={<Home />} />
+                        <Route path="/search" element={<Search />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Signup />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />

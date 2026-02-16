@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase, withTimeout } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -14,6 +14,7 @@ const PublicStore = () => {
     const { user } = useAuth(); // Get user for follow logic
     const { storeId } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const [store, setStore] = useState(null);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -39,7 +40,7 @@ const PublicStore = () => {
     };
 
     const toggleFollow = async () => {
-        if (!user) return alert('Please login to follow stores');
+        if (!user) return navigate('/login', { state: { from: location } });
         setFollowLoading(true);
         try {
             if (isFollowing) {
@@ -111,7 +112,13 @@ const PublicStore = () => {
                     <div className="store-header-main">
                         <div className="store-brand-box">
                             <div className="store-logo-large">
-                                {store.banner_url ? (
+                                {store.profile_picture_url ? (
+                                    <img
+                                        src={store.profile_picture_url}
+                                        alt={store.name}
+                                        style={{ width: '100%', height: '100%', borderRadius: '18px', objectFit: 'cover' }}
+                                    />
+                                ) : store.banner_url ? (
                                     <Store size={40} color="var(--primary)" />
                                 ) : (
                                     store.name.charAt(0)
@@ -139,6 +146,11 @@ const PublicStore = () => {
                             {store.instagram && (
                                 <a href={`https://instagram.com/${store.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="btn-contact-concierge" style={{ background: 'linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)' }}>
                                     <Instagram size={18} /> Instagram
+                                </a>
+                            )}
+                            {store.location_url && (
+                                <a href={store.location_url} target="_blank" rel="noopener noreferrer" className="btn-contact-concierge" style={{ background: '#4285F4' }}>
+                                    <MapPin size={18} /> Location
                                 </a>
                             )}
                         </div>

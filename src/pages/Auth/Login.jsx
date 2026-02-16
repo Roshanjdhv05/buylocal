@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { supabase, withTimeout } from '../../services/supabase';
 import { Mail, Lock } from 'lucide-react';
@@ -12,6 +12,7 @@ const Login = () => {
 
     const { signIn } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -42,8 +43,12 @@ const Login = () => {
 
                         if (storeData) navigate('/seller/dashboard');
                         else navigate('/seller/create-store');
+                        if (storeData) navigate('/seller/dashboard');
+                        else navigate('/seller/create-store');
                     } else {
-                        navigate('/');
+                        // Check for redirect path
+                        const from = location.state?.from?.pathname || '/';
+                        navigate(from, { replace: true });
                     }
                 } catch (e) {
                     console.warn('Login: Redirect logic partial fail, falling back to home', e.message);

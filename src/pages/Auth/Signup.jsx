@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { supabase, withTimeout } from '../../services/supabase';
 import { MapPin, User, Mail, Lock, ShoppingBag, Store } from 'lucide-react';
@@ -21,6 +21,7 @@ const Signup = () => {
 
     const { signUp } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const detectLocation = () => {
         if (!navigator.geolocation) {
@@ -74,7 +75,8 @@ const Signup = () => {
             if (formData.role === 'seller') {
                 navigate('/seller/create-store');
             } else {
-                navigate('/');
+                const from = location.state?.from?.pathname || '/';
+                navigate(from, { replace: true });
             }
         } catch (err) {
             console.error('Signup: Error occurred:', err.message);

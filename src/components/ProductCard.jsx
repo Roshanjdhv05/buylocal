@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Heart, Tag, ChevronLeft, ChevronRight, Store, Star } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 
@@ -9,6 +9,7 @@ const ProductCard = ({ product }) => {
   const { addToCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
@@ -56,7 +57,7 @@ const ProductCard = ({ product }) => {
 
   const handleToggleWishlist = async (e) => {
     e.stopPropagation();
-    if (!user) return navigate('/login');
+    if (!user) return navigate('/login', { state: { from: location } });
     if (wishlistLoading) return;
 
     setWishlistLoading(true);
@@ -106,8 +107,13 @@ const ProductCard = ({ product }) => {
     return () => clearInterval(interval);
   }, [isHovered, images.length]);
 
+
+
   const handleAddToCart = (e) => {
     e.stopPropagation();
+    if (!user) {
+      return navigate('/login', { state: { from: location } });
+    }
     addToCart(product);
   };
 

@@ -35,6 +35,7 @@ const SellerDashboard = () => {
     });
     const [sections, setSections] = useState([]);
     const [legacyImageUploading, setLegacyImageUploading] = useState(false);
+    const [profilePictureUploading, setProfilePictureUploading] = useState(false);
     const [newSectionName, setNewSectionName] = useState('');
 
     // src/pages/Seller/Dashboard.jsx - REMOVED
@@ -108,7 +109,6 @@ const SellerDashboard = () => {
                     .order('created_at', { ascending: false }));
 
                 if (ordersError) throw ordersError;
-                if (ordersError) throw ordersError;
                 setOrders(ordersData || []);
 
                 // Initialize editedStore with fetched data
@@ -124,7 +124,9 @@ const SellerDashboard = () => {
                     instagram: storeData.instagram || '',
                     legacy_heading: storeData.legacy_heading || '',
                     legacy_description: storeData.legacy_description || '',
-                    legacy_image_url: storeData.legacy_image_url || ''
+                    legacy_image_url: storeData.legacy_image_url || '',
+                    profile_picture_url: storeData.profile_picture_url || '',
+                    location_url: storeData.location_url || ''
                 });
 
                 // Fetch Sections - Non-blocking
@@ -455,6 +457,42 @@ const SellerDashboard = () => {
             alert(error.message);
         } finally {
             setLegacyImageUploading(false);
+        }
+    };
+
+    const handleProfilePictureUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setProfilePictureUploading(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `profile_${Math.random()}.${fileExt}`;
+            const filePath = `profile/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('store-gallery')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('store-gallery')
+                .getPublicUrl(filePath);
+
+            const { error: updateError } = await supabase
+                .from('stores')
+                .update({ profile_picture_url: publicUrl })
+                .eq('id', store.id);
+
+            if (updateError) throw updateError;
+            setStore({ ...store, profile_picture_url: publicUrl });
+            setEditedStore(prev => ({ ...prev, profile_picture_url: publicUrl }));
+            alert('Profile picture updated successfully!');
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            setProfilePictureUploading(false);
         }
     };
 
@@ -989,26 +1027,59 @@ const SellerDashboard = () => {
                                     {/* Left Column: Profile & Branding */}
                                     <div className="settings-left-col">
                                         <div className="settings-card-pro">
-                                            <div className="card-header-pro">
-                                                <div className="card-icon"><User size={24} /></div>
+                                            <div class="card-header-pro">
+                                                <div class="card-icon"><User size={24} /></div>
                                                 <h3>Store Profile</h3>
                                             </div>
+
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)' }}>
+                                                <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+                                                    {editedStore.profile_picture_url || store?.profile_picture_url ? (
+                                                        <img
+                                                            src={editedStore.profile_picture_url || store?.profile_picture_url}
+                                                            alt="Profile"
+                                                            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--primary)' }}
+                                                        />
+                                                    ) : (
+                                                        <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.5rem', color: '#64748b' }}>
+                                                            {store?.name?.charAt(0) || 'S'}
+                                                        </div>
+                                                    )}
+                                                    <label style={{
+                                                        position: 'absolute', bottom: '0', right: '0',
+                                                        background: 'white', border: '1px solid #e2e8f0',
+                                                        borderRadius: '50%', width: '28px', height: '28px',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                                                    }}>
+                                                        <ImageIcon size={14} color="#64748b" />
+                                                        <input type="file" hidden accept="image/*" onChange={handleProfilePictureUpload} disabled={profilePictureUploading} />
+                                                    </label>
+                                                </div>
+                                                <div>
+                                                    <h4 style={{ margin: '0 0 0.3rem 0', fontSize: '1rem' }}>Profile Picture</h4>
+                                                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                                        {profilePictureUploading ? 'Uploading...' : 'Visible on public store page'}
+                                                    </p>
+                                                </div>
+                                            </div>
+
                                             <div className="form-row-pro-responsive">
                                                 <div className="settings-input-group">
                                                     <label className="settings-label">Store Name</label>
-                                                    <input className="settings-input-light light-bg" value={editedStore.name || store?.name || ''} onChange={e => setEditedStore({ ...editedStore, name: e.target.value })} />
+                                                    <input className="settings-input-light light-bg" value={editedStore.name} onChange={e => setEditedStore({ ...editedStore, name: e.target.value })} />
                                                 </div>
                                                 <div className="settings-input-group light-bg">
                                                     <label className="settings-label">Delivery Days</label>
                                                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                        <input className="settings-input-light" style={{ flex: 1 }} placeholder="e.g. 2-3 days" value={editedStore.delivery_time || store?.delivery_time || ''} onChange={e => setEditedStore({ ...editedStore, delivery_time: e.target.value })} />
+                                                        <input className="settings-input-light" style={{ flex: 1 }} placeholder="e.g. 2-3 days" value={editedStore.delivery_time} onChange={e => setEditedStore({ ...editedStore, delivery_time: e.target.value })} />
                                                     </div>
                                                 </div>
                                             </div>
                                             <div className="settings-input-group light-bg">
                                                 <label className="settings-label">Physical Address</label>
                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                    <input className="settings-input-light" style={{ width: '100%' }} value={editedStore.address || store?.address || ''} onChange={e => setEditedStore({ ...editedStore, address: e.target.value })} />
+                                                    <input className="settings-input-light" style={{ width: '100%' }} value={editedStore.address} onChange={e => setEditedStore({ ...editedStore, address: e.target.value })} />
                                                     <MapPin size={18} color="#94a3b8" />
                                                 </div>
                                             </div>
@@ -1016,11 +1087,24 @@ const SellerDashboard = () => {
                                             <div className="form-row-pro-responsive" style={{ marginTop: '1.5rem' }}>
                                                 <div className="settings-input-group light-bg">
                                                     <label className="settings-label">WhatsApp Number</label>
-                                                    <input className="settings-input-light" placeholder="e.g. +91 9876543210" value={editedStore.whatsapp || store?.whatsapp || ''} onChange={e => setEditedStore({ ...editedStore, whatsapp: e.target.value })} />
+                                                    <input className="settings-input-light" placeholder="e.g. +91 9876543210" value={editedStore.whatsapp} onChange={e => setEditedStore({ ...editedStore, whatsapp: e.target.value })} />
                                                 </div>
                                                 <div className="settings-input-group light-bg">
                                                     <label className="settings-label">Instagram Username</label>
-                                                    <input className="settings-input-light" placeholder="e.g. yourshop_handle" value={editedStore.instagram || store?.instagram || ''} onChange={e => setEditedStore({ ...editedStore, instagram: e.target.value })} />
+                                                    <input className="settings-input-light" placeholder="e.g. yourshop_handle" value={editedStore.instagram} onChange={e => setEditedStore({ ...editedStore, instagram: e.target.value })} />
+                                                </div>
+                                            </div>
+                                            <div className="settings-input-group light-bg" style={{ marginTop: '1.5rem' }}>
+                                                <label className="settings-label">Google Maps Location Link</label>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <MapPin size={18} color="#94a3b8" />
+                                                    <input
+                                                        className="settings-input-light"
+                                                        style={{ flex: 1 }}
+                                                        placeholder="Paste your Google Maps link here..."
+                                                        value={editedStore.location_url}
+                                                        onChange={e => setEditedStore({ ...editedStore, location_url: e.target.value })}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>

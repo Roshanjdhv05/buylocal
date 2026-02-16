@@ -322,6 +322,44 @@ const Profile = () => {
                     .user-card { position: static; }
                 }
 
+                @media (max-width: 480px) {
+                    .profile-container { padding-top: 1rem; padding-bottom: 2rem; gap: 1rem; }
+                    
+                    /* User Card Compact */
+                    .user-card { padding: 1.25rem 1rem; margin-bottom: 1rem; }
+                    .user-avatar { width: 64px; height: 64px; font-size: 1.5rem; margin-bottom: 0.5rem; }
+                    .username { font-size: 1.25rem; margin-bottom: 0.1rem; }
+                    .user-email { font-size: 0.85rem; margin-bottom: 0.75rem; }
+                    .seller-badge { margin-bottom: 1rem; font-size: 0.7rem; padding: 0.2rem 0.6rem; }
+                    
+                    .user-stats { margin-bottom: 1.25rem; padding-bottom: 1.25rem; }
+                    .stat span { font-size: 0.65rem; }
+                    .stat strong { font-size: 0.9rem; }
+                    
+                    .action-btn { padding: 0.6rem; font-size: 0.9rem; }
+
+                    /* Dashboard/Promo Card Compact */
+                    .seller-dashboard-card, .seller-promo-card { 
+                        padding: 1rem; 
+                        flex-direction: column; 
+                        align-items: flex-start; 
+                        gap: 1rem;
+                    }
+                    .seller-dashboard-card { border-left-width: 3px; }
+                    .sd-content h3 { font-size: 1.1rem; }
+                    .sd-content p { font-size: 0.85rem; }
+                    .btn-primary, .btn-secondary-outline { width: 100%; text-align: center; justify-content: center; }
+
+                    /* Orders Compact */
+                    .section-header { padding: 1rem; }
+                    .section-header h3 { font-size: 1rem; }
+                    
+                    .order-item { padding: 1rem; flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+                    .order-info { width: 100%; }
+                    .order-total { width: 100%; display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border); padding-top: 0.75rem; text-align: left; }
+                    .order-total span { display: inline; margin-right: 0.5rem; }
+                }
+
                 .text-warning { color: #f59e0b; }
                 .text-secondary { color: var(--secondary); }
                 .text-primary { color: var(--primary); }

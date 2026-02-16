@@ -84,18 +84,26 @@ const Stores = () => {
                                             <div className="banner-placeholder"></div>
                                         )}
                                         <div className="store-avatar">
-                                            {store.name.substring(0, 2).toUpperCase()}
+                                            {store.profile_picture_url ? (
+                                                <img
+                                                    src={store.profile_picture_url}
+                                                    alt={store.name}
+                                                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                                                />
+                                            ) : (
+                                                store.name.substring(0, 2).toUpperCase()
+                                            )}
                                         </div>
                                     </div>
 
                                     <div className="store-info">
                                         <h3>{store.name}</h3>
-                                        <p className="description">{store.description}</p>
+                                        {/* <p className="description">{store.description}</p> */}
 
                                         <div className="store-meta">
                                             <span className="location">
                                                 <MapPin size={14} />
-                                                {store.city}, {store.state}
+                                                {store.address ? store.address : `${store.city}, ${store.state}`}
                                             </span>
                                         </div>
 
@@ -148,7 +156,7 @@ const Stores = () => {
                     align-items: center;
                     padding: 0.5rem 1.5rem;
                     border-radius: 12px;
-                    background: #ffff00; /* Matching the bright yellow in screenshot */
+                    background: #ffffff;
                     border: none;
                     box-shadow: 0 4px 20px rgba(0,0,0,0.1);
                 }
