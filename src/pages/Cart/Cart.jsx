@@ -76,12 +76,14 @@ const Cart = () => {
                             <div className="items-list">
                                 {cart.map(item => (
                                     <div key={item.id} className="cart-item">
-                                        <img src={item.images?.[0]} alt={item.name} className="item-img" />
-                                        <div className="item-details">
-                                            <h3>{item.name}</h3>
-                                            <p className="item-store">{item.storeName}</p>
-                                            <p className="item-price">₹{item.online_price}</p>
-                                        </div>
+                                        <Link to={`/product/${item.id}`} className="item-info-link">
+                                            <img src={item.images?.[0] || item.image} alt={item.name} className="item-img" />
+                                            <div className="item-details">
+                                                <h3>{item.name}</h3>
+                                                <p className="item-store">{item.storeName}</p>
+                                                <p className="item-price">₹{item.online_price}</p>
+                                            </div>
+                                        </Link>
                                         <div className="item-controls">
                                             <div className="quantity-toggle">
                                                 <button onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus size={16} /></button>
@@ -153,36 +155,52 @@ const Cart = () => {
         .cart-items-section { padding: 2rem; }
 
         .items-list { display: flex; flex-direction: column; gap: 1.5rem; }
-        .cart-item { display: flex; align-items: center; gap: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+        .cart-item { display: flex; align-items: center; gap: 1rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
         .cart-item:last-child { border-bottom: none; padding-bottom: 0; }
-        .item-img { width: 80px; height: 80px; border-radius: var(--radius-md); object-fit: cover; background: #f1f5f9; }
+        
+        .item-info-link { display: flex; align-items: center; gap: 1.5rem; flex: 1; text-decoration: none; color: inherit; }
+        .item-img { width: 80px; height: 80px; border-radius: var(--radius-md); object-fit: cover; background: #f1f5f9; flex-shrink: 0;}
         .item-details { flex: 1; }
-        .item-details h3 { font-size: 1.125rem; margin-bottom: 0.25rem; }
+        .item-details h3 { font-size: 1.125rem; margin-bottom: 0.25rem; color: var(--text-main); }
         .item-store { font-size: 0.875rem; color: var(--text-muted); }
         .item-price { font-weight: 700; color: var(--primary); margin-top: 0.25rem; }
 
         .item-controls { display: flex; align-items: center; gap: 1.5rem; }
         .quantity-toggle { display: flex; align-items: center; background: #f1f5f9; border-radius: 99px; padding: 0.25rem; }
-        .quantity-toggle button { padding: 0.5rem; border-radius: 50%; color: var(--text-muted); }
+        .quantity-toggle button { padding: 0.5rem; border-radius: 50%; color: var(--text-muted); display: flex; align-items: center; justify-content: center; border: none; background: transparent; cursor: pointer; }
         .quantity-toggle button:hover { background: white; color: var(--primary); }
-        .quantity-toggle span { width: 30px; text-align: center; font-weight: 600; }
-        .remove-btn { color: var(--text-muted); }
-        .remove-btn:hover { color: var(--error); }
+        .quantity-toggle span { width: 30px; text-align: center; font-weight: 600; font-size: 0.9rem; }
+        .remove-btn { color: var(--text-muted); padding: 0.5rem; border-radius: 50%; border: none; background: transparent; cursor: pointer; transition: 0.2s; }
+        .remove-btn:hover { color: var(--error); background: #fef2f2; }
 
-        .summary-card { padding: 2rem; }
+        .summary-card { padding: 2rem; position: sticky; top: 100px; }
         .summary-card h3 { margin-bottom: 1.5rem; }
         .summary-row { display: flex; justify-content: space-between; margin-bottom: 1rem; color: var(--text-muted); }
         .summary-row.total { font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-top: 1rem; }
         .free { color: var(--success); font-weight: 600; }
 
         .checkout-form { margin-top: 2rem; display: flex; flex-direction: column; gap: 1.25rem; }
-        .checkout-btn { width: 100%; padding: 1rem; font-size: 1.125rem; margin-top: 1rem; }
+        .checkout-btn { width: 100%; padding: 1rem; font-size: 1.125rem; margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
 
         .empty-cart { text-align: center; padding: 3rem 0; color: var(--text-muted); }
-        .empty-cart a { margin-top: 1.5rem; }
+        .empty-cart a { margin-top: 1.5rem; display: inline-block; }
 
         @media (max-width: 1024px) {
           .cart-grid { grid-template-columns: 1fr; }
+          .summary-card { position: static; }
+        }
+
+        @media (max-width: 640px) {
+            .cart-page { padding-top: 1rem; padding-bottom: 6rem; }
+            .cart-items-section, .summary-card { padding: 1.25rem; }
+            
+            .cart-item { flex-direction: column; align-items: flex-start; gap: 1rem; position: relative; }
+            .item-info-link { width: 100%; gap: 1rem; }
+            .item-img { width: 70px; height: 70px; }
+            .item-details h3 { font-size: 1rem; }
+            
+            .item-controls { width: 100%; justify-content: space-between; margin-top: 0.5rem; }
+            .remove-btn { position: absolute; top: 0; right: 0; }
         }
       `}</style>
         </div>
