@@ -18,6 +18,9 @@ const Login = () => {
     const handleGoogleLogin = async () => {
         try {
             setLoading(true);
+            // Save current "from" state to localStorage so it persists through OAuth redirect
+            const from = location.state?.from?.pathname || '/';
+            localStorage.setItem('oauth_redirect_path', from);
             await signInWithGoogle();
         } catch (err) {
             setError(err.message);

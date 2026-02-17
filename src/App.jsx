@@ -36,12 +36,32 @@ const ProtectedRoute = ({ children, role }) => {
 import PriceFilter from './pages/Home/PriceFilter';
 
 import InstallPWA from './components/InstallPWA';
+import { useEffect } from 'react';
+
+const AuthRedirectHandler = () => {
+    const { user, loading } = useAuth();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!loading && user) {
+            const redirectPath = localStorage.getItem('oauth_redirect_path');
+            if (redirectPath) {
+                console.log('AuthRedirect: Found pending path, navigating to:', redirectPath);
+                localStorage.removeItem('oauth_redirect_path');
+                navigate(redirectPath, { replace: true });
+            }
+        }
+    }, [user, loading, navigate]);
+
+    return null;
+};
 
 function App() {
     return (
-        <AuthProvider>
-            <CartProvider>
-                <Router>
+        <Router>
+            <AuthProvider>
+                <CartProvider>
+                    <AuthRedirectHandler />
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/search" element={<Search />} />
@@ -108,9 +128,9 @@ function App() {
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>
                     <InstallPWA />
-                </Router>
-            </CartProvider>
-        </AuthProvider>
+                </CartProvider>
+            </AuthProvider>
+        </Router>
     );
 }
 
