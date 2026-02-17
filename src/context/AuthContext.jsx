@@ -18,77 +18,85 @@ export const AuthProvider = ({ children }) => {
                 if (error) throw error;
 
                 if (mounted) {
-                    console.log('Auth: Session obtained:', session?.user?.email || 'none');
-                    setUser(session?.user ?? null);
                     if (session?.user) {
+                        console.log('Auth: Initial session found for:', session.user.email);
+                        setUser(session.user);
                         await fetchProfile(session.user.id);
+                    } else {
+                        console.log('Auth: No initial session.');
+                        setUser(null);
+                        setProfile(null);
                     }
                 }
             } catch (error) {
                 console.error('Auth initialization error:', error.message);
             } finally {
                 if (mounted) {
-                    console.log('Auth: Loading finished.');
                     setLoading(false);
+                    console.log('Auth: Initial loading finished.');
                 }
             }
         };
 
         getInitialSession();
 
-        // Failsafe: Ensure auth loading ends after 10s
-        const authFailsafe = setTimeout(() => {
-            if (mounted && loading) {
-                console.warn('Auth: Failsafe timeout reached. Forcing loading to false.');
-                setLoading(false);
-            }
-        }, 10000);
-
         const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (!mounted) return;
 
-            console.log('Auth event:', event);
+            console.log('Auth Event Triggered:', event);
             const currentUser = session?.user ?? null;
-            setUser(currentUser);
 
-            if (currentUser) {
-                // Check if profile exists, if not create it (common for first-time OAuth)
-                const { data: existingProfile, error: profileError } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('id', currentUser.id)
-                    .single();
-
-                if (profileError && profileError.code === 'PGRST116') {
-                    // Profile missing, create default one
-                    console.log('Auth: Profile missing for user, creating default...');
-                    const { data: newProfile, error: insertError } = await supabase
-                        .from('users')
-                        .insert([{
-                            id: currentUser.id,
-                            email: currentUser.email,
-                            username: currentUser.user_metadata.full_name || currentUser.email.split('@')[0],
-                            role: 'buyer'
-                        }])
-                        .select()
-                        .single();
-
-                    if (!insertError) setProfile(newProfile);
-                } else {
-                    setProfile(existingProfile);
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || (event === 'INITIAL_SESSION' && session)) {
+                setUser(currentUser);
+                if (currentUser) {
+                    console.log('Auth: Fetching/Updating profile for:', currentUser.email);
+                    await handleProfileSync(currentUser);
                 }
-            } else {
+            } else if (event === 'SIGNED_OUT') {
+                console.log('Auth: User signed out, clearing state.');
+                setUser(null);
                 setProfile(null);
             }
-            setLoading(false);
+
+            if (mounted) setLoading(false);
         });
 
         return () => {
             mounted = false;
-            clearTimeout(authFailsafe);
             authListener.subscription.unsubscribe();
         };
     }, []);
+
+    const handleProfileSync = async (currentUser) => {
+        try {
+            const { data: existingProfile, error: profileError } = await supabase
+                .from('users')
+                .select('*')
+                .eq('id', currentUser.id)
+                .single();
+
+            if (profileError && profileError.code === 'PGRST116') {
+                console.log('Auth: Profile missing, creating default...');
+                const { data: newProfile, error: insertError } = await supabase
+                    .from('users')
+                    .insert([{
+                        id: currentUser.id,
+                        email: currentUser.email,
+                        username: currentUser.user_metadata?.full_name || currentUser.email.split('@')[0],
+                        role: 'buyer'
+                    }])
+                    .select()
+                    .single();
+
+                if (!insertError) setProfile(newProfile);
+            } else if (!profileError) {
+                setProfile(existingProfile);
+                console.log('Auth: Profile synced successfully.');
+            }
+        } catch (err) {
+            console.error('Auth: Profile sync error:', err.message);
+        }
+    };
 
     const fetchProfile = async (userId) => {
         try {

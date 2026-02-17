@@ -129,8 +129,11 @@ const Navbar = () => {
                             </Link>
 
                             {user ? (
-                                <div className="user-menu">
+                                <div className="user-menu" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <Link to="/profile" className="icon-btn"><User size={20} /></Link>
+                                    <button onClick={handleLogout} className="icon-btn logout-desktop" title="Logout">
+                                        <LogOut size={20} color="#ef4444" />
+                                    </button>
                                 </div>
                             ) : (
                                 <Link to="/login" className="login-link">Login</Link>
@@ -181,7 +184,7 @@ const Navbar = () => {
                         ))}
                     </div>
 
-                    {profile && (
+                    {user && (
                         <div className="drawer-footer">
                             <button className="logout-btn" onClick={handleLogout}>
                                 <LogOut size={20} /> Logout
@@ -376,6 +379,14 @@ const Navbar = () => {
             width: auto;
             object-fit: contain;
           }
+        }
+
+        .logout-desktop {
+            margin-left: 0.5rem;
+            color: #64748b;
+        }
+        .logout-desktop:hover {
+            color: #ef4444 !important;
         }
       `}</style>
         </>
