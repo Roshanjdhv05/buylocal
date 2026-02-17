@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { supabase, withTimeout } from '../../services/supabase';
-import { MapPin, User, Mail, Lock, ShoppingBag, Store, Navigation } from 'lucide-react';
+import { MapPin, User, Mail, Lock, ShoppingBag, Store, Navigation, ArrowLeft } from 'lucide-react';
 import AuthLayout from '../../components/AuthLayout';
 
 const Signup = () => {
@@ -95,6 +95,12 @@ const Signup = () => {
 
     return (
         <AuthLayout>
+            <div className="auth-nav-top">
+                <Link to="/" className="back-link">
+                    <ArrowLeft size={18} />
+                    <span>Back to Home</span>
+                </Link>
+            </div>
             <div className="auth-form-header">
                 <h2 className="auth-form-title">Join the community</h2>
                 <p className="auth-form-subtitle">Create your account to start shopping local.</p>
@@ -173,6 +179,22 @@ const Signup = () => {
                 .auth-form-header { margin-bottom: 2.5rem; text-align: left; }
                 .auth-form-title { font-size: 2.5rem; font-weight: 800; color: #1e293b; margin-bottom: 0.5rem; letter-spacing: -0.01em; }
                 .auth-form-subtitle { color: #64748b; font-size: 1.1rem; }
+
+                .auth-nav-top {
+                    margin-bottom: 2rem;
+                }
+                .back-link {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    color: #64748b;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    transition: color 0.2s;
+                }
+                .back-link:hover {
+                    color: #7c3aed;
+                }
 
                 .auth-form-refined { display: flex; flex-direction: column; gap: 1.25rem; }
                 
