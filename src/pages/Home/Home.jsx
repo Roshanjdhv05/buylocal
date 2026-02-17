@@ -40,10 +40,20 @@ const Home = () => {
         const initHome = async () => {
             if (mounted) setLoading(true);
 
-            // 1. Check URL parameters (Manual override from Navbar)
+            // 1. Initial Location Source: Storage (Fastest)
+            const savedLoc = localStorage.getItem('saved_location');
+            if (savedLoc) {
+                try {
+                    const parsed = JSON.parse(savedLoc);
+                    if (mounted) setLocation(parsed);
+                } catch (e) {
+                    localStorage.removeItem('saved_location');
+                }
+            }
+
+            // 2. Override Source: URL Parameters (Force manual)
             const urlLat = searchParams.get('lat');
             const urlLng = searchParams.get('lng');
-
             if (urlLat && urlLng) {
                 const lat = parseFloat(urlLat);
                 const lng = parseFloat(urlLng);
@@ -52,42 +62,22 @@ const Home = () => {
                 if (mounted) setLocation(newLoc);
                 localStorage.setItem('saved_location', JSON.stringify(newLoc));
             }
-            // 2. Check localStorage (Persistence)
-            else {
-                const savedLoc = localStorage.getItem('saved_location');
-                if (savedLoc) {
-                    try {
-                        const parsed = JSON.parse(savedLoc);
-                        if (mounted) setLocation(parsed);
-
-                        // If we have coords but no city name, resolve it
-                        if (parsed.lat && parsed.lng && !parsed.cityName) {
-                            const cityName = await fetchCityName(parsed.lat, parsed.lng);
-                            const updatedLoc = { ...parsed, cityName };
-                            localStorage.setItem('saved_location', JSON.stringify(updatedLoc));
-                            if (mounted) setLocation(updatedLoc);
+            // 3. Background Sync Source: GeoLocation (Always try to get fresh on visit)
+            else if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                        if (mounted) {
+                            const lat = pos.coords.latitude;
+                            const lng = pos.coords.longitude;
+                            const cityName = await fetchCityName(lat, lng);
+                            const newLoc = { lat, lng, cityName };
+                            setLocation(newLoc);
+                            localStorage.setItem('saved_location', JSON.stringify(newLoc));
                         }
-                    } catch (e) {
-                        localStorage.removeItem('saved_location');
-                    }
-                }
-                // 3. Auto-detect (First visit / Fallback)
-                else if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        async (pos) => {
-                            if (mounted) {
-                                const lat = pos.coords.latitude;
-                                const lng = pos.coords.longitude;
-                                const cityName = await fetchCityName(lat, lng);
-                                const newLoc = { lat, lng, cityName };
-                                setLocation(newLoc);
-                                localStorage.setItem('saved_location', JSON.stringify(newLoc));
-                            }
-                        },
-                        (err) => console.warn('Geolocation failed', err),
-                        { timeout: 10000, maximumAge: 300000 }
-                    );
-                }
+                    },
+                    (err) => console.warn('Background Geolocation sync skipped:', err.message),
+                    { timeout: 10000, maximumAge: 60000 } // Use cached for 1 min, but try to refresh
+                );
             }
 
             await fetchData();
@@ -96,20 +86,26 @@ const Home = () => {
 
         const fetchData = async () => {
             try {
-                // Fetch basic data
-                const [storesRes, productsRes, reviewsRes] = await Promise.all([
+                // Fetch data independently so one failure doesn't block others
+                const [storesResult, productsResult, repoReviewsResult] = await Promise.allSettled([
                     withTimeout(supabase.from('stores').select('*')),
                     withTimeout(supabase.from('products').select('*')),
                     withTimeout(supabase.from('product_reviews').select('*'))
                 ]);
 
                 if (mounted) {
-                    setStores(storesRes.data || []);
-                    setProducts(productsRes.data || []);
-                    setReviews(reviewsRes.data || []);
+                    if (storesResult.status === 'fulfilled' && storesResult.value.data) {
+                        setStores(storesResult.value.data);
+                    }
+                    if (productsResult.status === 'fulfilled' && productsResult.value.data) {
+                        setProducts(productsResult.value.data);
+                    }
+                    if (repoReviewsResult.status === 'fulfilled' && repoReviewsResult.value.data) {
+                        setReviews(repoReviewsResult.value.data);
+                    }
                 }
             } catch (e) {
-                console.error('Fetch error:', e.message);
+                console.error('Core fetch error:', e.message);
             }
         };
 
