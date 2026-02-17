@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import {
     Menu, X, ShoppingCart, User, Home,
-    Layers, Package, LogOut, Store, Globe, Heart, LayoutDashboard, Search as SearchIcon, MapPin
+    Layers, Package, LogOut, Store, Globe, Heart, LayoutDashboard, Search as SearchIcon
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -13,59 +13,6 @@ const Navbar = () => {
     const { cartCount } = useCart();
     const navigate = useNavigate();
     const [upgrading, setUpgrading] = useState(false);
-    const [locating, setLocating] = useState(false);
-    const [cityName, setCityName] = useState(null);
-
-    useEffect(() => {
-        const updateCity = () => {
-            const savedLoc = localStorage.getItem('saved_location');
-            if (savedLoc) {
-                try {
-                    const parsed = JSON.parse(savedLoc);
-                    if (parsed.cityName) setCityName(parsed.cityName);
-                } catch (e) {
-                    console.warn('Failed to parse saved location', e);
-                }
-            }
-        };
-
-        updateCity();
-        // Add listener for storage changes (for sync across tabs)
-        window.addEventListener('storage', updateCity);
-        // Also poll briefly or use a custom event if navigating internally
-        const interval = setInterval(updateCity, 2000);
-
-        return () => {
-            window.removeEventListener('storage', updateCity);
-            clearInterval(interval);
-        };
-    }, []);
-
-    const handleDetectLocation = () => {
-        if (!navigator.geolocation) {
-            alert('Geolocation is not supported by your browser');
-            return;
-        }
-
-        setLocating(true);
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                setLocating(false);
-                const { latitude, longitude } = position.coords;
-                // Navigate to home with location params
-                navigate(`/?lat=${latitude}&lng=${longitude}`);
-                setIsOpen(false);
-            },
-            (error) => {
-                setLocating(false);
-                if (error.code === 3) {
-                    console.warn('Geolocation timeout, trying again or checking cached position...');
-                }
-                alert('Unable to retrieve your location: ' + error.message);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-        );
-    };
 
     const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -142,16 +89,6 @@ const Navbar = () => {
                     </div>
 
                     <div className="nav-right">
-                        <button
-                            className={`location-pill desktop-only ${locating ? 'locating' : ''}`}
-                            onClick={handleDetectLocation}
-                            disabled={locating}
-                            title={cityName ? `Location: ${cityName}` : 'Detect Location'}
-                        >
-                            <MapPin size={16} />
-                            <span>{locating ? 'Locating...' : (cityName ? `Near ${cityName}` : 'Near Me')}</span>
-                        </button>
-
                         <div className="nav-links desktop-only">
                             {navLinks.map(link => (
                                 <Link key={link.path} to={link.path}>{link.name}</Link>
@@ -178,15 +115,6 @@ const Navbar = () => {
                             )}
 
                             <button className="icon-btn desktop-only"><Globe size={20} /></button>
-
-                            {/* Mobile Location Icon */}
-                            <button
-                                className={`icon-btn mobile-only ${locating ? 'locating' : ''}`}
-                                onClick={handleDetectLocation}
-                                disabled={locating}
-                            >
-                                <MapPin size={22} color={locating ? 'var(--primary)' : 'currentColor'} />
-                            </button>
 
                             {/* Mobile Search Icon */}
                             <Link to="/search" className="icon-btn mobile-search-btn">
@@ -276,39 +204,6 @@ const Navbar = () => {
           display: flex;
           align-items: center;
         }
-
-        .location-pill {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: #f1f5f9;
-            color: #1e293b;
-            padding: 0.6rem 1rem;
-            border-radius: 100px;
-            font-size: 0.9rem;
-            font-weight: 700;
-            border: 1px solid #e2e8f0;
-            transition: all 0.2s;
-            margin-right: 0.5rem;
-        }
-
-        .location-pill:hover {
-            background: #e2e8f0;
-            border-color: #cbd5e1;
-            transform: translateY(-1px);
-        }
-
-        .location-pill.locating {
-            animation: pulse-location 1.5s infinite;
-            opacity: 0.8;
-        }
-
-        @keyframes pulse-location {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); opacity: 1; }
-            100% { transform: scale(1); }
-        }
-
         .nav-content {
           display: flex;
           justify-content: space-between;
@@ -361,11 +256,6 @@ const Navbar = () => {
         .nav-separater { width: 1px; height: 24px; background: var(--border); }
 
         .nav-actions { display: flex; align-items: center; gap: 1rem; }
-        .mobile-only { display: none; }
-
-        @media (max-width: 900px) {
-            .mobile-only { display: flex; }
-        }
         .icon-btn {
             background: none;
             color: var(--text-main);
@@ -476,7 +366,6 @@ const Navbar = () => {
             gap: 12px;
           }
           .desktop-only { display: none; }
-          .mobile-only { display: flex; }
           .mobile-search-btn { display: flex; }
           .menu-btn { display: flex; align-items: center; padding: 0; margin: 0; }
           .nav-center { display: none; } 

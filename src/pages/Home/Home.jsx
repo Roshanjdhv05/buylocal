@@ -25,58 +25,18 @@ const Home = () => {
     useEffect(() => {
         let mounted = true;
 
-        const fetchCityName = async (lat, lng) => {
-            try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`);
-                const data = await response.json();
-                const city = data.address.city || data.address.town || data.address.village || data.address.suburb || data.address.county || 'Local';
-                return city;
-            } catch (error) {
-                console.warn('Reverse geocoding failed', error);
-                return 'Local';
-            }
-        };
-
         const initHome = async () => {
-            if (mounted) setLoading(true);
+            if (mounted) setLoading(true); // Ensure loading is reset on mount
 
-            // 1. Initial Location Source: Storage (Fastest)
-            const savedLoc = localStorage.getItem('saved_location');
-            if (savedLoc) {
-                try {
-                    const parsed = JSON.parse(savedLoc);
-                    if (mounted) setLocation(parsed);
-                } catch (e) {
-                    localStorage.removeItem('saved_location');
-                }
-            }
-
-            // 2. Override Source: URL Parameters (Force manual)
-            const urlLat = searchParams.get('lat');
-            const urlLng = searchParams.get('lng');
-            if (urlLat && urlLng) {
-                const lat = parseFloat(urlLat);
-                const lng = parseFloat(urlLng);
-                const cityName = await fetchCityName(lat, lng);
-                const newLoc = { lat, lng, cityName };
-                if (mounted) setLocation(newLoc);
-                localStorage.setItem('saved_location', JSON.stringify(newLoc));
-            }
-            // 3. Background Sync Source: GeoLocation (Always try to get fresh on visit)
-            else if (navigator.geolocation) {
+            if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    async (pos) => {
+                    (pos) => {
                         if (mounted) {
-                            const lat = pos.coords.latitude;
-                            const lng = pos.coords.longitude;
-                            const cityName = await fetchCityName(lat, lng);
-                            const newLoc = { lat, lng, cityName };
-                            setLocation(newLoc);
-                            localStorage.setItem('saved_location', JSON.stringify(newLoc));
+                            setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
                         }
                     },
-                    (err) => console.warn('Background Geolocation sync skipped:', err.message),
-                    { timeout: 10000, maximumAge: 60000 } // Use cached for 1 min, but try to refresh
+                    (err) => console.warn('Geolocation failed', err),
+                    { timeout: 5000 }
                 );
             }
 
@@ -86,33 +46,24 @@ const Home = () => {
 
         const fetchData = async () => {
             try {
-                // Fetch data independently so one failure doesn't block others
-                const [storesResult, productsResult, repoReviewsResult] = await Promise.allSettled([
-                    withTimeout(supabase.from('stores').select('*')),
-                    withTimeout(supabase.from('products').select('*')),
-                    withTimeout(supabase.from('product_reviews').select('*'))
-                ]);
+                const { data: storesData } = await withTimeout(supabase.from('stores').select('*'));
+                const { data: productsData } = await withTimeout(supabase.from('products').select('*'));
+                const { data: reviewsData } = await withTimeout(supabase.from('product_reviews').select('*'));
 
                 if (mounted) {
-                    if (storesResult.status === 'fulfilled' && storesResult.value.data) {
-                        setStores(storesResult.value.data);
-                    }
-                    if (productsResult.status === 'fulfilled' && productsResult.value.data) {
-                        setProducts(productsResult.value.data);
-                    }
-                    if (repoReviewsResult.status === 'fulfilled' && repoReviewsResult.value.data) {
-                        setReviews(repoReviewsResult.value.data);
-                    }
+                    setStores(storesData || []);
+                    setProducts(productsData || []);
+                    setReviews(reviewsData || []);
                 }
             } catch (e) {
-                console.error('Core fetch error:', e.message);
+                console.error('Fetch error:', e.message);
             }
         };
 
         initHome();
         setRecentlyViewed(getRecentlyViewed());
         return () => { mounted = false; };
-    }, [profile, searchParams]);
+    }, [profile]);
 
     // Process Data
     const nearestStores = stores
