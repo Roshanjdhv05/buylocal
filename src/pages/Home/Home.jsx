@@ -58,7 +58,7 @@ const Home = () => {
                             }
                         },
                         (err) => console.warn('Geolocation failed', err),
-                        { timeout: 5000 }
+                        { timeout: 10000, maximumAge: 300000 }
                     );
                 }
             }

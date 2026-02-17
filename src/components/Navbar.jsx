@@ -32,9 +32,12 @@ const Navbar = () => {
             },
             (error) => {
                 setLocating(false);
+                if (error.code === 3) {
+                    console.warn('Geolocation timeout, trying again or checking cached position...');
+                }
                 alert('Unable to retrieve your location: ' + error.message);
             },
-            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
         );
     };
 
