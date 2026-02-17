@@ -34,8 +34,8 @@ const ProtectedRoute = ({ children, role }) => {
 };
 
 import PriceFilter from './pages/Home/PriceFilter';
-
 import InstallPWA from './components/InstallPWA';
+import LocationOnboarding from './components/LocationOnboarding';
 import { useEffect } from 'react';
 
 const AuthRedirectHandler = () => {
@@ -62,6 +62,7 @@ function App() {
             <AuthProvider>
                 <CartProvider>
                     <AuthRedirectHandler />
+                    <LocationOnboarding />
                     <Routes>
                         <Route path="/" element={<Home />} />
                         <Route path="/search" element={<Search />} />

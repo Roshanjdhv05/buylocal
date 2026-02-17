@@ -190,29 +190,31 @@ export const AuthProvider = ({ children }) => {
         if (error) throw error;
     };
 
-    const upgradeToSeller = async () => {
+    const updateProfile = async (updates) => {
         if (!user) return;
         try {
             const { error } = await withTimeout(supabase
                 .from('users')
-                .update({ role: 'seller' })
+                .update(updates)
                 .eq('id', user.id));
 
             if (error) throw error;
-
-            // Refresh local profile state
             await fetchProfile(user.id);
             return true;
         } catch (error) {
-            console.error('Error upgrading to seller:', error.message);
+            console.error('Error updating profile:', error.message);
             throw error;
         }
+    };
+
+    const upgradeToSeller = async () => {
+        return updateProfile({ role: 'seller' });
     };
 
     return (
         <AuthContext.Provider value={{
             user, profile, signUp, signIn, signInWithGoogle, signOut, upgradeToSeller,
-            sendPasswordResetEmail, updatePassword, loading
+            updateProfile, sendPasswordResetEmail, updatePassword, loading
         }}>
             {children}
         </AuthContext.Provider>
