@@ -32,11 +32,15 @@ const Home = () => {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
                         if (mounted) {
+                            console.log('Geolocation success');
                             setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
                         }
                     },
-                    (err) => console.warn('Geolocation failed', err),
-                    { timeout: 5000 }
+                    (err) => {
+                        console.warn('Geolocation failed', err);
+                        if (mounted) setLocation(null);
+                    },
+                    { timeout: 7000 }
                 );
             }
 
@@ -71,7 +75,12 @@ const Home = () => {
             ...store,
             distance: location ? calculateDistance(location, { lat: store.lat, lng: store.lng }) : Infinity
         }))
-        .sort((a, b) => a.distance - b.distance)
+        .sort((a, b) => {
+            if (a.distance === b.distance) return 0;
+            if (a.distance === Infinity) return 1;
+            if (b.distance === Infinity) return -1;
+            return a.distance - b.distance;
+        })
         .slice(0, 8); // Top 8 nearest stores
 
     const enrichProduct = (product) => {
@@ -215,16 +224,23 @@ const Home = () => {
                     </div>
 
                     <div className="stores-horizontal-scroll">
-                        {nearestStores.map(store => (
-                            <Link to={`/store/${store.id}`} key={store.id} className="store-circle-card">
-                                <div className="store-circle-img">
-                                    <img src={store.banner_url || 'https://via.placeholder.com/150'} alt={store.name} />
-                                    <span className="store-dist-badge">{store.distance === Infinity ? '?' : store.distance.toFixed(1)} km</span>
-                                </div>
-                                <h4>{store.name}</h4>
-                                <span>{store.category || 'Local Shop'}</span>
-                            </Link>
-                        ))}
+                        {nearestStores.length > 0 ? (
+                            nearestStores.map(store => (
+                                <Link to={`/store/${store.id}`} key={store.id} className="store-circle-card">
+                                    <div className="store-circle-img">
+                                        <img src={store.banner_url || 'https://via.placeholder.com/150'} alt={store.name} />
+                                        <span className="store-dist-badge">{store.distance === Infinity ? '?' : store.distance.toFixed(1)} km</span>
+                                    </div>
+                                    <h4>{store.name}</h4>
+                                    <span>{store.category || 'Local Shop'}</span>
+                                </Link>
+                            ))
+                        ) : (
+                            <div className="empty-inline-stores">
+                                <Store size={32} opacity={0.2} />
+                                <p>No stores nearby yet. Check back soon!</p>
+                            </div>
+                        )}
                     </div>
                 </section>
 
@@ -605,6 +621,20 @@ const Home = () => {
                 grid-template-columns: repeat(6, 1fr) !important;
             }
         }
+            .empty-inline-stores {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 3rem;
+                background: #f1f5f9;
+                border-radius: 16px;
+                width: 100%;
+                color: var(--text-muted);
+                gap: 1rem;
+                text-align: center;
+            }
+            .empty-inline-stores p { font-size: 0.9rem; font-weight: 600; }
       `}</style>
         </div>
     );
