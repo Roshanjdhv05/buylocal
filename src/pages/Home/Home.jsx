@@ -28,22 +28,39 @@ const Home = () => {
         const initHome = async () => {
             if (mounted) setLoading(true);
 
-            // Check if coordinates are in URL
+            // 1. Check URL parameters (Manual override from Navbar)
             const urlLat = searchParams.get('lat');
             const urlLng = searchParams.get('lng');
 
             if (urlLat && urlLng) {
-                if (mounted) setLocation({ lat: parseFloat(urlLat), lng: parseFloat(urlLng) });
-            } else if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        if (mounted) {
-                            setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                        }
-                    },
-                    (err) => console.warn('Geolocation failed', err),
-                    { timeout: 5000 }
-                );
+                const newLoc = { lat: parseFloat(urlLat), lng: parseFloat(urlLng) };
+                if (mounted) setLocation(newLoc);
+                localStorage.setItem('saved_location', JSON.stringify(newLoc));
+            }
+            // 2. Check localStorage (Persistence)
+            else {
+                const savedLoc = localStorage.getItem('saved_location');
+                if (savedLoc) {
+                    try {
+                        if (mounted) setLocation(JSON.parse(savedLoc));
+                    } catch (e) {
+                        localStorage.removeItem('saved_location');
+                    }
+                }
+                // 3. Auto-detect (First visit / Fallback)
+                else if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            if (mounted) {
+                                const newLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                                setLocation(newLoc);
+                                localStorage.setItem('saved_location', JSON.stringify(newLoc));
+                            }
+                        },
+                        (err) => console.warn('Geolocation failed', err),
+                        { timeout: 5000 }
+                    );
+                }
             }
 
             await fetchData();
@@ -52,14 +69,17 @@ const Home = () => {
 
         const fetchData = async () => {
             try {
-                const { data: storesData } = await withTimeout(supabase.from('stores').select('*'));
-                const { data: productsData } = await withTimeout(supabase.from('products').select('*'));
-                const { data: reviewsData } = await withTimeout(supabase.from('product_reviews').select('*'));
+                // Fetch basic data
+                const [storesRes, productsRes, reviewsRes] = await Promise.all([
+                    withTimeout(supabase.from('stores').select('*')),
+                    withTimeout(supabase.from('products').select('*')),
+                    withTimeout(supabase.from('product_reviews').select('*'))
+                ]);
 
                 if (mounted) {
-                    setStores(storesData || []);
-                    setProducts(productsData || []);
-                    setReviews(reviewsData || []);
+                    setStores(storesRes.data || []);
+                    setProducts(productsRes.data || []);
+                    setReviews(reviewsRes.data || []);
                 }
             } catch (e) {
                 console.error('Fetch error:', e.message);
@@ -69,7 +89,7 @@ const Home = () => {
         initHome();
         setRecentlyViewed(getRecentlyViewed());
         return () => { mounted = false; };
-    }, [profile]);
+    }, [profile, searchParams]);
 
     // Process Data
     const nearestStores = stores
