@@ -25,6 +25,18 @@ const Home = () => {
     useEffect(() => {
         let mounted = true;
 
+        const fetchCityName = async (lat, lng) => {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`);
+                const data = await response.json();
+                const city = data.address.city || data.address.town || data.address.village || data.address.suburb || data.address.county || 'Local';
+                return city;
+            } catch (error) {
+                console.warn('Reverse geocoding failed', error);
+                return 'Local';
+            }
+        };
+
         const initHome = async () => {
             if (mounted) setLoading(true);
 
@@ -33,7 +45,10 @@ const Home = () => {
             const urlLng = searchParams.get('lng');
 
             if (urlLat && urlLng) {
-                const newLoc = { lat: parseFloat(urlLat), lng: parseFloat(urlLng) };
+                const lat = parseFloat(urlLat);
+                const lng = parseFloat(urlLng);
+                const cityName = await fetchCityName(lat, lng);
+                const newLoc = { lat, lng, cityName };
                 if (mounted) setLocation(newLoc);
                 localStorage.setItem('saved_location', JSON.stringify(newLoc));
             }
@@ -42,7 +57,16 @@ const Home = () => {
                 const savedLoc = localStorage.getItem('saved_location');
                 if (savedLoc) {
                     try {
-                        if (mounted) setLocation(JSON.parse(savedLoc));
+                        const parsed = JSON.parse(savedLoc);
+                        if (mounted) setLocation(parsed);
+
+                        // If we have coords but no city name, resolve it
+                        if (parsed.lat && parsed.lng && !parsed.cityName) {
+                            const cityName = await fetchCityName(parsed.lat, parsed.lng);
+                            const updatedLoc = { ...parsed, cityName };
+                            localStorage.setItem('saved_location', JSON.stringify(updatedLoc));
+                            if (mounted) setLocation(updatedLoc);
+                        }
                     } catch (e) {
                         localStorage.removeItem('saved_location');
                     }
@@ -50,9 +74,12 @@ const Home = () => {
                 // 3. Auto-detect (First visit / Fallback)
                 else if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
-                        (pos) => {
+                        async (pos) => {
                             if (mounted) {
-                                const newLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                                const lat = pos.coords.latitude;
+                                const lng = pos.coords.longitude;
+                                const cityName = await fetchCityName(lat, lng);
+                                const newLoc = { lat, lng, cityName };
                                 setLocation(newLoc);
                                 localStorage.setItem('saved_location', JSON.stringify(newLoc));
                             }

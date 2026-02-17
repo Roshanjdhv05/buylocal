@@ -14,6 +14,32 @@ const Navbar = () => {
     const navigate = useNavigate();
     const [upgrading, setUpgrading] = useState(false);
     const [locating, setLocating] = useState(false);
+    const [cityName, setCityName] = useState(null);
+
+    useEffect(() => {
+        const updateCity = () => {
+            const savedLoc = localStorage.getItem('saved_location');
+            if (savedLoc) {
+                try {
+                    const parsed = JSON.parse(savedLoc);
+                    if (parsed.cityName) setCityName(parsed.cityName);
+                } catch (e) {
+                    console.warn('Failed to parse saved location', e);
+                }
+            }
+        };
+
+        updateCity();
+        // Add listener for storage changes (for sync across tabs)
+        window.addEventListener('storage', updateCity);
+        // Also poll briefly or use a custom event if navigating internally
+        const interval = setInterval(updateCity, 2000);
+
+        return () => {
+            window.removeEventListener('storage', updateCity);
+            clearInterval(interval);
+        };
+    }, []);
 
     const handleDetectLocation = () => {
         if (!navigator.geolocation) {
@@ -120,9 +146,10 @@ const Navbar = () => {
                             className={`location-pill desktop-only ${locating ? 'locating' : ''}`}
                             onClick={handleDetectLocation}
                             disabled={locating}
+                            title={cityName ? `Location: ${cityName}` : 'Detect Location'}
                         >
                             <MapPin size={16} />
-                            <span>{locating ? 'Locating...' : 'Near Me'}</span>
+                            <span>{locating ? 'Locating...' : (cityName ? `Near ${cityName}` : 'Near Me')}</span>
                         </button>
 
                         <div className="nav-links desktop-only">
