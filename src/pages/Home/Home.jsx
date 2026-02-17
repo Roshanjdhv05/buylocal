@@ -26,9 +26,15 @@ const Home = () => {
         let mounted = true;
 
         const initHome = async () => {
-            if (mounted) setLoading(true); // Ensure loading is reset on mount
+            if (mounted) setLoading(true);
 
-            if (navigator.geolocation) {
+            // Check if coordinates are in URL
+            const urlLat = searchParams.get('lat');
+            const urlLng = searchParams.get('lng');
+
+            if (urlLat && urlLng) {
+                if (mounted) setLocation({ lat: parseFloat(urlLat), lng: parseFloat(urlLng) });
+            } else if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
                         if (mounted) {
