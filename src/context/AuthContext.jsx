@@ -162,8 +162,18 @@ export const AuthProvider = ({ children }) => {
     };
 
     const signOut = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
+        try {
+            console.log('Auth: Initiating sign out...');
+            await supabase.auth.signOut();
+        } catch (error) {
+            console.error('Auth: Sign out error, forcing local clear:', error.message);
+        } finally {
+            // Force clear state in case listener doesn't fire or fails
+            setUser(null);
+            setProfile(null);
+            localStorage.removeItem('supabase.auth.token'); // Fallback for some older versions
+            console.log('Auth: State cleared.');
+        }
     };
 
     const sendPasswordResetEmail = async (email) => {

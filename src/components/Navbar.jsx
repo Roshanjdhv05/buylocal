@@ -17,9 +17,12 @@ const Navbar = () => {
     const toggleMenu = () => setIsOpen(!isOpen);
 
     const handleLogout = async () => {
-        await signOut();
-        navigate('/login');
-        setIsOpen(false);
+        try {
+            await signOut();
+        } finally {
+            navigate('/login');
+            setIsOpen(false);
+        }
     };
 
     const handleBecomeSeller = async () => {

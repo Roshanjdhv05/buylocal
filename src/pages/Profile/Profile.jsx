@@ -38,8 +38,11 @@ const Profile = () => {
     };
 
     const handleLogout = async () => {
-        await signOut();
-        navigate('/login');
+        try {
+            await signOut();
+        } finally {
+            navigate('/login');
+        }
     };
 
     const handleBecomeSeller = async () => {
