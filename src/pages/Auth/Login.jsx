@@ -3,6 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { supabase, withTimeout } from '../../services/supabase';
 import { Mail, Lock } from 'lucide-react';
+import AuthLayout from '../../components/AuthLayout';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -10,10 +11,19 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const { signIn } = useAuth();
+    const { signIn, signInWithGoogle } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
+    const handleGoogleLogin = async () => {
+        try {
+            setLoading(true);
+            await signInWithGoogle();
+        } catch (err) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -65,93 +75,152 @@ const Login = () => {
     };
 
     return (
-        <div className="auth-container">
-            <div className="auth-box glass-card">
-                <h2>Welcome Back</h2>
-                <p className="auth-subtitle">Login to your BuyLocal account</p>
+        <AuthLayout>
+            <div className="auth-form-header">
+                <h2 className="auth-form-title">Welcome Back</h2>
+                <p className="auth-form-subtitle">Login to your BuyLocal account</p>
+            </div>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="input-group">
-                        <Mail size={18} />
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </div>
+            <form onSubmit={handleSubmit} className="auth-form-refined">
+                <div className="auth-input-refined">
+                    <input
+                        type="email"
+                        placeholder="Email Address"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
+                </div>
 
-                    <div className="input-group">
-                        <Lock size={18} />
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </div>
+                <div className="auth-input-refined">
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+                </div>
 
-                    <div className="forgot-password-link">
-                        <Link to="/forgot-password">Forgot Password?</Link>
-                    </div>
+                <div className="forgot-password-link-refined">
+                    <Link to="/forgot-password">Forgot Password?</Link>
+                </div>
 
-                    {error && <p className="error-message">{error}</p>}
+                {error && <p className="auth-error-refined">{error}</p>}
 
-                    <button type="submit" className="btn-primary auth-submit" disabled={loading}>
-                        {loading ? 'Logging in...' : 'Log In'}
-                    </button>
-                </form>
+                <button type="submit" className="auth-submit-refined" disabled={loading}>
+                    {loading ? 'Logging in...' : 'Log In'}
+                </button>
 
-                <p className="auth-switch">
-                    Don't have an account? <Link to="/signup">Sign Up</Link>
-                </p>
+                <div className="auth-divider">
+                    <span>or continue with</span>
+                </div>
+
+                <button
+                    type="button"
+                    className="auth-google-btn"
+                    onClick={handleGoogleLogin}
+                    disabled={loading}
+                >
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+                    Continue with Google
+                </button>
+            </form>
+
+            <div className="auth-switch-refined">
+                Don't have an account? <Link to="/signup">Sign Up</Link>
             </div>
 
             <style>{`
-        .auth-container {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 2rem;
-          background: var(--grad-main);
-        }
-        .auth-box {
-          width: 100%;
-          max-width: 400px;
-          padding: 2.5rem;
-          text-align: center;
-          background: white;
-        }
-        h2 { margin-bottom: 0.5rem; font-size: 2rem; color: var(--text-main); }
-        .auth-subtitle { color: var(--text-muted); margin-bottom: 2rem; }
-        
-        .input-group {
-          position: relative;
-          margin-bottom: 1.25rem;
-        }
-        .input-group svg {
-          position: absolute;
-          left: 1rem;
-          top: 50%;
-          transform: translateY(-50%);
-          color: var(--text-muted);
-        }
-        .input-group input {
-          padding-left: 3rem;
-        }
+                .auth-form-header { margin-bottom: 2.5rem; text-align: left; }
+                .auth-form-title { font-size: 2.5rem; font-weight: 800; color: #1e293b; margin-bottom: 0.5rem; letter-spacing: -0.01em; }
+                .auth-form-subtitle { color: #64748b; font-size: 1.1rem; }
 
-        .error-message { color: var(--error); font-size: 0.875rem; margin-bottom: 1rem; }
-        .auth-submit { width: 100%; margin-top: 1rem; }
-        .forgot-password-link { text-align: right; margin-top: -0.5rem; margin-bottom: 1rem; }
-        .forgot-password-link a { color: var(--text-muted); font-size: 0.8125rem; transition: var(--transition); }
-        .forgot-password-link a:hover { color: var(--primary); }
-        .auth-switch { margin-top: 1.5rem; font-size: 0.9375rem; color: var(--text-muted); }
-        .auth-switch a { color: var(--primary); font-weight: 600; }
-      `}</style>
-        </div>
+                .auth-form-refined { display: flex; flex-direction: column; gap: 1.25rem; }
+                
+                .auth-input-refined input {
+                    width: 100%;
+                    padding: 1.2rem 1.5rem;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    font-size: 1rem;
+                    background: #fff;
+                    transition: all 0.2s;
+                    color: #1a1a1a;
+                }
+
+                .auth-input-refined input:focus {
+                    border-color: #7c3aed;
+                    outline: none;
+                    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+                }
+
+                .forgot-password-link-refined { text-align: right; margin-top: -0.5rem; }
+                .forgot-password-link-refined a { color: #64748b; font-size: 0.85rem; font-weight: 500; }
+                
+                .auth-error-refined { color: #ef4444; font-size: 0.875rem; font-weight: 500; }
+
+                .auth-submit-refined {
+                    margin-top: 1rem;
+                    padding: 1.2rem;
+                    background: #7c3aed;
+                    color: white;
+                    border-radius: 12px;
+                    font-weight: 700;
+                    font-size: 1rem;
+                    box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3);
+                    transition: all 0.2s;
+                }
+                .auth-submit-refined:hover { transform: translateY(-1px); box-shadow: 0 20px 25px -5px rgba(124, 58, 237, 0.4); background: #6d28d9; }
+                .auth-submit-refined:active { transform: translateY(0); }
+                .auth-submit-refined:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+                .auth-divider {
+                    margin: 1.5rem 0;
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                    color: #94a3b8;
+                    font-size: 0.85rem;
+                }
+                .auth-divider::before, .auth-divider::after {
+                    content: "";
+                    flex: 1;
+                    height: 1px;
+                    background: #e2e8f0;
+                }
+
+                .auth-google-btn {
+                    width: 100%;
+                    padding: 0.8rem;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    background: white;
+                    color: #1e293b;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.75rem;
+                    transition: all 0.2s;
+                }
+                .auth-google-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+                .auth-google-btn img { width: 18px; height: 18px; }
+
+                .auth-switch-refined {
+                    margin-top: 2.5rem;
+                    text-align: center;
+                    font-size: 1rem;
+                    font-weight: 700;
+                    color: #1e293b;
+                }
+                .auth-switch-refined a {
+                    color: #1e293b;
+                    text-decoration: underline;
+                    margin-left: 5px;
+                }
+            `}</style>
+        </AuthLayout>
     );
 };
 

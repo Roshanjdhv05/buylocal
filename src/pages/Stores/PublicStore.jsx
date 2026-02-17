@@ -316,7 +316,7 @@ const PublicStore = () => {
                         </div>
                         {store.legacy_image_url ? (
                             <div className="legacy-visual" style={{ background: 'none' }}>
-                                <img src={store.legacy_image_url} alt="Legacy" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '0 24px 24px 0' }} />
+                                <img src={store.legacy_image_url} alt="Legacy" className="legacy-img" />
                             </div>
                         ) : (
                             <div className="legacy-visual">
@@ -467,7 +467,8 @@ const PublicStore = () => {
                 .l-stat h3 { font-size: 2.5rem; font-weight: 800; color: #2563eb; margin-bottom: 0.5rem; }
                 .l-stat label { font-size: 0.95rem; font-weight: 700; color: #64748b; }
                 
-                .legacy-visual { background: #eff6ff; position: relative; display: flex; align-items: center; justify-content: center; }
+                .legacy-visual { background: #eff6ff; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+                .legacy-img { width: 100%; height: 100%; object-fit: cover; border-radius: 0 24px 24px 0; }
                 .legacy-shape { width: 70%; height: 70%; background: white; border-radius: 50% 50% 50% 0; box-shadow: 20px 20px 60px rgba(0,0,0,0.05); }
 
                 /* TESTIMONIALS */
@@ -485,7 +486,8 @@ const PublicStore = () => {
                 @media (max-width: 1200px) {
                     .stats-grid-refined { grid-template-columns: repeat(2, 1fr); }
                     .legacy-content { grid-template-columns: 1fr; }
-                    .legacy-visual { display: none; }
+                    .legacy-visual { height: 350px; }
+                    .legacy-img { border-radius: 0 0 24px 24px; }
                     .testimonials-wrap { grid-template-columns: 1fr; }
                 }
 

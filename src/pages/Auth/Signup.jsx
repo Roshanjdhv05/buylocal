@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { supabase, withTimeout } from '../../services/supabase';
-import { MapPin, User, Mail, Lock, ShoppingBag, Store } from 'lucide-react';
+import { MapPin, User, Mail, Lock, ShoppingBag, Store, Navigation } from 'lucide-react';
+import AuthLayout from '../../components/AuthLayout';
 
 const Signup = () => {
     const [formData, setFormData] = useState({
@@ -19,9 +20,19 @@ const Signup = () => {
     const [error, setError] = useState('');
     const [locationStatus, setLocationStatus] = useState('idle'); // idle, detecting, success, error
 
-    const { signUp } = useAuth();
+    const { signUp, signInWithGoogle } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+
+    const handleGoogleSignup = async () => {
+        try {
+            setLoading(true);
+            await signInWithGoogle();
+        } catch (err) {
+            setError(err.message);
+            setLoading(false);
+        }
+    };
 
     const detectLocation = () => {
         if (!navigator.geolocation) {
@@ -71,13 +82,9 @@ const Signup = () => {
             console.log('Signup: Calling signUp with:', formData.email);
             await signUp(formData.email, formData.password, formData);
 
-            console.log('Signup: signUp resolved, navigating based on role:', formData.role);
-            if (formData.role === 'seller') {
-                navigate('/seller/create-store');
-            } else {
-                const from = location.state?.from?.pathname || '/';
-                navigate(from, { replace: true });
-            }
+            console.log('Signup: signUp resolved, navigating to home');
+            const from = location.state?.from?.pathname || '/';
+            navigate(from, { replace: true });
         } catch (err) {
             console.error('Signup: Error occurred:', err.message);
             setError(err.message);
@@ -87,179 +94,188 @@ const Signup = () => {
     };
 
     return (
-        <div className="auth-container">
-            <div className="auth-box glass-card">
-                <h2>Join BuyLocal</h2>
-                <p className="auth-subtitle">Discover shops near you</p>
+        <AuthLayout>
+            <div className="auth-form-header">
+                <h2 className="auth-form-title">Join the community</h2>
+                <p className="auth-form-subtitle">Create your account to start shopping local.</p>
+            </div>
 
-                <form onSubmit={handleSubmit}>
-                    <div className="input-group">
-                        <User size={18} />
-                        <input
-                            type="text"
-                            placeholder="Username"
-                            required
-                            value={formData.username}
-                            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                        />
-                    </div>
+            <form onSubmit={handleSubmit} className="auth-form-refined">
+                <div className="auth-input-refined">
+                    <input
+                        type="text"
+                        placeholder="Name"
+                        required
+                        value={formData.username}
+                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    />
+                </div>
 
-                    <div className="input-group">
-                        <Mail size={18} />
-                        <input
-                            type="email"
-                            placeholder="Email"
-                            required
-                            value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        />
-                    </div>
+                <div className="auth-input-refined">
+                    <input
+                        type="email"
+                        placeholder="Email Address"
+                        required
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
+                </div>
 
-                    <div className="input-group">
-                        <Lock size={18} />
-                        <input
-                            type="password"
-                            placeholder="Password"
-                            required
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        />
-                    </div>
+                <div className="auth-input-refined">
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        required
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    />
+                </div>
 
-                    <div className="role-selector">
-                        <label className={formData.role === 'buyer' ? 'active' : ''}>
-                            <input
-                                type="radio"
-                                name="role"
-                                value="buyer"
-                                checked={formData.role === 'buyer'}
-                                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                            />
-                            <ShoppingBag size={20} />
-                            <span>Buyer</span>
-                        </label>
-                        <label className={formData.role === 'seller' ? 'active' : ''}>
-                            <input
-                                type="radio"
-                                name="role"
-                                value="seller"
-                                checked={formData.role === 'seller'}
-                                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                            />
-                            <Store size={20} />
-                            <span>Seller</span>
-                        </label>
-                    </div>
-
-                    <div className="location-section">
-                        <button
-                            type="button"
-                            className={`btn-location ${locationStatus}`}
-                            onClick={detectLocation}
-                            disabled={locationStatus === 'detecting'}
-                        >
-                            <MapPin size={18} />
-                            {locationStatus === 'detecting' ? 'Detecting...' :
-                                locationStatus === 'success' ? 'Location Detected!' : 'Detect My Location'}
-                        </button>
-                        {formData.city && (
-                            <p className="location-preview">{formData.city}, {formData.state}</p>
-                        )}
-                    </div>
-
-                    {error && <p className="error-message">{error}</p>}
-
-                    <button type="submit" className="btn-primary auth-submit" disabled={loading}>
-                        {loading ? 'Creating Account...' : 'Sign Up'}
+                <div className="auth-location-refined">
+                    <button
+                        type="button"
+                        className={`location-pill-btn ${locationStatus}`}
+                        onClick={detectLocation}
+                        disabled={locationStatus === 'detecting'}
+                    >
+                        <Navigation size={14} className={locationStatus === 'detecting' ? 'spin' : ''} />
+                        {locationStatus === 'detecting' ? 'Detecting Location...' :
+                            locationStatus === 'success' ? `Located: ${formData.city || 'Success'}` : 'Detect My Location'}
                     </button>
-                </form>
+                </div>
 
-                <p className="auth-switch">
-                    Already have an account? <Link to="/login">Log In</Link>
-                </p>
+                {error && <p className="auth-error-refined">{error}</p>}
+
+                <button type="submit" className="auth-submit-refined" disabled={loading}>
+                    {loading ? 'Creating Account...' : 'Create Account'}
+                </button>
+
+                <div className="auth-divider">
+                    <span>or continue with</span>
+                </div>
+
+                <button
+                    type="button"
+                    className="auth-google-btn"
+                    onClick={handleGoogleSignup}
+                    disabled={loading}
+                >
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
+                    Continue with Google
+                </button>
+            </form>
+
+            <div className="auth-switch-refined">
+                Already registered? <Link to="/login">Login</Link>
             </div>
 
             <style>{`
-        .auth-container {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 2rem;
-          background: var(--grad-main);
-        }
-        .auth-box {
-          width: 100%;
-          max-width: 450px;
-          padding: 2.5rem;
-          text-align: center;
-          background: white;
-        }
-        h2 { margin-bottom: 0.5rem; font-size: 2rem; color: var(--text-main); }
-        .auth-subtitle { color: var(--text-muted); margin-bottom: 2rem; }
-        
-        .input-group {
-          position: relative;
-          margin-bottom: 1rem;
-        }
-        .input-group svg {
-          position: absolute;
-          left: 1rem;
-          top: 50%;
-          transform: translateY(-50%);
-          color: var(--text-muted);
-        }
-        .input-group input {
-          padding-left: 3rem;
-        }
+                .auth-form-header { margin-bottom: 2.5rem; text-align: left; }
+                .auth-form-title { font-size: 2.5rem; font-weight: 800; color: #1e293b; margin-bottom: 0.5rem; letter-spacing: -0.01em; }
+                .auth-form-subtitle { color: #64748b; font-size: 1.1rem; }
 
-        .role-selector {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
-        }
-        .role-selector label {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 1rem;
-          border: 2px solid var(--border);
-          border-radius: var(--radius-md);
-          cursor: pointer;
-          transition: var(--transition);
-        }
-        .role-selector label.active {
-          border-color: var(--primary);
-          background: rgba(99, 102, 241, 0.05);
-        }
-        .role-selector input { display: none; }
+                .auth-form-refined { display: flex; flex-direction: column; gap: 1.25rem; }
+                
+                .auth-input-refined input {
+                    width: 100%;
+                    padding: 1.2rem 1.5rem;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    font-size: 1rem;
+                    background: #fff;
+                    transition: all 0.2s;
+                    color: #1a1a1a;
+                }
 
-        .btn-location {
-          width: 100%;
-          background: #f1f5f9;
-          color: var(--text-main);
-          padding: 0.75rem;
-          border-radius: var(--radius-md);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.5rem;
-          margin-bottom: 0.5rem;
-        }
-        .btn-location.success {
-          background: #dcfce7;
-          color: var(--success);
-        }
-        .location-preview { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem; }
+                .auth-input-refined input:focus {
+                    border-color: #7c3aed;
+                    outline: none;
+                    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+                }
 
-        .error-message { color: var(--error); font-size: 0.875rem; margin-bottom: 1rem; }
-        .auth-submit { width: 100%; margin-top: 1rem; }
-        .auth-switch { margin-top: 1.5rem; font-size: 0.9375rem; color: var(--text-muted); }
-        .auth-switch a { color: var(--primary); font-weight: 600; }
-      `}</style>
-        </div>
+                .auth-location-refined { margin-top: 0.5rem; }
+                .location-pill-btn {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.6rem;
+                    padding: 0.6rem 1.2rem;
+                    border-radius: 100px;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    background: #f1f5f9;
+                    color: #475569;
+                    border: 1px solid #e2e8f0;
+                    transition: 0.2s;
+                }
+                .location-pill-btn:hover { background: #e2e8f0; }
+                .location-pill-btn.success { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+                
+                .auth-error-refined { color: #ef4444; font-size: 0.875rem; font-weight: 500; }
+
+                .auth-submit-refined {
+                    margin-top: 1rem;
+                    padding: 1.2rem;
+                    background: #7c3aed;
+                    color: white;
+                    border-radius: 12px;
+                    font-weight: 700;
+                    font-size: 1rem;
+                    box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.3);
+                    transition: all 0.2s;
+                }
+                .auth-submit-refined:hover { transform: translateY(-1px); box-shadow: 0 20px 25px -5px rgba(124, 58, 237, 0.4); background: #6d28d9; }
+                .auth-submit-refined:active { transform: translateY(0); }
+                .auth-submit-refined:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+                .auth-divider {
+                    margin: 1.5rem 0;
+                    display: flex;
+                    align-items: center;
+                    gap: 1rem;
+                    color: #94a3b8;
+                    font-size: 0.85rem;
+                }
+                .auth-divider::before, .auth-divider::after {
+                    content: "";
+                    flex: 1;
+                    height: 1px;
+                    background: #e2e8f0;
+                }
+
+                .auth-google-btn {
+                    width: 100%;
+                    padding: 0.8rem;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    background: white;
+                    color: #1e293b;
+                    font-weight: 600;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.75rem;
+                    transition: all 0.2s;
+                }
+                .auth-google-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+                .auth-google-btn img { width: 18px; height: 18px; }
+
+                .auth-switch-refined {
+                    margin-top: 2.5rem;
+                    text-align: center;
+                    font-size: 1rem;
+                    font-weight: 700;
+                    color: #1e293b;
+                }
+                .auth-switch-refined a {
+                    color: #1e293b;
+                    text-decoration: underline;
+                    margin-left: 5px;
+                }
+
+                .spin { animation: spin 1s linear infinite; }
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+            `}</style>
+        </AuthLayout>
     );
 };
 

@@ -50,8 +50,33 @@ export const AuthProvider = ({ children }) => {
             console.log('Auth event:', event);
             const currentUser = session?.user ?? null;
             setUser(currentUser);
+
             if (currentUser) {
-                await fetchProfile(currentUser.id);
+                // Check if profile exists, if not create it (common for first-time OAuth)
+                const { data: existingProfile, error: profileError } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .single();
+
+                if (profileError && profileError.code === 'PGRST116') {
+                    // Profile missing, create default one
+                    console.log('Auth: Profile missing for user, creating default...');
+                    const { data: newProfile, error: insertError } = await supabase
+                        .from('users')
+                        .insert([{
+                            id: currentUser.id,
+                            email: currentUser.email,
+                            username: currentUser.user_metadata.full_name || currentUser.email.split('@')[0],
+                            role: 'buyer'
+                        }])
+                        .select()
+                        .single();
+
+                    if (!insertError) setProfile(newProfile);
+                } else {
+                    setProfile(existingProfile);
+                }
             } else {
                 setProfile(null);
             }
@@ -117,6 +142,17 @@ export const AuthProvider = ({ children }) => {
         return data;
     };
 
+    const signInWithGoogle = async () => {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin
+            }
+        });
+        if (error) throw error;
+        return data;
+    };
+
     const signOut = async () => {
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
@@ -157,7 +193,7 @@ export const AuthProvider = ({ children }) => {
 
     return (
         <AuthContext.Provider value={{
-            user, profile, signUp, signIn, signOut, upgradeToSeller,
+            user, profile, signUp, signIn, signInWithGoogle, signOut, upgradeToSeller,
             sendPasswordResetEmail, updatePassword, loading
         }}>
             {children}
