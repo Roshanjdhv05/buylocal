@@ -50,9 +50,9 @@ const Home = () => {
 
         const fetchData = async () => {
             try {
-                const { data: storesData } = await withTimeout(supabase.from('stores').select('*'));
-                const { data: productsData } = await withTimeout(supabase.from('products').select('*'));
-                const { data: reviewsData } = await withTimeout(supabase.from('product_reviews').select('*'));
+                const { data: storesData } = await withTimeout(supabase.from('stores').select('*'), 30000, 'Home Fetch Stores');
+                const { data: productsData } = await withTimeout(supabase.from('products').select('*'), 30000, 'Home Fetch Products');
+                const { data: reviewsData } = await withTimeout(supabase.from('product_reviews').select('*'), 30000, 'Home Fetch Reviews');
 
                 if (mounted) {
                     setStores(storesData || []);
@@ -218,7 +218,7 @@ const Home = () => {
                     <div className="section-header">
                         <div className="title-group">
                             <h2>Nearby Stores</h2>
-                            <p>Discover the best-rated shops within walking distance</p>
+                            <p>{location ? 'Discover the best-rated shops within walking distance' : 'Discover the best shops in your area'}</p>
                         </div>
                         <Link to="/stores" className="view-all">View All</Link>
                     </div>
@@ -229,7 +229,9 @@ const Home = () => {
                                 <Link to={`/store/${store.id}`} key={store.id} className="store-circle-card">
                                     <div className="store-circle-img">
                                         <img src={store.banner_url || 'https://via.placeholder.com/150'} alt={store.name} />
-                                        <span className="store-dist-badge">{store.distance === Infinity ? '?' : store.distance.toFixed(1)} km</span>
+                                        {store.distance !== Infinity && (
+                                            <span className="store-dist-badge">{store.distance.toFixed(1)} km</span>
+                                        )}
                                     </div>
                                     <h4>{store.name}</h4>
                                     <span>{store.category || 'Local Shop'}</span>

@@ -34,40 +34,17 @@ const Login = () => {
 
         try {
             console.log('Login: Attempting sign in...');
-            const { user } = await signIn(email, password);
-            console.log('Login: Sign in success, user:', user.email);
+            const { user, session } = await signIn(email, password);
+            console.log('Login: Sign in success, session established.');
 
-            // Short delay to allow AuthContext to sync local profile
-            // This prevents a race where we redirect before profile is loaded
-            setTimeout(async () => {
-                try {
-                    const { data: profileData } = await withTimeout(supabase
-                        .from('users')
-                        .select('role')
-                        .eq('id', user.id)
-                        .single());
+            // Instead of manually fetching role, we can wait a moment or just use 
+            // the profile from AuthContext if we really need it, but for a simple 
+            // redirect, we can just check the data we already have or assume 'buyer'
+            // and let the Home page handle it if they need to be a seller.
 
-                    if (profileData?.role === 'seller') {
-                        const { data: storeData } = await withTimeout(supabase
-                            .from('stores')
-                            .select('id')
-                            .eq('owner_id', user.id)
-                            .single());
-
-                        if (storeData) navigate('/seller/dashboard');
-                        else navigate('/seller/create-store');
-                        if (storeData) navigate('/seller/dashboard');
-                        else navigate('/seller/create-store');
-                    } else {
-                        // Check for redirect path
-                        const from = location.state?.from?.pathname || '/';
-                        navigate(from, { replace: true });
-                    }
-                } catch (e) {
-                    console.warn('Login: Redirect logic partial fail, falling back to home', e.message);
-                    navigate('/');
-                }
-            }, 500);
+            // Checking redirect path
+            const from = location.state?.from?.pathname || '/';
+            navigate(from, { replace: true });
 
         } catch (err) {
             console.error('Login: Submit error:', err.message);

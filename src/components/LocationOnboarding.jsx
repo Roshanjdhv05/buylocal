@@ -21,8 +21,9 @@ const LocationOnboarding = () => {
         if (!authLoading && user && profile) {
             const isGoogleUser = user.app_metadata?.provider === 'google';
             const hasNoLocation = !profile.city || !profile.state;
+            const isSkipped = localStorage.getItem('location_skipped') === 'true';
 
-            if (isGoogleUser && hasNoLocation) {
+            if (isGoogleUser && hasNoLocation && !isSkipped) {
                 setIsVisible(true);
             } else {
                 setIsVisible(false);
@@ -137,6 +138,17 @@ const LocationOnboarding = () => {
                     >
                         {status === 'saving' ? 'Saving...' : 'Start Shopping'}
                     </button>
+
+                    <button
+                        type="button"
+                        className="skip-btn"
+                        onClick={() => {
+                            localStorage.setItem('location_skipped', 'true');
+                            setIsVisible(false);
+                        }}
+                    >
+                        Browse without location
+                    </button>
                 </form>
             </div>
 
@@ -205,6 +217,18 @@ const LocationOnboarding = () => {
                     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
                 }
                 
+                .skip-btn {
+                    background: none;
+                    border: none;
+                    color: #64748b;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                    margin-top: 0.5rem;
+                    cursor: pointer;
+                    text-decoration: underline;
+                }
+                .skip-btn:hover { color: var(--primary); }
+
                 .error-msg { color: #ef4444; font-size: 0.85rem; font-weight: 500; }
                 
                 .spinner { animation: spin 1s linear infinite; }

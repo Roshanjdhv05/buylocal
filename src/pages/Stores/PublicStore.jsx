@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
     ShoppingCart, MapPin, Phone, Clock, ArrowLeft, Store,
     UserCheck, MessageSquare, Package, Star, CreditCard, ChevronRight,
-    Award, ShieldCheck, Globe, Instagram, Twitter, Facebook
+    Award, ShieldCheck, Globe, Instagram, Twitter, Facebook, X
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
@@ -20,13 +20,29 @@ const PublicStore = () => {
     const [loading, setLoading] = useState(true);
     const [isFollowing, setIsFollowing] = useState(false);
     const [followLoading, setFollowLoading] = useState(false);
+    const [reviews, setReviews] = useState([]);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [rating, setRating] = useState(5);
+    const [comment, setComment] = useState('');
+    const [submittingReview, setSubmittingReview] = useState(false);
+    const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
 
     useEffect(() => {
         fetchStoreProfile();
+        fetchReviews();
         if (user) {
             checkIfFollowing();
         }
     }, [storeId, user]);
+
+    useEffect(() => {
+        if (reviews.length > 1) {
+            const interval = setInterval(() => {
+                setCurrentTestimonialIndex(prev => (prev + 1) % reviews.length);
+            }, 3000);
+            return () => clearInterval(interval);
+        }
+    }, [reviews]);
 
     const checkIfFollowing = async () => {
         const { data } = await supabase
@@ -72,7 +88,7 @@ const PublicStore = () => {
                 .from('stores')
                 .select('*')
                 .eq('id', storeId)
-                .single());
+                .single(), 30000, 'Public Store FetchProfile');
 
             if (storeError) throw storeError;
             setStore(storeData);
@@ -80,13 +96,59 @@ const PublicStore = () => {
             const { data: productsData } = await withTimeout(supabase
                 .from('products')
                 .select('*')
-                .eq('store_id', storeId));
+                .eq('store_id', storeId), 30000, 'Public Store FetchProducts');
 
             setProducts(productsData || []);
         } catch (error) {
             console.error('Error fetching store profile:', error.message);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchReviews = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('store_reviews')
+                .select('*')
+                .eq('store_id', storeId)
+                .order('rating', { ascending: false })
+                .limit(10);
+
+            if (data) setReviews(data);
+        } catch (err) {
+            console.error('Error fetching reviews:', err.message);
+        }
+    };
+
+    const submitReview = async (e) => {
+        e.preventDefault();
+        if (!user) return navigate('/login', { state: { from: location } });
+
+        setSubmittingReview(true);
+        try {
+            const { error } = await supabase
+                .from('store_reviews')
+                .insert([{
+                    store_id: storeId,
+                    user_id: user.id,
+                    rating,
+                    comment,
+                    user_name: user.user_metadata?.full_name || user.email.split('@')[0],
+                    user_avatar: user.user_metadata?.avatar_url
+                }]);
+
+            if (error) throw error;
+
+            setIsReviewModalOpen(false);
+            setComment('');
+            setRating(5);
+            fetchReviews();
+            alert('Review submitted successfully!');
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            setSubmittingReview(false);
         }
     };
 
@@ -135,8 +197,8 @@ const PublicStore = () => {
                                 {isFollowing ? <UserCheck size={18} /> : <UserCheck size={18} />}
                                 {isFollowing ? 'Following' : 'Follow Store'}
                             </button>
-                            <button className="btn-contact-concierge">
-                                <MessageSquare size={18} /> Contact Concierge
+                            <button className="btn-contact-concierge" onClick={() => setIsReviewModalOpen(true)}>
+                                <Star size={18} /> Review our Store
                             </button>
                             {store.whatsapp && (
                                 <a href={`https://wa.me/${store.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="btn-contact-concierge" style={{ background: '#25D366' }}>
@@ -331,28 +393,86 @@ const PublicStore = () => {
                     <div className="testimonials-wrap">
                         <div className="testimonial-header">
                             <h2>Client Testimonials</h2>
+                            <p>What our community thinks about {store.name}</p>
                         </div>
-                        <div className="testimonial-card-luxury">
-                            <div className="quote-icon"><MessageSquare size={24} /></div>
-                            <div className="stars-row">
-                                <Star size={16} fill="var(--primary)" color="var(--primary)" />
-                                <Star size={16} fill="var(--primary)" color="var(--primary)" />
-                                <Star size={16} fill="var(--primary)" color="var(--primary)" />
-                                <Star size={16} fill="var(--primary)" color="var(--primary)" />
-                                <Star size={16} fill="var(--primary)" color="var(--primary)" />
-                            </div>
-                            <p className="t-text">"The white-glove service provided by {store.name} is unparalleled. My sapphire necklace arrived in pristine condition, gift wrapped to perfection."</p>
-                            <div className="t-author">
-                                <div className="author-avatar">{store.name.charAt(0)}</div>
-                                <div className="author-info">
-                                    <strong>Elena V.</strong>
-                                    <label>Verified Purchase</label>
+
+                        <div className="testimonial-carousel">
+                            {reviews.length > 0 ? (
+                                <div className="testimonial-card-luxury slide-animation">
+                                    <div className="quote-icon"><MessageSquare size={24} /></div>
+                                    <div className="stars-row">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star
+                                                key={i}
+                                                size={16}
+                                                fill={i < reviews[currentTestimonialIndex].rating ? "#facc15" : "none"}
+                                                color={i < reviews[currentTestimonialIndex].rating ? "#facc15" : "#ccc"}
+                                            />
+                                        ))}
+                                    </div>
+                                    <p className="t-text">"{reviews[currentTestimonialIndex].comment}"</p>
+                                    <div className="t-author">
+                                        <div className="author-avatar">
+                                            {reviews[currentTestimonialIndex].user_avatar ? (
+                                                <img src={reviews[currentTestimonialIndex].user_avatar} alt="User" />
+                                            ) : (
+                                                reviews[currentTestimonialIndex].user_name?.charAt(0) || 'U'
+                                            )}
+                                        </div>
+                                        <div className="author-info">
+                                            <strong>{reviews[currentTestimonialIndex].user_name}</strong>
+                                            <label>Verified Purchase</label>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="testimonial-card-luxury">
+                                    <p className="t-text">"Be the first to review our store and share your experience with the community!"</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </section>
             </main>
+
+            {/* REVIEW MODAL */}
+            {isReviewModalOpen && (
+                <div className="review-modal-overlay" onClick={() => setIsReviewModalOpen(false)}>
+                    <div className="review-modal-content glass-card" onClick={e => e.stopPropagation()}>
+                        <button className="modal-close" onClick={() => setIsReviewModalOpen(false)}>
+                            <X size={24} />
+                        </button>
+                        <h2>Share Your Experience</h2>
+                        <p>Your feedback helps our community discover the best local shops.</p>
+
+                        <form onSubmit={submitReview}>
+                            <div className="rating-input">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                    <button
+                                        key={star}
+                                        type="button"
+                                        className={`star-btn ${rating >= star ? 'active' : ''}`}
+                                        onClick={() => setRating(star)}
+                                    >
+                                        <Star size={32} fill={rating >= star ? "#facc15" : "none"} color={rating >= star ? "#facc15" : "#e2e8f0"} />
+                                    </button>
+                                ))}
+                            </div>
+
+                            <textarea
+                                placeholder="Tell us about your experience..."
+                                value={comment}
+                                onChange={(e) => setComment(e.target.value)}
+                                required
+                            />
+
+                            <button type="submit" className="btn-follow" style={{ width: '100%', marginTop: '1rem' }} disabled={submittingReview}>
+                                {submittingReview ? 'Submitting...' : 'Submit Review'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             <style>{`
                 .luxury-store-wrapper { background: #fff; min-height: 100vh; padding-bottom: 8rem; color: #1a1a1a; font-family: 'Inter', sans-serif; }
@@ -481,6 +601,68 @@ const PublicStore = () => {
                 .author-avatar { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid white; }
                 .author-info strong { display: block; font-size: 1.1rem; }
                 .author-info label { font-size: 0.85rem; opacity: 0.7; }
+
+                /* MODAL */
+                .review-modal-overlay {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(0,0,0,0.6);
+                    backdrop-filter: blur(5px);
+                    z-index: 9999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 1.5rem;
+                }
+                .review-modal-content {
+                    width: 100%;
+                    max-width: 500px;
+                    padding: 3rem;
+                    position: relative;
+                    animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+                }
+                .modal-close {
+                    position: absolute;
+                    top: 1.5rem;
+                    right: 1.5rem;
+                    background: none;
+                    border: none;
+                    color: #64748b;
+                    cursor: pointer;
+                }
+                .rating-input {
+                    display: flex;
+                    justify-content: center;
+                    gap: 0.5rem;
+                    margin: 2rem 0;
+                }
+                .star-btn { background: none; border: none; cursor: pointer; color: #e2e8f0; transition: 0.2s; }
+                .star-btn.active { color: #facc15; transform: scale(1.1); }
+                
+                .review-modal-content textarea {
+                    width: 100%;
+                    height: 120px;
+                    padding: 1rem;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 12px;
+                    margin-bottom: 1rem;
+                    font-family: inherit;
+                    resize: none;
+                }
+
+                @keyframes modalIn {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+
+                .slide-animation {
+                    animation: slideFade 0.5s ease-out;
+                }
+
+                @keyframes slideFade {
+                    from { opacity: 0; transform: translateX(20px); }
+                    to { opacity: 1; transform: translateX(0); }
+                }
 
                 /* RESPONSIVE */
                 @media (max-width: 1200px) {

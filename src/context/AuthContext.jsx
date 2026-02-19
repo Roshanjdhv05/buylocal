@@ -14,7 +14,7 @@ export const AuthProvider = ({ children }) => {
         const getInitialSession = async () => {
             console.log('Auth: Getting initial session...');
             try {
-                const { data: { session }, error } = await withTimeout(supabase.auth.getSession());
+                const { data: { session }, error } = await withTimeout(supabase.auth.getSession(), 30000, 'Initial Session');
                 if (error) throw error;
 
                 if (mounted) {
@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }) => {
 
         getInitialSession();
 
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             if (!mounted) return;
 
             console.log('Auth Event Triggered:', event);
@@ -49,8 +49,8 @@ export const AuthProvider = ({ children }) => {
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || (event === 'INITIAL_SESSION' && session)) {
                 setUser(currentUser);
                 if (currentUser) {
-                    console.log('Auth: Fetching/Updating profile for:', currentUser.email);
-                    await handleProfileSync(currentUser);
+                    console.log('Auth: Syncing profile (background)...');
+                    handleProfileSync(currentUser); // Non-blocking sync
                 }
             } else if (event === 'SIGNED_OUT') {
                 console.log('Auth: User signed out, clearing state.');
@@ -104,7 +104,7 @@ export const AuthProvider = ({ children }) => {
                 .from('users')
                 .select('*')
                 .eq('id', userId)
-                .single());
+                .single(), 30000, 'Fetch Profile');
 
             if (error) throw error;
             setProfile(data);
@@ -114,14 +114,17 @@ export const AuthProvider = ({ children }) => {
     };
 
     const signUp = async (email, password, metadata) => {
-        const { data, error } = await withTimeout(supabase.auth.signUp({
+        console.log('Auth: Starting signUp process...');
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
-        }));
+        });
 
         if (error) throw error;
+        console.log('Auth: signUp success, user created.');
 
         if (data.user) {
+            console.log('Auth: Creating profile for new user...');
             const { error: profileError } = await withTimeout(supabase
                 .from('users')
                 .insert([{
@@ -133,7 +136,7 @@ export const AuthProvider = ({ children }) => {
                     state: metadata.state,
                     lat: metadata.lat,
                     lng: metadata.lng
-                }]));
+                }]), 30000, 'Create Profile');
 
             if (profileError) throw profileError;
         }
@@ -142,12 +145,20 @@ export const AuthProvider = ({ children }) => {
     };
 
     const signIn = async (email, password) => {
-        const { data, error } = await withTimeout(supabase.auth.signInWithPassword({
-            email,
-            password,
-        }));
-        if (error) throw error;
-        return data;
+        console.log('Auth: Calling signInWithPassword...');
+        console.time('AuthTimer: signIn');
+        try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+            console.timeEnd('AuthTimer: signIn');
+            if (error) throw error;
+            return data;
+        } catch (err) {
+            console.timeEnd('AuthTimer: signIn');
+            throw err;
+        }
     };
 
     const signInWithGoogle = async () => {
@@ -179,14 +190,14 @@ export const AuthProvider = ({ children }) => {
     const sendPasswordResetEmail = async (email) => {
         const { error } = await withTimeout(supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${window.location.origin}/update-password`,
-        }));
+        }), 30000, 'Password Reset');
         if (error) throw error;
     };
 
     const updatePassword = async (newPassword) => {
         const { error } = await withTimeout(supabase.auth.updateUser({
             password: newPassword
-        }));
+        }), 30000, 'Update Password');
         if (error) throw error;
     };
 
@@ -196,7 +207,7 @@ export const AuthProvider = ({ children }) => {
             const { error } = await withTimeout(supabase
                 .from('users')
                 .update(updates)
-                .eq('id', user.id));
+                .eq('id', user.id), 30000, 'Update Profile');
 
             if (error) throw error;
             await fetchProfile(user.id);

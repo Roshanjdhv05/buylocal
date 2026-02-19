@@ -19,19 +19,22 @@ const FollowedStores = () => {
     const fetchFollowedStores = async () => {
         try {
             // Fetch store_follows joined with stores
-            // Note: This assumes the relationship is set up or we fetch manually
             const { data, error } = await withTimeout(supabase
                 .from('store_follows')
                 .select(`
                     store_id,
-                    stores:store_id (*)
+                    stores (*)
                 `)
-                .eq('user_id', user.id));
+                .eq('user_id', user.id), 30000, 'Followed Stores Fetch');
 
             if (error) throw error;
 
             // Map the nested data structure back to a flat store array
-            const followedStores = data.map(item => item.stores);
+            // Sometimes Supabase returns an object, sometimes an array index if ambiguous
+            const followedStores = data
+                .map(item => item.stores)
+                .filter(store => store !== null);
+
             setStores(followedStores || []);
         } catch (error) {
             console.error('Error fetching followed stores:', error.message);
@@ -74,7 +77,15 @@ const FollowedStores = () => {
                                             <div className="banner-placeholder"></div>
                                         )}
                                         <div className="store-avatar">
-                                            {store.name.substring(0, 2).toUpperCase()}
+                                            {store.profile_picture_url ? (
+                                                <img
+                                                    src={store.profile_picture_url}
+                                                    alt={store.name}
+                                                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                                                />
+                                            ) : (
+                                                store.name?.substring(0, 2).toUpperCase()
+                                            )}
                                         </div>
                                     </div>
 
@@ -84,10 +95,10 @@ const FollowedStores = () => {
                                         <div className="store-meta">
                                             <span className="location">
                                                 <MapPin size={14} />
-                                                {store.city}, {store.state}
+                                                {store.address ? store.address : `${store.city}, ${store.state}`}
                                             </span>
                                         </div>
-                                        <Link to={`/store/${store.id}`} className="visit-btn">
+                                        <Link to={`/store/${store.id}`} className="visit-btn" style={{ background: '#00966b' }}>
                                             Visit Store <ArrowRight size={16} />
                                         </Link>
                                     </div>
