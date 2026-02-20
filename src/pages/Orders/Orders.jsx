@@ -7,9 +7,10 @@ import {
     Package, Truck, CheckCircle, Clock, MapPin,
     ShoppingBag, ArrowRight, ShieldCheck,
     Headphones, RefreshCcw, Star, Store,
-    TrendingUp, ExternalLink
+    TrendingUp, ExternalLink, BookOpen, X
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import InvoiceModal from '../../components/InvoiceModal';
 
 const Orders = () => {
     const { user } = useAuth();
@@ -18,6 +19,7 @@ const Orders = () => {
     const [loading, setLoading] = useState(true);
     const [trendingProducts, setTrendingProducts] = useState([]);
     const [recommendedStores, setRecommendedStores] = useState([]);
+    const [activeTab, setActiveTab] = useState('active');
 
     useEffect(() => {
         if (user) {
@@ -31,7 +33,7 @@ const Orders = () => {
         try {
             const { data } = await supabase
                 .from('orders')
-                .select('*, stores(name)')
+                .select('*, stores(*), buyer:users(username, email)')
                 .eq('buyer_id', user.id)
                 .order('created_at', { ascending: false });
             setOrders(data || []);
@@ -88,6 +90,7 @@ const Orders = () => {
             default: return <Clock size={20} />;
         }
     };
+
 
     if (loading) return <div className="loader-container"><div className="loader"></div></div>;
 
@@ -163,12 +166,40 @@ const Orders = () => {
                         </Link>
                     </header>
 
+                    <div className="orders-tabs">
+                        <button
+                            className={`tab-btn ${activeTab === 'active' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('active')}
+                        >
+                            Active Orders
+                        </button>
+                        <button
+                            className={`tab-btn ${activeTab === 'past' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('past')}
+                        >
+                            Past Orders
+                        </button>
+                    </div>
+
                     {orders.length === 0 ? <EmptyState /> : (
                         <div className="orders-list">
-                            {orders.map(order => (
-                                <div key={order.id} className="order-card glass-card">
+                            {orders.filter(order =>
+                                activeTab === 'active'
+                                    ? ['pending', 'accepted', 'dispatched'].includes(order.status)
+                                    : order.status === 'delivered'
+                            ).length === 0 ? (
+                                <div className="no-orders-msg">No {activeTab} orders found.</div>
+                            ) : orders.filter(order =>
+                                activeTab === 'active'
+                                    ? ['pending', 'accepted', 'dispatched'].includes(order.status)
+                                    : order.status === 'delivered'
+                            ).map(order => (
+                                <div key={order.id} className="order-card glass-card" onClick={() => {
+                                    navigate(`/orders/${order.id}`);
+                                }}>
                                     <div className="order-header">
                                         <div className="order-main-info">
+                                            <h3>Order #{order.display_id || order.id.slice(0, 8).toUpperCase()}</h3>
                                             <h3>Store: {order.stores?.name}</h3>
                                             <span className="order-date">{new Date(order.created_at).toLocaleDateString()}</span>
                                         </div>
@@ -181,10 +212,13 @@ const Orders = () => {
                                     <div className="order-body">
                                         <div className="order-items">
                                             {order.items.map((item, i) => (
-                                                <Link
-                                                    to={`/product/${item.product_id || item.id}`}
+                                                <div
                                                     key={i}
                                                     className="order-item-row"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/orders/${order.id}`);
+                                                    }}
                                                 >
                                                     <div className="item-thumb">
                                                         <img
@@ -196,16 +230,24 @@ const Orders = () => {
                                                         <span className="item-name">{item.name} x {item.quantity}</span>
                                                         <span className="item-price">₹{item.online_price * item.quantity}</span>
                                                     </div>
-                                                </Link>
+                                                </div>
                                             ))}
                                         </div>
 
                                         <div className="order-footer">
-                                            <div className="shipping-info">
-                                                <p><MapPin size={14} /> {order.shipping_address}</p>
+                                            <div className="order-meta-info">
+                                                <div className="shipping-info">
+                                                    <p><MapPin size={14} /> {order.delivery_type === 'Self-pick' ? <strong>{order.shipping_address}</strong> : order.shipping_address}</p>
+                                                </div>
+                                                <div className="order-badges">
+                                                    <span className="meta-badge">{order.payment_method || 'COD'}</span>
+                                                    <span className={`meta-badge ${order.delivery_type === 'Self-pick' ? 'self-pick' : ''}`}>
+                                                        {order.delivery_type || 'Delivery'}
+                                                    </span>
+                                                </div>
                                             </div>
                                             <div className="order-total">
-                                                <span>Total Paid</span>
+                                                <span>Total Amount</span>
                                                 <strong>₹{order.total_amount}</strong>
                                             </div>
                                         </div>
@@ -215,45 +257,9 @@ const Orders = () => {
                         </div>
                     )}
                 </div>
-
-                {/* Sidebar for Laptop */}
-                <aside className="orders-sidebar desktop-only">
-                    <div className="sidebar-group">
-                        <h3>Order Benefits</h3>
-                        <div className="benefit-card glass-card">
-                            <ShieldCheck size={24} className="text-primary" />
-                            <div>
-                                <h4>Local Support</h4>
-                                <p>Help small businesses in your community grow.</p>
-                            </div>
-                        </div>
-                        <div className="benefit-card glass-card">
-                            <RefreshCcw size={24} className="text-secondary" />
-                            <div>
-                                <h4>Easy Returns</h4>
-                                <p>Hassle-free local returns within your area.</p>
-                            </div>
-                        </div>
-                        <div className="benefit-card glass-card">
-                            <Package size={24} className="text-success" />
-                            <div>
-                                <h4>COD Available</h4>
-                                <p>Pay safely after you receive the products.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="sidebar-group">
-                        <h3>Help & Support</h3>
-                        <ul className="support-links">
-                            <li><Link to="/help">Help Center <ArrowRight size={14} /></Link></li>
-                            <li><Link to="/delivery-policy">Delivery Policy <ArrowRight size={14} /></Link></li>
-                            <li><Link to="/contact">Contact Support <ArrowRight size={14} /></Link></li>
-                            <li><Link to="/faq">Track Order FAQ <ArrowRight size={14} /></Link></li>
-                        </ul>
-                    </div>
-                </aside>
             </main>
+
+            {/* No longer needed here as it's in OrderDetails page */}
 
             <style>{`
         .orders-page { 
@@ -263,10 +269,8 @@ const Orders = () => {
         }
         
         .main-layout {
-            display: grid;
-            grid-template-columns: 1fr 340px;
-            gap: 3rem;
-            margin-top: 2rem;
+            max-width: 900px;
+            margin: 2rem auto;
         }
 
         .page-header { 
@@ -469,8 +473,57 @@ const Orders = () => {
           padding-top: 1.5rem; 
           border-top: 1px dashed #e2e8f0;
         }
+        .order-meta-info { display: flex; flex-direction: column; gap: 0.75rem; }
+        .order-badges { display: flex; gap: 0.5rem; }
+        .meta-badge {
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+        .meta-badge.self-pick {
+            background: #eff6ff;
+            color: var(--primary);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+        }
         .shipping-info p { font-size: 0.85rem; color: #64748b; display: flex; gap: 0.5rem; }
         .order-total strong { font-size: 1.35rem; font-weight: 850; color: var(--primary); }
+        .order-total { display: flex; align-items: center; gap: 1rem; }
+
+        /* Categorization Tabs */
+        .orders-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            background: #f1f5f9;
+            padding: 0.5rem;
+            border-radius: 12px;
+            width: fit-content;
+        }
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: none;
+            border-radius: 8px;
+            font-weight: 700;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: white;
+            color: #0f172a;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        .no-orders-msg {
+            padding: 3rem;
+            text-align: center;
+            color: #94a3b8;
+            font-weight: 600;
+        }
 
         @media (max-width: 1100px) {
             .main-layout { grid-template-columns: 1fr; }

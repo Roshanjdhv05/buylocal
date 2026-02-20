@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabase';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import { User, Package, MapPin, Store, LogOut, Settings, ChevronRight, Clock, CheckCircle, Truck } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Bell, BellOff, LogOut, Settings, ChevronRight, Clock, CheckCircle, Truck, Package, Store } from 'lucide-react';
+import { requestNotificationPermission } from '../../utils/pushNotification';
 
 const Profile = () => {
     const { user, profile, signOut, upgradeToSeller } = useAuth();
@@ -12,6 +13,17 @@ const Profile = () => {
     const [recentOrders, setRecentOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [upgrading, setUpgrading] = useState(false);
+    const [pushEnabled, setPushEnabled] = useState(Notification.permission === 'granted');
+
+    const handleToggleNotifications = async () => {
+        if (pushEnabled) {
+            // Logic to disable (optional, for now just show status)
+            alert('To disable notifications, please use your browser settings.');
+        } else {
+            const success = await requestNotificationPermission(user.id);
+            if (success) setPushEnabled(true);
+        }
+    };
 
     useEffect(() => {
         if (user) {
@@ -101,6 +113,14 @@ const Profile = () => {
                         </div>
 
                         <div className="sidebar-actions">
+                            <button
+                                className={`action-btn ${pushEnabled ? 'enabled' : ''}`}
+                                onClick={handleToggleNotifications}
+                                style={{ marginBottom: '0.5rem', color: pushEnabled ? 'var(--success)' : 'var(--text-muted)' }}
+                            >
+                                {pushEnabled ? <Bell size={18} /> : <BellOff size={18} />}
+                                {pushEnabled ? 'Notifications On' : 'Enable Notifications'}
+                            </button>
                             <button className="action-btn logout" onClick={handleLogout}>
                                 <LogOut size={18} /> Logout
                             </button>

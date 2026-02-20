@@ -15,7 +15,17 @@ const Cart = () => {
     const [orderForm, setOrderForm] = useState({
         shipping_address: profile?.address || '',
         contact_number: profile?.phone || '',
+        payment_method: 'COD',
+        delivery_type: 'Delivery'
     });
+
+    const calculateDeliveryCharges = () => {
+        if (orderForm.delivery_type === 'Self-pick') return 0;
+        return cart.reduce((total, item) => total + (item.delivery_charges || 0), 0);
+    };
+
+    const deliveryCharges = calculateDeliveryCharges();
+    const finalTotal = cartTotal + deliveryCharges;
 
     const handleCheckout = async (e) => {
         e.preventDefault();
@@ -27,9 +37,27 @@ const Cart = () => {
             // Group items by store (since orders are store-specific)
             const storesInCart = [...new Set(cart.map(item => item.store_id))];
 
+            // Get today's order count for ID generation
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const date = now.getDate();
+            const dateStr = `${year}${month}${date}`;
+
+            const startOfDay = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
+            const { count: todayCount } = await supabase
+                .from('orders')
+                .select('*', { count: 'exact', head: true })
+                .gte('created_at', startOfDay);
+
+            let currentCount = (todayCount || 0) + 1;
+
             for (const storeId of storesInCart) {
                 const storeItems = cart.filter(item => item.store_id === storeId);
-                const storeTotal = storeItems.reduce((acc, item) => acc + (item.online_price * item.quantity), 0);
+                const storeCartTotal = storeItems.reduce((acc, item) => acc + (item.online_price * item.quantity), 0);
+                const storeDeliveryCharges = orderForm.delivery_type === 'Self-pick' ? 0 : storeItems.reduce((acc, item) => acc + (item.delivery_charges || 0), 0);
+
+                const customOrderId = `${dateStr}${currentCount}`;
 
                 const { error } = await supabase
                     .from('orders')
@@ -37,13 +65,18 @@ const Cart = () => {
                         buyer_id: user.id,
                         store_id: storeId,
                         items: storeItems,
-                        total_amount: storeTotal,
-                        shipping_address: orderForm.shipping_address,
+                        total_amount: storeCartTotal + storeDeliveryCharges,
+                        delivery_charges: storeDeliveryCharges,
+                        display_id: customOrderId,
+                        shipping_address: orderForm.delivery_type === 'Self-pick' ? 'Self-pick at Store' : orderForm.shipping_address,
                         contact_number: orderForm.contact_number,
+                        payment_method: orderForm.payment_method,
+                        delivery_type: orderForm.delivery_type,
                         status: 'pending'
                     }]);
 
                 if (error) throw error;
+                currentCount++; // Increment for next store in current checkout session
             }
 
             clearCart();
@@ -81,7 +114,7 @@ const Cart = () => {
                                             <div className="item-details">
                                                 <h3>{item.name}</h3>
                                                 <p className="item-store">{item.storeName}</p>
-                                                <p className="item-price">₹{item.online_price}</p>
+                                                <p className="item-price">₹{item.online_price} {item.delivery_charges > 0 && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(+₹{item.delivery_charges} Del.)</span>}</p>
                                             </div>
                                         </Link>
                                         <div className="item-controls">
@@ -110,23 +143,19 @@ const Cart = () => {
                                 </div>
                                 <div className="summary-row">
                                     <span>Delivery</span>
-                                    <span className="free">FREE</span>
+                                    {deliveryCharges > 0 ? (
+                                        <span>₹{deliveryCharges}</span>
+                                    ) : (
+                                        <span className="free">FREE</span>
+                                    )}
                                 </div>
                                 <hr />
                                 <div className="summary-row total">
                                     <span>Total</span>
-                                    <span>₹{cartTotal}</span>
+                                    <span>₹{finalTotal}</span>
                                 </div>
 
                                 <form onSubmit={handleCheckout} className="checkout-form">
-                                    <div className="input-group">
-                                        <label><MapPin size={16} /> Shipping Address</label>
-                                        <textarea
-                                            required
-                                            value={orderForm.shipping_address}
-                                            onChange={(e) => setOrderForm({ ...orderForm, shipping_address: e.target.value })}
-                                        />
-                                    </div>
                                     <div className="input-group">
                                         <label><Phone size={16} /> Contact Number</label>
                                         <input
@@ -136,6 +165,47 @@ const Cart = () => {
                                             onChange={(e) => setOrderForm({ ...orderForm, contact_number: e.target.value })}
                                         />
                                     </div>
+
+                                    <div className="options-group">
+                                        <label>Delivery Method</label>
+                                        <div className="selection-grid">
+                                            <div
+                                                className={`option-card ${orderForm.delivery_type === 'Delivery' ? 'active' : ''}`}
+                                                onClick={() => setOrderForm({ ...orderForm, delivery_type: 'Delivery' })}
+                                            >
+                                                Home Delivery
+                                            </div>
+                                            <div
+                                                className={`option-card self-pick-card ${orderForm.delivery_type === 'Self-pick' ? 'active glow' : ''}`}
+                                                onClick={() => setOrderForm({ ...orderForm, delivery_type: 'Self-pick' })}
+                                            >
+                                                <strong>Self pick</strong>
+                                                <p className="option-desc">Buyer can get his order by visiting the store</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="options-group">
+                                        <label>Payment Method</label>
+                                        <div className="selection-grid single-option">
+                                            <div
+                                                className="option-card active"
+                                            >
+                                                COD (Cash on Delivery)
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {orderForm.delivery_type === 'Delivery' && (
+                                        <div className="input-group">
+                                            <label><MapPin size={16} /> Shipping Address</label>
+                                            <textarea
+                                                required
+                                                value={orderForm.shipping_address}
+                                                onChange={(e) => setOrderForm({ ...orderForm, shipping_address: e.target.value })}
+                                            />
+                                        </div>
+                                    )}
                                     <button type="submit" className="btn-primary checkout-btn" disabled={loading}>
                                         {loading ? 'Processing...' : `Place Order (₹${cartTotal})`}
                                         {!loading && <CreditCard size={18} />}
@@ -180,6 +250,45 @@ const Cart = () => {
         .free { color: var(--success); font-weight: 600; }
 
         .checkout-form { margin-top: 2rem; display: flex; flex-direction: column; gap: 1.25rem; }
+        
+        .options-group { display: flex; flex-direction: column; gap: 0.75rem; }
+        .options-group label { font-size: 0.875rem; font-weight: 700; color: var(--text-main); }
+        .selection-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+        
+        .option-card {
+            padding: 1rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: 0.3s;
+            text-align: center;
+            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 80px;
+        }
+        .option-card.active {
+            border-color: var(--primary);
+            background: #eff6ff;
+            color: var(--primary);
+        }
+        
+        .self-pick-card strong { font-size: 1rem; display: block; }
+        .option-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.2; margin-top: 0.4rem; }
+        
+        .glow {
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+            border-color: var(--primary) !important;
+            animation: pulse-glow 2s infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 5px rgba(37, 99, 235, 0.2); }
+            50% { box-shadow: 0 0 20px rgba(37, 99, 235, 0.6); }
+            100% { box-shadow: 0 0 5px rgba(37, 99, 235, 0.2); }
+        }
+
         .checkout-btn { width: 100%; padding: 1rem; font-size: 1.125rem; margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
 
         .empty-cart { text-align: center; padding: 3rem 0; color: var(--text-muted); }

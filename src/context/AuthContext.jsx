@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, withTimeout } from '../services/supabase';
+import { requestNotificationPermission } from '../utils/pushNotification';
 
 const AuthContext = createContext({});
 
@@ -51,6 +52,11 @@ export const AuthProvider = ({ children }) => {
                 if (currentUser) {
                     console.log('Auth: Syncing profile (background)...');
                     handleProfileSync(currentUser); // Non-blocking sync
+
+                    // Request notification permission if not already denied
+                    if (event === 'SIGNED_IN') {
+                        setTimeout(() => requestNotificationPermission(currentUser.id), 2000);
+                    }
                 }
             } else if (event === 'SIGNED_OUT') {
                 console.log('Auth: User signed out, clearing state.');

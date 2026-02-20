@@ -2215,4 +2215,34 @@ body {
         flex-wrap: wrap;
         gap: 0.5rem;
     }
+
+    .order-type-badge {
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        text-transform: uppercase;
+    }
+
+    [data-status='pending'] {
+        color: #c2410c;
+        background: #ffedd5;
+    }
+
+    [data-status='accepted'] {
+        color: #1d4ed8;
+        background: #dbeafe;
+    }
+
+    [data-status='dispatched'] {
+        color: #1e3a8a;
+        background: #d1fae5;
+    }
+
+    [data-status='delivered'] {
+        color: #15803d;
+        background: #dcfce7;
+    }
 }

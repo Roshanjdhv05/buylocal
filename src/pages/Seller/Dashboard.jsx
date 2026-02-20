@@ -13,6 +13,7 @@ import {
     Filter, MoreHorizontal, ChevronLeft, Search, MapPin, Zap, Menu, BookOpen
 } from 'lucide-react';
 import './DashboardStyles.css';
+import InvoiceModal from '../../components/InvoiceModal';
 
 const SellerDashboard = () => {
     const { profile } = useAuth();
@@ -30,9 +31,13 @@ const SellerDashboard = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [bannerUpdating, setBannerUpdating] = useState(false);
     const [editedStore, setEditedStore] = useState({
-        name: '', description: '', address: '', phone: '', city: '', state: '', delivery_time: '',
-        whatsapp: '', instagram: '', legacy_heading: '', legacy_description: '', legacy_image_url: ''
+        name: '', description: '', address: '', phone: '', city: '', state: '',
+        delivery_time: '', whatsapp: '', instagram: '',
+        legacy_heading: '', legacy_description: '', legacy_image_url: '',
+        profile_picture_url: '', location_url: '', gst_number: ''
     });
+    const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
+    const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState(null);
     const [sections, setSections] = useState([]);
     const [legacyImageUploading, setLegacyImageUploading] = useState(false);
     const [profilePictureUploading, setProfilePictureUploading] = useState(false);
@@ -104,7 +109,7 @@ const SellerDashboard = () => {
                 // Fetch Orders
                 const { data: ordersData, error: ordersError } = await withTimeout(supabase
                     .from('orders')
-                    .select('*, buyer:users(email)')
+                    .select('*, buyer:users(username, email)')
                     .eq('store_id', storeData.id)
                     .order('created_at', { ascending: false }));
 
@@ -126,7 +131,8 @@ const SellerDashboard = () => {
                     legacy_description: storeData.legacy_description || '',
                     legacy_image_url: storeData.legacy_image_url || '',
                     profile_picture_url: storeData.profile_picture_url || '',
-                    location_url: storeData.location_url || ''
+                    location_url: storeData.location_url || '',
+                    gst_number: storeData.gst_number || ''
                 });
 
                 // Fetch Sections - Non-blocking
@@ -264,6 +270,7 @@ const SellerDashboard = () => {
                 age_group: productData.age_group || productData.ageGroup || 'Adults',
                 cod_available: productData.cod_available ?? productData.codEnabled ?? true,
                 delivery_time: productData.delivery_time || productData.deliveryTime || '2-3 days',
+                delivery_charges: parseFloat(productData.delivery_charges || productData.deliveryCharges || 0),
                 store_id: store.id,
                 images: imageUrls
             };
@@ -553,6 +560,15 @@ const SellerDashboard = () => {
         }
     };
 
+    const handlePrintInvoice = () => {
+        window.print();
+    };
+
+
+
+
+
+
     const handleLogout = async () => {
         const { error } = await supabase.auth.signOut();
         if (error) {
@@ -738,7 +754,7 @@ const SellerDashboard = () => {
                                                     {orders.slice(0, 5).map(order => (
                                                         <tr key={order.id}>
                                                             <td className="order-id-cell" data-label="Order ID">
-                                                                #{order.id.slice(0, 8).toUpperCase()}
+                                                                #{order.display_id || order.id.slice(0, 8).toUpperCase()}
                                                                 <span className="order-date-span">{new Date(order.created_at).toLocaleString()}</span>
                                                             </td>
                                                             <td data-label="Customer">{order.buyer?.email?.split('@')[0] || 'Customer'}</td>
@@ -749,7 +765,13 @@ const SellerDashboard = () => {
                                                                 </span>
                                                             </td>
                                                             <td data-label="Action">
-                                                                <span className="action-link" onClick={() => setActiveTab('orders')}>View</span>
+                                                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                                    <span className="action-link" onClick={() => setActiveTab('orders')}>View</span>
+                                                                    <span className="action-link invoice-link" onClick={() => {
+                                                                        setSelectedOrderForInvoice(order);
+                                                                        setIsInvoiceModalOpen(true);
+                                                                    }}>Invoice</span>
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     ))}
@@ -951,6 +973,8 @@ const SellerDashboard = () => {
                                                         {order.status.toUpperCase()}
                                                     </span>
                                                     <span style={{ margin: '0 0.75rem', color: '#cbd5e1' }}>|</span>
+                                                    <span className="order-type-badge">{order.delivery_type || 'Delivery'}</span>
+                                                    <span style={{ margin: '0 0.75rem', color: '#cbd5e1' }}>|</span>
                                                     <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Ordered {new Date(order.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ago</span>
                                                 </div>
                                                 <div className="order-pro-id">#{order.id.slice(0, 8).toUpperCase()}</div>
@@ -960,8 +984,11 @@ const SellerDashboard = () => {
                                                     <h4>Customer Details</h4>
                                                     <p className="customer-name">{order.buyer?.username || 'Guest User'}</p>
                                                     <p className="customer-loc"><User size={14} /> {order.buyer?.email || 'N/A'}</p>
-                                                    <p className="customer-loc" style={{ marginTop: '0.5rem' }}>
-                                                        <Truck size={14} /> {order.shipping_address ? order.shipping_address.substring(0, 25) + '...' : 'No Address'}
+                                                    <p className="customer-loc">
+                                                        <Truck size={14} /> {order.delivery_type === 'Self-pick' ? <strong>Customer will Pick up at Store</strong> : (order.shipping_address ? order.shipping_address.substring(0, 30) + '...' : 'No Address')}
+                                                    </p>
+                                                    <p className="payment-method-text" style={{ marginTop: '0.5rem', fontSize: '0.85rem', fontWeight: '600', color: '#6366f1' }}>
+                                                        <DollarSign size={14} /> Payment: {order.payment_method || 'COD'}
                                                     </p>
                                                 </div>
                                                 <div className="order-items-block">
@@ -986,6 +1013,29 @@ const SellerDashboard = () => {
                                                     <span className="order-total-large">₹{order.total_amount}</span>
 
                                                     <div className="btn-group-pro" style={{ marginTop: 'auto' }}>
+                                                        <button
+                                                            className="btn-invoice-pro"
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '0.75rem',
+                                                                borderRadius: '8px',
+                                                                border: '1px solid #e2e8f0',
+                                                                background: 'white',
+                                                                fontWeight: '600',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                justifyContent: 'center',
+                                                                gap: '0.5rem',
+                                                                cursor: 'pointer',
+                                                                marginBottom: '0.5rem'
+                                                            }}
+                                                            onClick={() => {
+                                                                setSelectedOrderForInvoice(order);
+                                                                setIsInvoiceModalOpen(true);
+                                                            }}
+                                                        >
+                                                            <BookOpen size={16} /> View Invoice
+                                                        </button>
                                                         {order.status === 'pending' && (
                                                             <>
                                                                 <button className="btn-reject">Reject</button>
@@ -1092,6 +1142,10 @@ const SellerDashboard = () => {
                                                 <div className="settings-input-group light-bg">
                                                     <label className="settings-label">Instagram Username</label>
                                                     <input className="settings-input-light" placeholder="e.g. yourshop_handle" value={editedStore.instagram} onChange={e => setEditedStore({ ...editedStore, instagram: e.target.value })} />
+                                                </div>
+                                                <div className="settings-input-group light-bg">
+                                                    <label className="settings-label">GST Number (Optional)</label>
+                                                    <input className="settings-input-light" placeholder="e.g. 22AAAAA0000A1Z5" value={editedStore.gst_number} onChange={e => setEditedStore({ ...editedStore, gst_number: e.target.value })} />
                                                 </div>
                                             </div>
                                             <div className="settings-input-group light-bg" style={{ marginTop: '1.5rem' }}>
@@ -1297,6 +1351,16 @@ const SellerDashboard = () => {
                     </>
                 )}
             </main>
+            {isInvoiceModalOpen && (
+                <InvoiceModal
+                    order={selectedOrderForInvoice}
+                    store={store}
+                    onClose={() => {
+                        setIsInvoiceModalOpen(false);
+                        setSelectedOrderForInvoice(null);
+                    }}
+                />
+            )}
         </div>
     );
 };

@@ -13,6 +13,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
         description: '',
         onlinePrice: '',
         marketPrice: '',
+        deliveryCharges: '0',
         images: [],
         section: ''
     });
@@ -30,6 +31,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                 description: initialData.description || '',
                 onlinePrice: initialData.online_price || '',
                 marketPrice: initialData.offline_price || '',
+                deliveryCharges: initialData.delivery_charges || '0',
                 images: initialData.images || [],
                 section: initialData.section || ''
             });
@@ -269,11 +271,23 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                         <div className="form-group">
                             <label>Offline/Market Price</label>
                             <div className="input-prefix">
-                                <span>$</span>
+                                <span>₹</span>
                                 <input
                                     type="number"
                                     value={formData.marketPrice}
                                     onChange={e => setFormData({ ...formData, marketPrice: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="form-group">
+                            <label>Delivery Charges (₹)</label>
+                            <div className="input-prefix">
+                                <span>₹</span>
+                                <input
+                                    type="number"
+                                    placeholder="0 for free"
+                                    value={formData.deliveryCharges}
+                                    onChange={e => setFormData({ ...formData, deliveryCharges: e.target.value })}
                                 />
                             </div>
                         </div>

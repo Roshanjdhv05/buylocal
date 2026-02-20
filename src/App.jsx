@@ -22,6 +22,7 @@ import ProductDetails from './pages/Product/ProductDetails';
 import FollowedStores from './pages/Stores/FollowedStores';
 import Profile from './pages/Profile/Profile';
 import Wishlist from './pages/Wishlist/Wishlist';
+import OrderDetails from './pages/Orders/OrderDetails';
 
 const ProtectedRoute = ({ children, role }) => {
     const { user, profile, loading } = useAuth();
@@ -56,7 +57,12 @@ const AuthRedirectHandler = () => {
     return null;
 };
 
+import { registerServiceWorker } from './utils/pushNotification';
+
 function App() {
+    useEffect(() => {
+        registerServiceWorker();
+    }, []);
     return (
         <Router>
             <AuthProvider>
@@ -85,6 +91,11 @@ function App() {
                         <Route path="/orders" element={
                             <ProtectedRoute>
                                 <Orders />
+                            </ProtectedRoute>
+                        } />
+                        <Route path="/orders/:orderId" element={
+                            <ProtectedRoute>
+                                <OrderDetails />
                             </ProtectedRoute>
                         } />
 
