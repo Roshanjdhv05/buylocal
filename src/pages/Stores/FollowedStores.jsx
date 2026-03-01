@@ -98,7 +98,8 @@ const FollowedStores = () => {
                                                 {store.address ? store.address : `${store.city}, ${store.state}`}
                                             </span>
                                         </div>
-                                        <Link to={`/store/${store.id}`} className="visit-btn" style={{ background: '#00966b' }}>
+                                        <Link to={`/${encodeURIComponent(store.name)}`} className="visit-btn" style={{ background: '#00966b' }}>
+
                                             Visit Store <ArrowRight size={16} />
                                         </Link>
                                     </div>

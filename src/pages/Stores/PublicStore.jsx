@@ -12,8 +12,9 @@ import ProductCard from '../../components/ProductCard';
 
 const PublicStore = () => {
     const { user } = useAuth(); // Get user for follow logic
-    const { storeId } = useParams();
+    const { storeName } = useParams();
     const navigate = useNavigate();
+
     const location = useLocation();
     const [store, setStore] = useState(null);
     const [products, setProducts] = useState([]);
@@ -29,11 +30,17 @@ const PublicStore = () => {
 
     useEffect(() => {
         fetchStoreProfile();
-        fetchReviews();
-        if (user) {
-            checkIfFollowing();
+    }, [storeName]);
+
+    useEffect(() => {
+        if (store?.id) {
+            fetchReviews();
+            if (user) {
+                checkIfFollowing();
+            }
         }
-    }, [storeId, user]);
+    }, [store?.id, user]);
+
 
     useEffect(() => {
         if (reviews.length > 1) {
@@ -45,32 +52,36 @@ const PublicStore = () => {
     }, [reviews]);
 
     const checkIfFollowing = async () => {
+        if (!store?.id || !user) return;
         const { data } = await supabase
             .from('store_follows')
             .select('*')
-            .eq('store_id', storeId)
+            .eq('store_id', store.id)
             .eq('user_id', user.id)
             .single();
+
 
         setIsFollowing(!!data);
     };
 
     const toggleFollow = async () => {
         if (!user) return navigate('/login', { state: { from: location } });
+        if (!store?.id) return;
         setFollowLoading(true);
         try {
             if (isFollowing) {
                 const { error } = await supabase
                     .from('store_follows')
                     .delete()
-                    .eq('store_id', storeId)
+                    .eq('store_id', store.id)
                     .eq('user_id', user.id);
                 if (error) throw error;
                 setIsFollowing(false);
             } else {
                 const { error } = await supabase
                     .from('store_follows')
-                    .insert([{ store_id: storeId, user_id: user.id }]);
+                    .insert([{ store_id: store.id, user_id: user.id }]);
+
                 if (error) throw error;
                 setIsFollowing(true);
             }
@@ -84,21 +95,25 @@ const PublicStore = () => {
 
     const fetchStoreProfile = async () => {
         try {
+            setLoading(true);
             const { data: storeData, error: storeError } = await withTimeout(supabase
                 .from('stores')
                 .select('*')
-                .eq('id', storeId)
+                .eq('name', decodeURIComponent(storeName))
                 .single(), 30000, 'Public Store FetchProfile');
 
             if (storeError) throw storeError;
             setStore(storeData);
 
-            const { data: productsData } = await withTimeout(supabase
-                .from('products')
-                .select('*')
-                .eq('store_id', storeId), 30000, 'Public Store FetchProducts');
+            if (storeData) {
+                const { data: productsData } = await withTimeout(supabase
+                    .from('products')
+                    .select('*')
+                    .eq('store_id', storeData.id), 30000, 'Public Store FetchProducts');
 
-            setProducts(productsData || []);
+                setProducts(productsData || []);
+            }
+
         } catch (error) {
             console.error('Error fetching store profile:', error.message);
         } finally {
@@ -107,11 +122,13 @@ const PublicStore = () => {
     };
 
     const fetchReviews = async () => {
+        if (!store?.id) return;
         try {
             const { data, error } = await supabase
                 .from('store_reviews')
                 .select('*')
-                .eq('store_id', storeId)
+                .eq('store_id', store.id)
+
                 .order('rating', { ascending: false })
                 .limit(10);
 
@@ -130,8 +147,9 @@ const PublicStore = () => {
             const { error } = await supabase
                 .from('store_reviews')
                 .insert([{
-                    store_id: storeId,
+                    store_id: store.id,
                     user_id: user.id,
+
                     rating,
                     comment,
                     user_name: user.user_metadata?.full_name || user.email.split('@')[0],
@@ -328,9 +346,10 @@ const PublicStore = () => {
                                 <p className="sub-header">Curated pieces from our {sectionName.toLowerCase()} selection</p>
                             </div>
                             <div className="scroll-controls">
-                                <button className="control-btn view-all-btn" onClick={() => navigate(`/store/${storeId}/section/${encodeURIComponent(sectionName)}`)}>
+                                <button className="control-btn view-all-btn" onClick={() => navigate(`/${encodeURIComponent(store.name)}/section/${encodeURIComponent(sectionName)}`)}>
                                     View All
                                 </button>
+
                                 <button className="control-btn desktop-only"><ArrowLeft size={16} /></button>
                                 <button className="control-btn desktop-only"><ChevronRight size={16} /></button>
                             </div>

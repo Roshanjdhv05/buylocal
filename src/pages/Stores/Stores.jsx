@@ -107,7 +107,8 @@ const Stores = () => {
                                             </span>
                                         </div>
 
-                                        <Link to={`/store/${store.id}`} className="visit-btn">
+                                        <Link to={`/${encodeURIComponent(store.name)}`} className="visit-btn">
+
                                             Visit Store <ArrowRight size={16} />
                                         </Link>
                                     </div>

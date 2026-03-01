@@ -36,14 +36,14 @@ const InvoiceModal = ({ order, store, onClose }) => {
                         </div>
                         <div className="qr-box">
                             <div className="invoice-num-box">
-                                Invoice Number # {orderId}
+                                Invoice Number # <span style={{ color: '#ef4444', fontWeight: 'bold' }}>{orderId}</span>
                             </div>
                         </div>
                     </div>
 
                     <div className="invoice-meta-section">
                         <div className="order-details-col">
-                            <p><strong>Order ID:</strong> {orderId}</p>
+                            <p><strong>Order ID:</strong> <span style={{ color: '#ef4444', fontWeight: 'bold' }}>{orderId}</span></p>
                             <p><strong>Order Date:</strong> {new Date(order.created_at).toLocaleDateString()}</p>
                             <p><strong>Invoice Date:</strong> {new Date().toLocaleDateString()}</p>
                         </div>

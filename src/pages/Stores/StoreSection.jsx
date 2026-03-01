@@ -7,7 +7,8 @@ import Navbar from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
 
 const StoreSection = () => {
-    const { storeId, sectionName } = useParams();
+    const { storeName, sectionName } = useParams();
+
     const [store, setStore] = useState(null);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -21,20 +22,24 @@ const StoreSection = () => {
                 const { data: storeData, error: storeError } = await supabase
                     .from('stores')
                     .select('*')
-                    .eq('id', storeId)
+                    .eq('name', decodeURIComponent(storeName))
                     .single();
+
 
                 if (storeError) throw storeError;
                 setStore(storeData);
 
-                // Fetch ALL products for this store
-                const { data: productsData, error: productsError } = await supabase
-                    .from('products')
-                    .select('*')
-                    .eq('store_id', storeId);
+                if (storeData) {
+                    // Fetch ALL products for this store
+                    const { data: productsData, error: productsError } = await supabase
+                        .from('products')
+                        .select('*')
+                        .eq('store_id', storeData.id);
 
-                if (productsError) throw productsError;
-                setProducts(productsData || []);
+                    if (productsError) throw productsError;
+                    setProducts(productsData || []);
+                }
+
             } catch (error) {
                 console.error('Error fetching section data:', error.message);
             } finally {
@@ -43,7 +48,8 @@ const StoreSection = () => {
         };
 
         fetchData();
-    }, [storeId]);
+    }, [storeName]);
+
 
     // Scroll to section on load
     useEffect(() => {
@@ -81,7 +87,8 @@ const StoreSection = () => {
 
             <div className="container" style={{ marginTop: '80px', paddingBottom: '4rem' }}>
                 <div className="section-header-simple" style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Link to={`/store/${storeId}`} className="back-btn" style={{
+                    <Link to={`/${encodeURIComponent(store.name)}`} className="back-btn" style={{
+
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         width: '40px', height: '40px', borderRadius: '50%',
                         background: '#f1f5f9', color: '#64748b', transition: '0.2s'

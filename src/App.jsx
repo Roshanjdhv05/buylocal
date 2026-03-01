@@ -23,6 +23,9 @@ import FollowedStores from './pages/Stores/FollowedStores';
 import Profile from './pages/Profile/Profile';
 import Wishlist from './pages/Wishlist/Wishlist';
 import OrderDetails from './pages/Orders/OrderDetails';
+import AdminLogin from './pages/Admin/AdminLogin';
+import AdminDashboard from './pages/Admin/AdminDashboard';
+import { useState } from 'react';
 
 const ProtectedRoute = ({ children, role }) => {
     const { user, profile, loading } = useAuth();
@@ -59,6 +62,28 @@ const AuthRedirectHandler = () => {
 
 import { registerServiceWorker } from './utils/pushNotification';
 
+const AdminRouteHandler = () => {
+    const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(
+        localStorage.getItem('admin_auth') === 'true'
+    );
+
+    const handleLogin = () => {
+        localStorage.setItem('admin_auth', 'true');
+        setIsAdminAuthenticated(true);
+    };
+
+    const handleLogout = () => {
+        localStorage.removeItem('admin_auth');
+        setIsAdminAuthenticated(false);
+    };
+
+    if (!isAdminAuthenticated) {
+        return <AdminLogin onLogin={handleLogin} />;
+    }
+
+    return <AdminDashboard onLogout={handleLogout} />;
+};
+
 function App() {
     useEffect(() => {
         registerServiceWorker();
@@ -78,8 +103,6 @@ function App() {
                         <Route path="/update-password" element={<UpdatePassword />} />
                         <Route path="/categories" element={<Categories />} />
                         <Route path="/stores" element={<Stores />} />
-                        <Route path="/store/:storeId" element={<PublicStore />} />
-                        <Route path="/store/:storeId/section/:sectionName" element={<StoreSection />} />
                         <Route path="/product/:productId" element={<ProductDetails />} />
                         <Route path="/price-filter/:maxPrice" element={<PriceFilter />} />
                         <Route path="/cart" element={
@@ -136,6 +159,14 @@ function App() {
                             </ProtectedRoute>
                         } />
 
+                        {/* Admin Routes */}
+                        <Route path="/admin" element={
+                            <AdminRouteHandler />
+                        } />
+
+
+                        <Route path="/:storeName" element={<PublicStore />} />
+                        <Route path="/:storeName/section/:sectionName" element={<StoreSection />} />
                         {/* Fallback */}
                         <Route path="*" element={<Navigate to="/" />} />
                     </Routes>

@@ -226,7 +226,8 @@ const Home = () => {
                     <div className="stores-horizontal-scroll">
                         {nearestStores.length > 0 ? (
                             nearestStores.map(store => (
-                                <Link to={`/store/${store.id}`} key={store.id} className="store-circle-card">
+                                <Link to={`/${encodeURIComponent(store.name)}`} key={store.id} className="store-circle-card">
+
                                     <div className="store-circle-img">
                                         <img src={store.banner_url || 'https://via.placeholder.com/150'} alt={store.name} />
                                         {store.distance !== Infinity && (

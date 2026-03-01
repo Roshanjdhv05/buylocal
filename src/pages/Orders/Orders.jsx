@@ -136,7 +136,8 @@ const Orders = () => {
                 </div>
                 <div className="stores-compact-list">
                     {recommendedStores.map(store => (
-                        <Link to={`/store/${store.id}`} key={store.id} className="store-compact-card glass-card">
+                        <Link to={`/${encodeURIComponent(store.name)}`} key={store.id} className="store-compact-card glass-card">
+
                             <img src={store.banner_url || 'https://via.placeholder.com/80'} alt={store.name} />
                             <div className="store-compact-info">
                                 <h4>{store.name}</h4>

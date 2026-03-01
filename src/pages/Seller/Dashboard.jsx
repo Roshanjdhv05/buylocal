@@ -807,7 +807,8 @@ const SellerDashboard = () => {
                                                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Edit size={16} /> Edit Store</span>
                                                     <ChevronRight size={16} />
                                                 </button>
-                                                <Link to={`/store/${store?.id}`} className="btn-action-white" target="_blank">
+                                                <Link to={`/${encodeURIComponent(store?.name)}`} className="btn-action-white" target="_blank">
+
                                                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ExternalLink size={16} /> View Store Page</span>
                                                     <ChevronRight size={16} />
                                                 </Link>

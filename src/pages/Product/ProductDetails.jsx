@@ -268,7 +268,8 @@ const ProductDetails = () => {
                             </div>
 
                             <div className="vendor-link">
-                                Sold by <Link to={`/store/${store?.id}`}>{store?.name || 'Local Seller'}</Link>
+                                Sold by <Link to={`/${encodeURIComponent(store?.name)}`}>{store?.name || 'Local Seller'}</Link>
+
                             </div>
 
                             <div className="pricing-box glass-card">
@@ -329,7 +330,8 @@ const ProductDetails = () => {
                         </section>
 
                         <section className="store-profile-card">
-                            <Link to={`/store/${store?.id}`} className="store-card-inner">
+                            <Link to={`/${encodeURIComponent(store?.name)}`} className="store-card-inner">
+
                                 <div className="store-avatar-pill">
                                     <Store size={24} color="#7c3aed" />
                                 </div>

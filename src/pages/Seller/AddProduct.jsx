@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Save, Eye, Upload, Check, Info, Plus, CloudUpload, X, Tag } from 'lucide-react';
+import { ArrowLeft, Save, Eye, Upload, Check, Info, Plus, CloudUpload, X, Tag, ChevronRight } from 'lucide-react';
+
 import './DashboardStyles.css'; // Re-use dashboard styles + new specific styles
 
 const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = null }) => {
@@ -17,6 +18,9 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
         images: [],
         section: ''
     });
+
+    const [step, setStep] = useState(1);
+    const [summaryExpanded, setSummaryExpanded] = useState(true);
 
     useEffect(() => {
         if (initialData) {
@@ -63,9 +67,28 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
 
     const handleImageUpload = (e) => {
         if (e.target.files) {
-            const newImages = Array.from(e.target.files).map(file => URL.createObjectURL(file));
+            const files = Array.from(e.target.files);
+            const newImages = files.map(file => URL.createObjectURL(file));
             setFormData(prev => ({ ...prev, images: [...prev.images, ...newImages] }));
         }
+    };
+
+    const removeImage = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            images: prev.images.filter((_, i) => i !== index)
+        }));
+    };
+
+    const nextStep = () => {
+        if (step < 4) setStep(step + 1);
+        window.scrollTo(0, 0);
+    };
+
+    const prevStep = () => {
+        if (step > 1) setStep(step - 1);
+        else onBack();
+        window.scrollTo(0, 0);
     };
 
     // Calculations
@@ -76,294 +99,415 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
     const platformFee = online * 0.05; // 5% fee example
     const netEarnings = online - platformFee;
 
+
     return (
         <div className="add-product-page">
-            {/* Top Header */}
+            {/* Sticky Header */}
             <header className="add-product-header">
-                <div className="header-left">
-                    <button className="btn-back" onClick={onBack}>
-                        <ArrowLeft size={20} />
+                <div className="header-inner">
+                    <button className="btn-back" onClick={prevStep} style={{ background: 'none', border: 'none', padding: '4px', display: 'flex' }}>
+                        <ArrowLeft size={22} />
                     </button>
                     <div>
                         <h1>{initialData ? 'Edit Product' : 'Add New Product'}</h1>
                         <span className="auto-save-text">Draft auto-saved 2 mins ago</span>
                     </div>
                 </div>
-                <div className="header-right">
-                    <button className="btn-secondary" onClick={onBack}>Cancel</button>
-                    <button
-                        className="btn-primary"
-                        onClick={() => onAdd(formData)}
-                        disabled={uploading}
-                    >
-                        {uploading ? 'Saving...' : 'Save Product'}
-                    </button>
+                <div className="step-indicator-wrapper">
+                    <div className="step-progress-bar">
+                        {[1, 2, 3, 4].map(s => (
+                            <div
+                                key={s}
+                                className="step-progress-fill"
+                                style={{
+                                    width: '25%',
+                                    background: s <= step ? 'var(--primary)' : '#f1f5f9',
+                                    borderRadius: '10px'
+                                }}
+                            ></div>
+                        ))}
+                    </div>
                 </div>
             </header>
 
-            <div className="add-product-container">
-                {/* Basic Information */}
-                <section className="add-product-section">
-                    <div className="section-title">
-                        <Info size={18} className="text-purple-600" />
-                        <h2>Basic Information</h2>
-                    </div>
-
-                    <div className="form-grid">
-                        <div className="form-group full-width">
-                            <label>Product Name</label>
-                            <input
-                                type="text"
-                                placeholder="e.g. Slim Fit Linen Shirt"
-                                value={formData.name}
-                                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                            />
+            <main className="add-product-container">
+                {step === 1 && (
+                    <div className="step-view">
+                        <div className="step-headline">
+                            <span>Step 1 of 4</span>
+                            <h2>Basic Information</h2>
                         </div>
 
-                        <div className="form-group">
-                            <label>Category (e.g. Trendy Men's Wear)</label>
-                            <input
-                                type="text"
-                                placeholder="Enter custom category..."
-                                value={formData.category}
-                                onChange={e => setFormData({ ...formData, category: e.target.value })}
-                            />
-                        </div>
+                        <div className="add-product-card">
+                            <div className="form-group-mobile">
+                                <label>Product Name</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Slim Fit Linen Shirt"
+                                    value={formData.name}
+                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                />
+                            </div>
 
-                        <div className="form-group">
-                            <label>Store Section / Collection</label>
-                            <div className="input-with-icon" style={{ position: 'relative' }}>
-                                <div style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-                                    <Tag size={18} />
-                                </div>
+                            <div className="form-group-mobile">
+                                <label>Category</label>
+                                <input
+                                    type="text"
+                                    placeholder="Select Category or type new..."
+                                    value={formData.category}
+                                    onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="form-group-mobile">
+                                <label>Store Section / Collection</label>
                                 <select
                                     value={formData.section}
                                     onChange={e => setFormData({ ...formData, section: e.target.value })}
-                                    style={{ paddingLeft: '2.5rem', width: '100%', height: '45px', borderRadius: '8px', border: '1px solid var(--border)' }}
                                 >
                                     <option value="">No Section (General Collection)</option>
                                     {sections.map(sec => (
                                         <option key={sec.id} value={sec.name}>{sec.name}</option>
                                     ))}
                                 </select>
+                                <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                                    Default: General Collection. Helps in organizing your shop.
+                                </p>
                             </div>
-                            <p className="help-text">Select a collection. Create new ones in the "Quick Sections" card on your dashboard.</p>
-                        </div>
 
-                        <div className="form-group full-width">
-                            <label>Sizes (Select or Add New Number/Text)</label>
-                            <div className="size-management" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                <div className="size-selector" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
-                                    {[...new Set([...availableSizes, ...formData.sizes])].map(size => (
+                            <div className="form-group-mobile">
+                                <label>Available Sizes</label>
+                                <div className="size-chips">
+                                    {availableSizes.map(size => (
                                         <button
                                             key={size}
                                             type="button"
-                                            className={`size-btn ${formData.sizes.includes(size) ? 'active' : ''}`}
+                                            className={`size-chip ${formData.sizes.includes(size) ? 'active' : ''}`}
                                             onClick={() => handleSizeToggle(size)}
-                                            style={{ minWidth: '50px', padding: '8px 12px' }}
                                         >
                                             {size}
                                         </button>
                                     ))}
                                 </div>
-
-                                <div className="custom-size-adder" style={{ display: 'flex', gap: '8px' }}>
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '1rem' }}>
                                     <input
                                         type="text"
-                                        placeholder="Add custom size (e.g. 8, 9, XL)"
+                                        placeholder="Add custom (e.g. 42, US 10)"
                                         value={customSize}
                                         onChange={(e) => setCustomSize(e.target.value)}
-                                        onKeyPress={(e) => e.key === 'Enter' && handleAddCustomSize(e)}
-                                        style={{ maxWidth: '250px', flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}
+                                        style={{ height: '48px' }}
                                     />
                                     <button
-                                        type="button"
-                                        className="btn-secondary"
                                         onClick={handleAddCustomSize}
-                                        style={{ height: '42px', padding: '0 1.5rem', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)' }}
+                                        className="size-chip"
+                                        style={{ height: '48px', minWidth: '80px', background: '#f8fafc' }}
                                     >
-                                        <Plus size={18} style={{ marginRight: '4px' }} /> Add
+                                        Add
                                     </button>
                                 </div>
-                                <p className="help-text">Click existing tags to select, or type a value above for unique sizes.</p>
+                            </div>
+
+                            <div className="form-group-mobile">
+                                <label>Age Group</label>
+                                <div className="size-chips">
+                                    {['Adults', 'Kids', 'Teens'].map(age => (
+                                        <button
+                                            key={age}
+                                            type="button"
+                                            className={`size-chip ${formData.ageGroup === age ? 'active' : ''}`}
+                                            onClick={() => setFormData({ ...formData, ageGroup: age })}
+                                            style={{ flex: 1 }}
+                                        >
+                                            {age}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
-                        <div className="form-group">
-                            <label>Age Group</label>
-                            <select
-                                value={formData.ageGroup}
-                                onChange={e => setFormData({ ...formData, ageGroup: e.target.value })}
-                            >
-                                <option value="">Select Age Group</option>
-                                <option value="adult">Adult</option>
-                                <option value="kids">Kids</option>
-                                <option value="teen">Teen</option>
-                            </select>
+                        <div className="add-product-card" style={{ background: '#f0f9ff', border: '1px solid #bae6fd', display: 'flex', gap: '12px' }}>
+                            <Info size={18} color="#0369a1" />
+                            <p style={{ fontSize: '0.8rem', color: '#0369a1', lineHeight: '1.4' }}>
+                                <strong>Pro Tip:</strong> Using clear product names helps buyers find your items faster in search results.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {step === 2 && (
+                    <div className="step-view">
+                        <div className="step-headline">
+                            <span>Step 2 of 4</span>
+                            <h2>Delivery Details</h2>
                         </div>
 
-                        <div className="form-group">
-                            <label>Standard Delivery Time</label>
-                            <div className="input-with-suffix">
-                                <input
-                                    type="text"
-                                    placeholder="e.g. 3-5"
-                                    value={formData.deliveryTime}
-                                    onChange={e => setFormData({ ...formData, deliveryTime: e.target.value })}
-                                />
-                                <span>Days</span>
+                        <div className="add-product-card">
+                            <div className="form-group-mobile">
+                                <label>Standard Delivery Time</label>
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. 3"
+                                        value={formData.deliveryTime.split(' ')[0]}
+                                        onChange={e => setFormData({ ...formData, deliveryTime: `${e.target.value} Days` })}
+                                        style={{ flex: 2 }}
+                                    />
+                                    <select style={{ flex: 1, height: '48px' }}>
+                                        <option>Days</option>
+                                        <option>Hours</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="toggle-group-mobile">
+                                <div className="toggle-info">
+                                    <h4>Cash on Delivery</h4>
+                                    <p>Allow customers to pay at doorstep</p>
+                                </div>
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.codEnabled}
+                                        onChange={e => setFormData({ ...formData, codEnabled: e.target.checked })}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
                             </div>
                         </div>
 
-                        <div className="form-group full-width cod-group">
-                            <div className="cod-label">
-                                <span>Cash on Delivery</span>
-                                <small>Allow customers to pay at doorstep</small>
+                        <div className="add-product-card">
+                            <div className="form-group-mobile" style={{ marginBottom: 0 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                    <label style={{ margin: 0 }}>Product Description</label>
+                                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{formData.description.length} / 1000</span>
+                                </div>
+                                <textarea
+                                    rows="8"
+                                    placeholder="Describe your product features, materials, and unique selling points..."
+                                    value={formData.description}
+                                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                ></textarea>
+                                <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.75rem', fontStyle: 'italic' }}>
+                                    Pro-tip: Clear descriptions increase sales by up to 30%.
+                                </p>
                             </div>
-                            <label className="switch">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.codEnabled}
-                                    onChange={e => setFormData({ ...formData, codEnabled: e.target.checked })}
-                                />
-                                <span className="slider round"></span>
+                        </div>
+
+                        <div className="add-product-card" style={{ background: '#f5f3ff', border: '1px solid #ddd6fe', display: 'flex', gap: '12px' }}>
+                            <div style={{ background: 'white', padding: '4px', borderRadius: '50%', display: 'flex' }}>
+                                <Info size={14} color="var(--primary)" />
+                            </div>
+                            <p style={{ fontSize: '0.8rem', color: '#5b21b6', lineHeight: '1.4' }}>
+                                Make sure to include information about shipping areas and any restrictions in your description.
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {step === 3 && (
+                    <div className="step-view">
+                        <div className="step-headline">
+                            <span>Step 3 of 4</span>
+                            <h2>Pricing & Earnings</h2>
+                        </div>
+
+                        <div className="add-product-card">
+                            <div className="form-group-mobile">
+                                <label>Online Price ($)</label>
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: '700', color: '#64748b' }}>$</span>
+                                    <input
+                                        type="number"
+                                        className="price-input"
+                                        style={{ paddingLeft: '2.5rem' }}
+                                        value={formData.onlinePrice}
+                                        onChange={e => setFormData({ ...formData, onlinePrice: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group-mobile">
+                                <label>Offline Price (₹)</label>
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: '700', color: '#64748b' }}>₹</span>
+                                    <input
+                                        type="number"
+                                        style={{ paddingLeft: '2.5rem' }}
+                                        value={formData.marketPrice}
+                                        onChange={e => setFormData({ ...formData, marketPrice: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="form-group-mobile" style={{ marginBottom: 0 }}>
+                                <label>Delivery Charges (₹)</label>
+                                <div style={{ position: 'relative' }}>
+                                    <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: '700', color: '#64748b' }}>₹</span>
+                                    <input
+                                        type="number"
+                                        style={{ paddingLeft: '2.5rem' }}
+                                        value={formData.deliveryCharges}
+                                        onChange={e => setFormData({ ...formData, deliveryCharges: e.target.value })}
+                                    />
+                                </div>
+                                <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                                    Recommended: ₹20 - ₹149 for your region.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="summary-card-mobile">
+                            <div className="summary-card-header" onClick={() => setSummaryExpanded(!summaryExpanded)}>
+                                <h3><Plus size={18} className="text-blue-500" /> Summary & Savings</h3>
+                                <ChevronRight size={18} style={{ transform: summaryExpanded ? 'rotate(90deg)' : 'none', transition: '0.2s' }} />
+                            </div>
+                            {summaryExpanded && (
+                                <div className="summary-content">
+                                    <div className="summary-row">
+                                        <span>Buyer Savings</span>
+                                        <span style={{ color: '#22c55e', fontWeight: '700' }}>₹{savings.toFixed(2)} ({savingsPercent}%)</span>
+                                    </div>
+                                    <div className="summary-row">
+                                        <span>Marketplace Fee (5%)</span>
+                                        <span>- ₹{platformFee.toFixed(2)}</span>
+                                    </div>
+                                    <div className="summary-total">
+                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                            <span style={{ fontWeight: '700', fontSize: '0.95rem' }}>You Earn (Estimated)</span>
+                                            <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Credited within 3-5 days</span>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <strong>₹{(online * 83).toFixed(2)}</strong>
+                                            <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>PER UNIT</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <p style={{ display: 'flex', gap: '8px', fontSize: '0.75rem', color: '#64748b', padding: '1rem' }}>
+                            <Info size={14} flexShrink={0} />
+                            Increasing your offline price slightly could offset the marketplace fee while keeping buyer savings high.
+                        </p>
+                    </div>
+                )}
+
+                {step === 4 && (
+                    <div className="step-view">
+                        <div className="step-headline">
+                            <span>Step 4 of 4</span>
+                            <h2>Product Images</h2>
+                        </div>
+
+                        <div className="add-product-card">
+                            <label className="image-upload-zone">
+                                <div className="upload-icon-circle">
+                                    <CloudUpload size={24} />
+                                </div>
+                                <div>
+                                    <h4 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '0.25rem' }}>Upload Photos</h4>
+                                    <p style={{ fontSize: '0.7rem', color: '#94a3b8' }}>PNG, JPG, WEBP up to 10MB</p>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '0.5rem' }}>
+                                    <div className="btn-mobile-footer primary" style={{ height: '40px', padding: '0 1rem', fontSize: '0.9rem', width: 'auto' }}>
+                                        Gallery
+                                    </div>
+                                    <div className="btn-mobile-footer secondary" style={{ height: '40px', padding: '0 1rem', fontSize: '0.9rem', width: 'auto' }}>
+                                        Camera
+                                    </div>
+                                </div>
+                                <input type="file" multiple onChange={handleImageUpload} style={{ display: 'none' }} />
                             </label>
+
+                            {formData.images.length > 0 && (
+                                <div style={{ marginTop: '1.5rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                                        <h4 style={{ fontSize: '0.85rem', fontWeight: '800' }}>Uploaded Images ({formData.images.length})</h4>
+                                        <button style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: '700', background: 'none', border: 'none' }}>Rearrange</button>
+                                    </div>
+                                    <div className="uploaded-images-slider">
+                                        {formData.images.map((img, idx) => (
+                                            <div key={idx} className="image-preview-card">
+                                                <img src={img} alt={`Preview ${idx}`} />
+                                                <button className="remove-image-btn" onClick={() => removeImage(idx)} style={{ background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                    <X size={12} />
+                                                </button>
+                                                {idx === 0 && (
+                                                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'var(--primary)', color: 'white', fontSize: '0.6rem', fontWeight: '800', textAlign: 'center', padding: '2px 0' }}>
+                                                        COVER
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                    </div>
-                </section>
 
-                {/* Product Description */}
-                <section className="add-product-section">
-                    <div className="section-title">
-                        <div className="icon-box bg-blue-100 text-blue-600">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><line x1="10" y1="9" x2="8" y2="9" /></svg>
-                        </div>
-                        <h2>Product Description</h2>
-                    </div>
-
-                    <div className="form-group full-width">
-                        <label>Full Description</label>
-                        <textarea
-                            rows="6"
-                            placeholder="Enter detailed product information..."
-                            value={formData.description}
-                            onChange={e => setFormData({ ...formData, description: e.target.value })}
-                        ></textarea>
-                        <div className="char-count">{formData.description.length} / 1000</div>
-                        <p className="help-text">Describe the material, fit, style, and care instructions to help buyers decide.</p>
-                    </div>
-                </section>
-
-                {/* Pricing & Savings */}
-                <section className="add-product-section pricing-row">
-                    <div className="pricing-inputs">
-                        <div className="form-group">
-                            <label>Online Price (BuyLocal)</label>
-                            <div className="input-prefix">
-                                <span>$</span>
-                                <input
-                                    type="number"
-                                    value={formData.onlinePrice}
-                                    onChange={e => setFormData({ ...formData, onlinePrice: e.target.value })}
-                                />
+                        <div className="add-product-card">
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                <h4 style={{ fontSize: '0.95rem', fontWeight: '800' }}>Review Summary</h4>
+                                <button onClick={() => setStep(1)} style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '700', fontSize: '0.85rem' }}>Edit</button>
                             </div>
-                        </div>
-                        <div className="form-group">
-                            <label>Offline/Market Price</label>
-                            <div className="input-prefix">
-                                <span>₹</span>
-                                <input
-                                    type="number"
-                                    value={formData.marketPrice}
-                                    onChange={e => setFormData({ ...formData, marketPrice: e.target.value })}
-                                />
+
+                            <div style={{ display: 'flex', gap: '12px', background: '#f8fafc', padding: '12px', borderRadius: '12px' }}>
+                                <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: 'white', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                                    {formData.images[0] ? <img src={formData.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Review preview" /> : <div style={{ width: '100%', height: '100%', background: '#f1f5f9' }} />}
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <h5 style={{ fontSize: '0.9rem', fontWeight: '800', marginBottom: '2px' }}>{formData.name || 'Untitled Product'}</h5>
+                                    <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: '4px' }}>Category: {formData.category || 'Not Set'}</div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--primary)' }}>${formData.onlinePrice || '0'}</div>
+                                </div>
                             </div>
-                        </div>
-                        <div className="form-group">
-                            <label>Delivery Charges (₹)</label>
-                            <div className="input-prefix">
-                                <span>₹</span>
-                                <input
-                                    type="number"
-                                    placeholder="0 for free"
-                                    value={formData.deliveryCharges}
-                                    onChange={e => setFormData({ ...formData, deliveryCharges: e.target.value })}
-                                />
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '1rem' }}>
+                                <div>
+                                    <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '800' }}>Inventory</div>
+                                    <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>{formData.sizes.length || 1} Variations</div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '800' }}>Shipping</div>
+                                    <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>{formData.deliveryCharges === '0' ? 'Free Local Delivery' : `₹${formData.deliveryCharges}`}</div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <div className="summary-box">
-                        <div className="summary-header">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" /><circle cx="12" cy="5" r="2" /><path d="M12 7v4" /><line x1="8" y1="16" x2="8" y2="16" /><line x1="16" y1="16" x2="16" y2="16" /></svg>
-                            <h3>Summary & Savings</h3>
+                            <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '1rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                {formData.description}
+                            </p>
                         </div>
-                        <div className="summary-row">
-                            <span>Buyer Savings</span>
-                            <span className="green-text">-${savings.toFixed(2)} ({savingsPercent}%)</span>
-                        </div>
-                        <div className="summary-row">
-                            <span>Marketplace Fee (5%)</span>
-                            <span>-${platformFee.toFixed(2)}</span>
-                        </div>
-                        <div className="summary-total">
-                            <span>You Earn (Estimated)</span>
-                            <span className="purple-text">${netEarnings.toFixed(2)}</span>
-                        </div>
-                    </div>
-                </section>
 
-                {/* Product Images */}
-                <section className="add-product-section">
-                    <div className="section-title">
-                        <div className="icon-box bg-purple-100 text-purple-600">
-                            <Upload size={16} />
-                        </div>
-                        <h2>Product Images</h2>
+                        <p style={{ display: 'flex', gap: '8px', fontSize: '0.75rem', color: '#64748b', padding: '1rem' }}>
+                            <Info size={14} flexShrink={0} />
+                            By clicking "Add Product", you agree to our Seller Guidelines and confirm that you have the right to sell this item.
+                        </p>
                     </div>
+                )}
+            </main>
 
-                    <div className="upload-area">
-                        <div className="upload-placeholder">
-                            <div className="cloud-icon">
-                                <CloudUpload size={32} />
-                            </div>
-                            <h4>Click or drag images here to upload</h4>
-                            <p>PNG, JPG, or WEBP up to 10MB each</p>
-                            <input type="file" multiple onChange={handleImageUpload} className="hidden-file-input" />
-                        </div>
-                    </div>
-
-                    <div className="image-previews">
-                        {formData.images.map((img, idx) => (
-                            <div key={idx} className="preview-card">
-                                <img src={img} alt={`Preview ${idx}`} />
-                                {idx === 0 && <span className="primary-tag">PRIMARY</span>}
-                            </div>
-                        ))}
-                        <div className="add-more-card">
-                            <Plus size={24} />
-                            <input type="file" onChange={handleImageUpload} className="hidden-overlay" />
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            {/* Bottom Bar */}
-            <div className="add-product-footer">
-                <button className="btn-text text-red-500" onClick={onBack}>Discard Changes</button>
-                <div className="footer-actions">
-                    <button className="btn-secondary">Save as Draft</button>
+            {/* Sticky Bottom Bar */}
+            <footer className="add-product-footer-mobile">
+                <button className="btn-mobile-footer secondary" onClick={prevStep}>
+                    {step === 1 ? 'Save Draft' : 'Back'}
+                </button>
+                {step < 4 ? (
+                    <button className="btn-mobile-footer primary" onClick={nextStep}>
+                        Next Step
+                    </button>
+                ) : (
                     <button
-                        className="btn-primary"
+                        className="btn-mobile-footer primary"
                         onClick={() => onAdd(formData)}
                         disabled={uploading}
                     >
                         {uploading ? 'Adding...' : 'Add Product'}
                     </button>
-                </div>
-            </div>
+                )}
+            </footer>
+
         </div>
     );
+
 };
+
 
 export default AddProduct;
