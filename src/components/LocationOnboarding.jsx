@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLocation } from '../context/LocationContext';
 import { MapPin, Navigation, Loader } from 'lucide-react';
 
 const LocationOnboarding = () => {
+    const { user, profile, updateProfile, loading: authLoading } = useAuth();
     const { location: ctxLocation, loading: locLoading, error: locError, detectLocation: ctxDetectLocation } = useLocation();
+    const [isVisible, setIsVisible] = useState(false);
     const [city, setCity] = useState('');
     const [state, setState] = useState('');
     const [lat, setLat] = useState(null);
