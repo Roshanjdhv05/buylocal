@@ -98,9 +98,9 @@ const Navbar = () => {
                                 <img src="/logo.png" alt="ByLocal" className="logo-img" />
                             </Link>
 
-                            <div className="location-info">
+                            <div className="location-info" onClick={detectLocation}>
                                 <MapPin size={16} className="loc-icon" />
-                                <div className="loc-text" onClick={detectLocation}>
+                                <div className="loc-text">
                                     {locLoading ? (
                                         <span className="loc-loading">...</span>
                                     ) : location ? (
@@ -190,7 +190,7 @@ const Navbar = () => {
                 </div>
 
                 <div className="drawer-body">
-                    <div className="drawer-location" onClick={detectLocation}>
+                    <div className="drawer-location" onClick={() => { detectLocation(); toggleMenu(); }}>
                         <MapPin size={18} className="loc-icon" />
                         <div className="loc-details">
                             <span className="loc-label">Your Location</span>

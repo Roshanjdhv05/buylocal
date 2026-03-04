@@ -25,6 +25,7 @@ import Wishlist from './pages/Wishlist/Wishlist';
 import OrderDetails from './pages/Orders/OrderDetails';
 import AdminLogin from './pages/Admin/AdminLogin';
 import AdminDashboard from './pages/Admin/AdminDashboard';
+import LocationOnboarding from './components/LocationOnboarding';
 import { useState } from 'react';
 
 const ProtectedRoute = ({ children, role }) => {
@@ -170,6 +171,7 @@ function App() {
                             {/* Fallback */}
                             <Route path="*" element={<Navigate to="/" />} />
                         </Routes>
+                        <LocationOnboarding />
                         <InstallPWA />
                     </CartProvider>
                 </LocationProvider>

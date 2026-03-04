@@ -11,12 +11,16 @@ export const LocationProvider = ({ children }) => {
     const [error, setError] = useState(null);
 
     const detectLocation = () => {
+        if (loading) return; // Prevent concurrent calls
+
         if (!navigator.geolocation) {
             setError('Geolocation not supported');
             return;
         }
 
         setLoading(true);
+        setError(null);
+
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 const { latitude: lat, longitude: lng } = position.coords;
@@ -24,8 +28,8 @@ export const LocationProvider = ({ children }) => {
                 try {
                     const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
                     const data = await response.json();
-                    const city = data.address.city || data.address.town || data.address.village || '';
-                    const state = data.address.state || '';
+                    const city = data.address?.city || data.address?.town || data.address?.village || data.address?.suburb || 'Unknown City';
+                    const state = data.address?.state || '';
 
                     const newLocation = { lat, lng, city, state, timestamp: new Date().getTime() };
                     setLocation(newLocation);
@@ -43,10 +47,12 @@ export const LocationProvider = ({ children }) => {
             },
             (err) => {
                 console.error('Geolocation error:', err);
-                setError('Location access denied');
+                let msg = 'Location access denied';
+                if (err.code === 3) msg = 'Location request timed out';
+                setError(msg);
                 setLoading(false);
             },
-            { timeout: 10000 }
+            { timeout: 10000, enableHighAccuracy: true }
         );
     };
 

@@ -3,13 +3,12 @@ import { useAuth } from '../context/AuthContext';
 import { MapPin, Navigation, Loader } from 'lucide-react';
 
 const LocationOnboarding = () => {
-    const { user, profile, updateProfile, loading: authLoading } = useAuth();
-    const [isVisible, setIsVisible] = useState(false);
+    const { location: ctxLocation, loading: locLoading, error: locError, detectLocation: ctxDetectLocation } = useLocation();
     const [city, setCity] = useState('');
     const [state, setState] = useState('');
     const [lat, setLat] = useState(null);
     const [lng, setLng] = useState(null);
-    const [status, setStatus] = useState('idle'); // idle, detecting, success, saving, error
+    const [status, setStatus] = useState('idle'); // idle, saved, error
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -20,7 +19,6 @@ const LocationOnboarding = () => {
             const hasProfileLocation = profile && (profile.city || profile.state);
             const savedLocation = localStorage.getItem('user_location');
             const hasSavedLocation = !!savedLocation;
-
             const isSkipped = localStorage.getItem('location_skipped') === 'true';
 
             if (!hasProfileLocation && !hasSavedLocation && !isSkipped) {
@@ -29,42 +27,37 @@ const LocationOnboarding = () => {
                 setIsVisible(false);
             }
         }
-    }, [authLoading, user, profile]);
+    }, [authLoading, profile]);
 
-    const detectLocation = () => {
-        if (!navigator.geolocation) {
-            setStatus('error');
-            setError('Geolocation is not supported by your browser');
-            return;
+    // Sync from context if detected there
+    useEffect(() => {
+        if (ctxLocation) {
+            setCity(ctxLocation.city || '');
+            setState(ctxLocation.state || '');
+            setLat(ctxLocation.lat);
+            setLng(ctxLocation.lng);
+            if (ctxLocation.city) setStatus('success');
         }
+    }, [ctxLocation]);
 
+    const handleDetect = () => {
         setStatus('detecting');
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const { latitude, longitude } = position.coords;
-                setLat(latitude);
-                setLng(longitude);
-
-                try {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                    const data = await response.json();
-                    const detectedCity = data.address.city || data.address.town || data.address.village || '';
-                    const detectedState = data.address.state || '';
-                    setCity(detectedCity);
-                    setState(detectedState);
-                    setStatus('success');
-                } catch (e) {
-                    setStatus('success'); // Still success for lat/lng
-                }
-            },
-            (err) => {
-                console.warn('Location error:', err);
-                setStatus('error');
-                setError('Location access denied. Please enter details manually.');
-            },
-            { timeout: 10000 }
-        );
+        ctxDetectLocation();
     };
+
+    // Update internal status based on context loading/error
+    useEffect(() => {
+        if (!locLoading && status === 'detecting') {
+            if (locError) {
+                setStatus('error');
+                setError(locError);
+            } else if (ctxLocation) {
+                setStatus('success');
+            } else {
+                setStatus('idle');
+            }
+        }
+    }, [locLoading, locError, ctxLocation, status]);
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -118,7 +111,7 @@ const LocationOnboarding = () => {
                     <button
                         type="button"
                         className={`detect-btn ${status === 'detecting' ? 'loading' : ''}`}
-                        onClick={detectLocation}
+                        onClick={handleDetect}
                         disabled={status === 'detecting' || status === 'saving'}
                     >
                         {status === 'detecting' ? <Loader className="spinner" size={18} /> : <Navigation size={18} />}
