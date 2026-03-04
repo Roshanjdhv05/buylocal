@@ -11,9 +11,14 @@ export const LocationProvider = ({ children }) => {
     const [error, setError] = useState(null);
 
     const detectLocation = () => {
-        if (loading) return; // Prevent concurrent calls
+        console.log('LocationContext: Starting detection...');
+        if (loading) {
+            console.log('LocationContext: Already loading, skipping.');
+            return;
+        }
 
         if (!navigator.geolocation) {
+            console.log('LocationContext: Geolocation node not available.');
             setError('Geolocation not supported');
             return;
         }
@@ -21,13 +26,26 @@ export const LocationProvider = ({ children }) => {
         setLoading(true);
         setError(null);
 
+        console.log('LocationContext: Requesting current position...');
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 const { latitude: lat, longitude: lng } = position.coords;
+                console.log('LocationContext: Coordinates received:', { lat, lng });
 
                 try {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                    console.log('LocationContext: Fetching city name...');
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+                        {
+                            headers: {
+                                'Accept-Language': 'en',
+                                'User-Agent': 'ByLocal-App'
+                            }
+                        }
+                    );
                     const data = await response.json();
+                    console.log('LocationContext: Geocode success:', data.address);
+
                     const city = data.address?.city || data.address?.town || data.address?.village || data.address?.suburb || 'Unknown City';
                     const state = data.address?.state || '';
 
@@ -36,8 +54,7 @@ export const LocationProvider = ({ children }) => {
                     localStorage.setItem('user_location', JSON.stringify(newLocation));
                     setError(null);
                 } catch (err) {
-                    console.error('Reverse geocoding error:', err);
-                    // Fallback to coordinates only if geocoding fails
+                    console.error('LocationContext: Geocode fetch failed:', err);
                     const newLocation = { lat, lng, city: 'Unknown', state: '', timestamp: new Date().getTime() };
                     setLocation(newLocation);
                     localStorage.setItem('user_location', JSON.stringify(newLocation));
@@ -46,13 +63,13 @@ export const LocationProvider = ({ children }) => {
                 }
             },
             (err) => {
-                console.error('Geolocation error:', err);
+                console.error('LocationContext: Geolocation error:', { code: err.code, message: err.message });
                 let msg = 'Location access denied';
                 if (err.code === 3) msg = 'Location request timed out';
                 setError(msg);
                 setLoading(false);
             },
-            { timeout: 10000, enableHighAccuracy: true }
+            { timeout: 15000, enableHighAccuracy: false }
         );
     };
 
