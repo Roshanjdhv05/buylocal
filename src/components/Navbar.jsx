@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
+import { useLocation } from '../context/LocationContext';
 import {
-    Menu, X, ShoppingCart, User, Home,
+    Menu, X, ShoppingCart, User, Home, MapPin,
     Layers, Package, LogOut, Store, Globe, Heart, LayoutDashboard, Search as SearchIcon
 } from 'lucide-react';
 
@@ -11,8 +12,26 @@ const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const { user, profile, signOut, upgradeToSeller } = useAuth();
     const { cartCount } = useCart();
+    const { location, loading: locLoading, detectLocation } = useLocation();
     const navigate = useNavigate();
     const [upgrading, setUpgrading] = useState(false);
+    const [visible, setVisible] = useState(true);
+    const [lastScrollY, setLastScrollY] = useState(0);
+
+    React.useEffect(() => {
+        const handleScroll = () => {
+            const currentScrollY = window.scrollY;
+            if (currentScrollY > lastScrollY && currentScrollY > 80) {
+                setVisible(false);
+            } else {
+                setVisible(true);
+            }
+            setLastScrollY(currentScrollY);
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [lastScrollY]);
 
     const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -68,15 +87,30 @@ const Navbar = () => {
 
     return (
         <>
-            <nav className="navbar">
+            <nav className={`navbar ${!visible ? 'navbar-hidden' : ''}`}>
                 <div className="container nav-content">
                     <div className="nav-left">
                         <button className="menu-btn" onClick={toggleMenu}>
                             <Menu size={24} />
                         </button>
-                        <Link to="/" className="logo">
-                            <img src="/logo.png" alt="ByLocal" className="logo-img" />
-                        </Link>
+                        <div className="nav-brand-group">
+                            <Link to="/" className="logo">
+                                <img src="/logo.png" alt="ByLocal" className="logo-img" />
+                            </Link>
+
+                            <div className="location-info">
+                                <MapPin size={16} className="loc-icon" />
+                                <div className="loc-text" onClick={detectLocation}>
+                                    {locLoading ? (
+                                        <span className="loc-loading">...</span>
+                                    ) : location ? (
+                                        <span className="loc-name">{location.city}</span>
+                                    ) : (
+                                        <span className="loc-placeholder">Set</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="nav-center">
@@ -156,6 +190,16 @@ const Navbar = () => {
                 </div>
 
                 <div className="drawer-body">
+                    <div className="drawer-location" onClick={detectLocation}>
+                        <MapPin size={18} className="loc-icon" />
+                        <div className="loc-details">
+                            <span className="loc-label">Your Location</span>
+                            <span className="loc-value">
+                                {locLoading ? 'Detecting...' : location ? `${location.city}, ${location.state}` : 'Set Location'}
+                            </span>
+                        </div>
+                    </div>
+
                     <div className="drawer-section">
                         {navLinks.map(link => (
                             <Link key={link.path} to={link.path} onClick={toggleMenu}>
@@ -209,6 +253,10 @@ const Navbar = () => {
           height: 80px;
           display: flex;
           align-items: center;
+          transition: transform 0.3s ease-in-out;
+        }
+        .navbar-hidden {
+            transform: translateY(-100%);
         }
         .nav-content {
           display: flex;
@@ -216,6 +264,11 @@ const Navbar = () => {
           align-items: center;
           width: 100%;
           gap: 2rem;
+        }
+        .nav-brand-group {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
         }
         .logo {
             flex: none;
@@ -228,6 +281,35 @@ const Navbar = () => {
             display: block;
             object-fit: contain;
         }
+        
+        .location-info {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.75rem;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            max-width: 180px;
+        }
+        .location-info:hover {
+            background: #f1f5f9;
+            border-color: var(--primary-light);
+            transform: translateY(-1px);
+        }
+        .loc-icon { color: var(--primary); }
+        .loc-text {
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #475569;
+        }
+        .loc-loading { opacity: 0.6; }
+        .loc-name { color: var(--text-main); }
         
         .nav-center { flex: 1; display: flex; justify-content: flex-start; max-width: 600px; }
         .search-pill {
@@ -337,7 +419,8 @@ const Navbar = () => {
           flex-direction: column;
         }
         .nav-drawer.open { left: 0; }
-        .drawer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; }
+        .drawer-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .drawer-header .logo-img { height: 55px !important; }
         .drawer-body { display: flex; flex-direction: column; gap: 2rem; flex: 1; }
         .drawer-section { display: flex; flex-direction: column; gap: 1.25rem; }
         .drawer-section a { display: flex; align-items: center; gap: 1rem; font-size: 1.125rem; font-weight: 500; color: var(--text-main); }
@@ -352,15 +435,43 @@ const Navbar = () => {
           z-index: 1000;
         }
 
+        .drawer-location {
+            background: #f1f5f9;
+            padding: 1rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            border: 1px solid #e2e8f0;
+        }
+        .drawer-location .loc-details {
+            display: flex;
+            flex-direction: column;
+        }
+        .drawer-location .loc-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #64748b;
+            letter-spacing: 0.5px;
+        }
+        .drawer-location .loc-value {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
         @media (max-width: 900px) {
           .navbar {
-            height: 60px;
-            padding: 0 16px;
+            height: 70px;
+            padding: 0 8px;
             background: #fff;
-            border-bottom: 1px solid #eee;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
           }
           .nav-content {
-            gap: 1rem;
+            gap: 0.4rem;
             padding: 0;
             display: flex;
             align-items: center;
@@ -369,19 +480,48 @@ const Navbar = () => {
           .nav-left {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 4px;
+            overflow: visible;
+            flex: none;
+          }
+          .nav-brand-group {
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            margin-top: 14px;
+          }
+          .location-info {
+            max-width: fit-content;
+            padding: 0.15rem 0.5rem;
+            border-radius: 50px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            gap: 0.25rem;
+            transform: scale(0.9);
+          }
+          .loc-icon { width: 12px; height: 12px; }
+          .loc-text {
+            font-size: 0.65rem;
+            max-width: 70px;
+            font-weight: 700;
+            color: #334155;
           }
           .desktop-only { display: none; }
-          .mobile-search-btn { display: flex; }
-          .menu-btn { display: flex; align-items: center; padding: 0; margin: 0; }
+          .mobile-search-btn { display: flex; padding: 0.4rem; }
+          .menu-btn { display: flex; align-items: center; padding: 0.4rem; margin: 0; }
           .nav-center { display: none; } 
-          .nav-right { gap: 0.75rem; display: flex; align-items: center; }
-          .nav-actions { gap: 1rem; display: flex; align-items: center; }
+          .nav-right { gap: 0.25rem; display: flex; align-items: center; flex: 1; justify-content: flex-end; }
+          .nav-actions { gap: 0.4rem; display: flex; align-items: center; }
           .logo-img {
-            height: 36px !important;
+            height: 42px !important;
             width: auto;
             object-fit: contain;
+            margin: 0 4px;
           }
+          .cart-btn { padding: 0.4rem; }
+          .login-link { font-size: 0.85rem; font-weight: 700; color: var(--primary); margin-left: 4px; }
+          .user-menu { display: flex !important; gap: 0.3rem !important; }
+          .logout-desktop { margin-left: 0; }
         }
 
         .logout-desktop {

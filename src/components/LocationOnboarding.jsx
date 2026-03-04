@@ -15,15 +15,15 @@ const LocationOnboarding = () => {
     useEffect(() => {
         // Show onboarding only if:
         // 1. Auth is loaded
-        // 2. User is logged in
-        // 3. User is a Google user
-        // 4. Profile is missing location data
-        if (!authLoading && user && profile) {
-            const isGoogleUser = user.app_metadata?.provider === 'google';
-            const hasNoLocation = !profile.city || !profile.state;
+        // 2. User has no location in profile (if logged in) or in localStorage (if guest)
+        if (!authLoading) {
+            const hasProfileLocation = profile && (profile.city || profile.state);
+            const savedLocation = localStorage.getItem('user_location');
+            const hasSavedLocation = !!savedLocation;
+
             const isSkipped = localStorage.getItem('location_skipped') === 'true';
 
-            if (isGoogleUser && hasNoLocation && !isSkipped) {
+            if (!hasProfileLocation && !hasSavedLocation && !isSkipped) {
                 setIsVisible(true);
             } else {
                 setIsVisible(false);
@@ -75,12 +75,25 @@ const LocationOnboarding = () => {
 
         setStatus('saving');
         try {
-            await updateProfile({
-                city,
-                state,
-                lat,
-                lng
-            });
+            if (user) {
+                await updateProfile({
+                    city,
+                    state,
+                    lat,
+                    lng
+                });
+            } else {
+                // For guest users, save to localStorage
+                localStorage.setItem('user_location', JSON.stringify({
+                    city,
+                    state,
+                    lat,
+                    lng,
+                    timestamp: new Date().getTime()
+                }));
+                // Wait a bit to simulate saving experience
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
             setIsVisible(false);
         } catch (err) {
             setError(err.message);

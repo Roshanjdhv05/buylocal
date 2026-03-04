@@ -4,12 +4,15 @@ import { ArrowLeft, X, Clock, Trash2 } from 'lucide-react';
 import { getRecentSearches, addRecentSearch, clearSearchHistory } from '../../utils/searchHistory';
 import { getRecentlyViewed } from '../../utils/recentlyViewed';
 import { supabase } from '../../services/supabase';
+import { useLocation } from '../../context/LocationContext';
+import { calculateDistance } from '../../utils/distance';
 
 const Search = () => {
     const navigate = useNavigate();
     const [query, setQuery] = useState('');
     const [recentSearches, setRecentSearches] = useState([]);
     const [recentProducts, setRecentProducts] = useState([]);
+    const { location } = useLocation();
     const inputRef = useRef(null);
 
     useEffect(() => {
@@ -27,7 +30,7 @@ const Search = () => {
 
         const { data } = await supabase
             .from('products')
-            .select('*, stores(name)')
+            .select('*, stores(name, lat, lng)')
             .in('id', recentIds.map(p => p.id));
 
         if (data) {
@@ -35,7 +38,9 @@ const Search = () => {
             const formatted = data.map(p => ({
                 ...p,
                 storeName: p.stores?.name,
-                distance: Infinity // Context not available here easily, defaulted
+                distance: location && p.stores?.lat && p.stores?.lng
+                    ? calculateDistance(location, { lat: p.stores.lat, lng: p.stores.lng })
+                    : Infinity
             }));
             setRecentProducts(formatted);
         }
@@ -121,6 +126,9 @@ const Search = () => {
                                         />
                                     </div>
                                     <p className="mini-product-name">{product.name}</p>
+                                    {product.distance !== Infinity && (
+                                        <span className="mini-product-dist">{product.distance.toFixed(1)} km</span>
+                                    )}
                                 </Link>
                             ))}
                         </div>
@@ -259,6 +267,16 @@ const Search = () => {
                     -webkit-line-clamp: 2;
                     -webkit-box-orient: vertical;
                     overflow: hidden;
+                }
+                .mini-product-dist {
+                    font-size: 0.7rem;
+                    color: #00966b;
+                    font-weight: 700;
+                    text-align: center;
+                    background: #f0fdf4;
+                    padding: 1px 4px;
+                    border-radius: 3px;
+                    align-self: center;
                 }
             `}</style>
         </div>

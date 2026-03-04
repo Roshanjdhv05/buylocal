@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import Navbar from '../../components/Navbar';
+import { useLocation } from '../../context/LocationContext';
+import { calculateDistance } from '../../utils/distance';
 import { Search, MapPin, Store, ArrowRight, Loader } from 'lucide-react';
 
 const Stores = () => {
     const [stores, setStores] = useState([]);
     const [filteredStores, setFilteredStores] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { location } = useLocation();
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
@@ -15,13 +18,22 @@ const Stores = () => {
     }, []);
 
     useEffect(() => {
-        const filtered = stores.filter(store =>
-            store.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            store.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            store.description?.toLowerCase().includes(searchQuery.toLowerCase())
-        );
+        const filtered = stores
+            .map(store => ({
+                ...store,
+                distance: location ? calculateDistance(location, { lat: store.lat, lng: store.lng }) : Infinity
+            }))
+            .filter(store =>
+                store.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                store.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                store.description?.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+            .sort((a, b) => {
+                if (a.distance === b.distance) return a.name.localeCompare(b.name);
+                return a.distance - b.distance;
+            });
         setFilteredStores(filtered);
-    }, [searchQuery, stores]);
+    }, [searchQuery, stores, location]);
 
     const fetchStores = async () => {
         try {
@@ -105,6 +117,11 @@ const Stores = () => {
                                                 <MapPin size={14} />
                                                 {store.address ? store.address : `${store.city}, ${store.state}`}
                                             </span>
+                                            {store.distance !== Infinity && (
+                                                <span className="distance-tag">
+                                                    {store.distance.toFixed(1)} km away
+                                                </span>
+                                            )}
                                         </div>
 
                                         <Link to={`/${encodeURIComponent(store.name)}`} className="visit-btn">
@@ -275,6 +292,16 @@ const Stores = () => {
                     gap: 0.5rem;
                     font-size: 0.9rem;
                     color: var(--text-muted);
+                    flex: 1;
+                }
+
+                .distance-tag {
+                    font-size: 0.75rem;
+                    font-weight: 700;
+                    color: #00966b;
+                    background: #f0fdf4;
+                    padding: 2px 8px;
+                    border-radius: 4px;
                 }
 
                 .visit-btn {

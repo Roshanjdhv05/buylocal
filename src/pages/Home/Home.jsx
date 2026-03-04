@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, withTimeout } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { useLocation } from '../../context/LocationContext';
 import { calculateDistance } from '../../utils/distance';
 import ProductCard from '../../components/ProductCard';
 import Navbar from '../../components/Navbar';
@@ -18,7 +19,7 @@ const Home = () => {
     const [stores, setStores] = useState([]);
     const [recentlyViewed, setRecentlyViewed] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [location, setLocation] = useState(null);
+    const { location } = useLocation();
     const [reviews, setReviews] = useState([]);
     const [activeCategory, setActiveCategory] = useState('Trending Near You');
 
@@ -26,23 +27,7 @@ const Home = () => {
         let mounted = true;
 
         const initHome = async () => {
-            if (mounted) setLoading(true); // Ensure loading is reset on mount
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => {
-                        if (mounted) {
-                            console.log('Geolocation success');
-                            setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                        }
-                    },
-                    (err) => {
-                        console.warn('Geolocation failed', err);
-                        if (mounted) setLocation(null);
-                    },
-                    { timeout: 7000 }
-                );
-            }
+            if (mounted) setLoading(true);
 
             await fetchData();
             if (mounted) setLoading(false);
@@ -82,6 +67,8 @@ const Home = () => {
             return a.distance - b.distance;
         })
         .slice(0, 8); // Top 8 nearest stores
+
+    const isAnyStoreNear = nearestStores.some(s => s.distance <= 10); // 10km radius
 
     const enrichProduct = (product) => {
         const store = stores.find(s => s.id === product.store_id);
@@ -218,7 +205,19 @@ const Home = () => {
                     <div className="section-header">
                         <div className="title-group">
                             <h2>Nearby Stores</h2>
-                            <p>{location ? 'Discover the best-rated shops within walking distance' : 'Discover the best shops in your area'}</p>
+                            <p>
+                                {location ? (
+                                    isAnyStoreNear ? (
+                                        'Discover the best-rated shops within walking distance'
+                                    ) : (
+                                        <span className="location-warning">
+                                            No stores found right near you. Here are the nearest available stores:
+                                        </span>
+                                    )
+                                ) : (
+                                    'Discover the best shops in your area'
+                                )}
+                            </p>
                         </div>
                         <Link to="/stores" className="view-all">View All</Link>
                     </div>
@@ -634,6 +633,11 @@ const Home = () => {
             .recently-viewed-grid > *:nth-child(n+5) {
                 display: block;
             }
+        }
+
+        .location-warning {
+            color: #f59e0b; /* Amber/Orange color */
+            font-weight: 600;
         }
 
         @media (min-width: 1024px) {

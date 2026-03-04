@@ -744,6 +744,7 @@ const SellerDashboard = () => {
                                                 <thead>
                                                     <tr>
                                                         <th>ORDER ID</th>
+                                                        <th>ITEMS</th>
                                                         <th>CUSTOMER</th>
                                                         <th>AMOUNT</th>
                                                         <th>STATUS</th>
@@ -756,6 +757,22 @@ const SellerDashboard = () => {
                                                             <td className="order-id-cell" data-label="Order ID">
                                                                 #{order.display_id || order.id.slice(0, 8).toUpperCase()}
                                                                 <span className="order-date-span">{new Date(order.created_at).toLocaleString()}</span>
+                                                            </td>
+                                                            <td data-label="Items">
+                                                                <div className="order-item-thumbnails">
+                                                                    {order.items?.slice(0, 3).map((item, i) => (
+                                                                        <img
+                                                                            key={i}
+                                                                            src={item.images?.[0] || item.image || '/placeholder-product.png'}
+                                                                            alt={item.name}
+                                                                            className="mini-thumb"
+                                                                            title={item.name}
+                                                                        />
+                                                                    ))}
+                                                                    {order.items?.length > 3 && (
+                                                                        <span className="more-items-badge">+{order.items.length - 3}</span>
+                                                                    )}
+                                                                </div>
                                                             </td>
                                                             <td data-label="Customer">{order.buyer?.email?.split('@')[0] || 'Customer'}</td>
                                                             <td className="amount-cell" data-label="Amount">₹{order.total_amount}</td>
@@ -997,7 +1014,11 @@ const SellerDashboard = () => {
                                                     {order.items?.map((item, idx) => (
                                                         <div key={idx} className="pro-item-row">
                                                             <div className="pro-item-img">
-                                                                <Package size={24} style={{ margin: '12px', color: '#cbd5e1' }} />
+                                                                {item.images?.[0] || item.image ? (
+                                                                    <img src={item.images?.[0] || item.image} alt={item.name} />
+                                                                ) : (
+                                                                    <Package size={24} style={{ color: '#cbd5e1' }} />
+                                                                )}
                                                             </div>
                                                             <div className="pro-item-details">
                                                                 <p className="pro-item-name">{item.name}</p>
