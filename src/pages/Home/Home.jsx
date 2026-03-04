@@ -256,7 +256,7 @@ const Home = () => {
                                 <p>Pick up where you left off</p>
                             </div>
                         </div>
-                        <div className="products-grid recently-viewed-grid">
+                        <div className="products-grid recently-viewed-grid products-slider">
                             {recentlyViewed.slice(0, 6).map(rv => {
                                 // Find full enriched data
                                 const fullProduct = enrichedProducts.find(p => p.id === rv.id) || rv;
@@ -276,7 +276,7 @@ const Home = () => {
                             </div>
                             <Link to="/categories" className="view-all">View All</Link>
                         </div>
-                        <div className="products-grid">
+                        <div className="products-grid products-slider">
                             {topRatedProducts.map(product => (
                                 <ProductCard key={product.id} product={product} />
                             ))}
@@ -292,7 +292,7 @@ const Home = () => {
                             <p>Most popular items right now</p>
                         </div>
                     </div>
-                    <div className="products-grid">
+                    <div className="products-grid products-slider">
                         {trendingProducts.map(product => (
                             <ProductCard key={product.id} product={product} />
                         ))}
@@ -604,18 +604,35 @@ const Home = () => {
             .cta-content h2 { font-size: 2rem; }
             .cta-container { flex-direction: column; text-align: center; }
             .cta-buttons { justify-content: center; }
-            .section-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .section-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
             .view-all { align-self: flex-end; }
         }
 
         @media (max-width: 640px) {
-            .products-grid {
+            .products-slider {
+                display: flex !important;
+                overflow-x: auto !important;
+                gap: 1rem !important;
+                padding: 0.5rem 0.25rem !important;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+            }
+            .products-slider::-webkit-scrollbar {
+                display: none;
+            }
+            .products-slider > * {
+                flex: 0 0 160px !important;
+                scroll-snap-align: start;
+            }
+            .products-grid:not(.products-slider) {
                 grid-template-columns: repeat(2, 1fr) !important;
                 gap: 0.75rem;
             }
-            /* Show only 4 products on phone */
+            /* Show all products inside slider on phone */
             .recently-viewed-grid > *:nth-child(n+5) {
-                display: none;
+                display: block;
             }
         }
 

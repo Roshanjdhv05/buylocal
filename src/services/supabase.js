@@ -1,19 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
+const supabaseUrl = import.meta.env.VITE_SUPABASE_PROXY_URL?.trim() || import.meta.env.VITE_SUPABASE_URL?.trim();
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase URL or Anon Key is missing. Check your .env file.');
 } else {
-  console.log('Supabase Initialized with project:', supabaseUrl.split('//')[1].split('.')[0]);
+  const displayUrl = supabaseUrl.includes('supabase.co')
+    ? supabaseUrl.split('//')[1].split('.')[0]
+    : 'Proxied (' + supabaseUrl + ')';
+  console.log('Supabase Initialized with:', displayUrl);
 }
 
 export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    flowType: 'pkce' // Recommended for modern web apps
   }
 });
 
