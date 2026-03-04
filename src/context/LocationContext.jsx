@@ -9,6 +9,15 @@ export const LocationProvider = ({ children }) => {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [toast, setToast] = useState({ message: '', type: 'info' });
+
+    const showToast = (message, type = 'info') => {
+        setToast({ message, type });
+        // Auto clear after 3 seconds for non-loading states
+        if (type !== 'loading') {
+            setTimeout(() => setToast({ message: '', type: 'info' }), 3000);
+        }
+    };
 
     const detectLocation = () => {
         console.log('LocationContext: Starting detection...');
@@ -19,18 +28,22 @@ export const LocationProvider = ({ children }) => {
 
         if (!navigator.geolocation) {
             console.log('LocationContext: Geolocation node not available.');
-            setError('Geolocation not supported');
+            const msg = 'Geolocation not supported';
+            setError(msg);
+            showToast(msg, 'error');
             return;
         }
 
         setLoading(true);
         setError(null);
+        showToast('Detecting your location...', 'loading');
 
         console.log('LocationContext: Requesting current position...');
         navigator.geolocation.getCurrentPosition(
             async (position) => {
                 const { latitude: lat, longitude: lng } = position.coords;
                 console.log('LocationContext: Coordinates received:', { lat, lng });
+                showToast('Position found, identifying city...', 'loading');
 
                 try {
                     console.log('LocationContext: Fetching city name...');
@@ -53,11 +66,13 @@ export const LocationProvider = ({ children }) => {
                     setLocation(newLocation);
                     localStorage.setItem('user_location', JSON.stringify(newLocation));
                     setError(null);
+                    showToast(`Location updated: ${city}`, 'success');
                 } catch (err) {
                     console.error('LocationContext: Geocode fetch failed:', err);
                     const newLocation = { lat, lng, city: 'Unknown', state: '', timestamp: new Date().getTime() };
                     setLocation(newLocation);
                     localStorage.setItem('user_location', JSON.stringify(newLocation));
+                    showToast('City not found, showing coordinates', 'info');
                 } finally {
                     setLoading(false);
                 }
@@ -68,6 +83,7 @@ export const LocationProvider = ({ children }) => {
                 if (err.code === 3) msg = 'Location request timed out';
                 setError(msg);
                 setLoading(false);
+                showToast(msg, 'error');
             },
             { timeout: 15000, enableHighAccuracy: false }
         );
@@ -83,12 +99,16 @@ export const LocationProvider = ({ children }) => {
                 detectLocation();
             }
         } else {
-            detectLocation();
+            // Only auto-detect if we haven't skipped
+            const isSkipped = localStorage.getItem('location_skipped') === 'true';
+            if (!isSkipped) {
+                detectLocation();
+            }
         }
     }, []);
 
     return (
-        <LocationContext.Provider value={{ location, loading, error, detectLocation }}>
+        <LocationContext.Provider value={{ location, loading, error, detectLocation, toast, setToast }}>
             {children}
         </LocationContext.Provider>
     );

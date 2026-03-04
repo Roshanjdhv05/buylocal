@@ -26,6 +26,8 @@ import OrderDetails from './pages/Orders/OrderDetails';
 import AdminLogin from './pages/Admin/AdminLogin';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import LocationOnboarding from './components/LocationOnboarding';
+import Toast from './components/Toast';
+import { useLocation } from './context/LocationContext';
 import { useState } from 'react';
 
 const ProtectedRoute = ({ children, role }) => {
@@ -85,6 +87,99 @@ const AdminRouteHandler = () => {
     return <AdminDashboard onLogout={handleLogout} />;
 };
 
+const AppContent = () => {
+    const { toast, setToast } = useLocation();
+
+    return (
+        <>
+            <AuthRedirectHandler />
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/search" element={<Search />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/update-password" element={<UpdatePassword />} />
+                <Route path="/categories" element={<Categories />} />
+                <Route path="/stores" element={<Stores />} />
+                <Route path="/product/:productId" element={<ProductDetails />} />
+                <Route path="/price-filter/:maxPrice" element={<PriceFilter />} />
+                <Route path="/cart" element={
+                    <ProtectedRoute>
+                        <Cart />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/orders" element={
+                    <ProtectedRoute>
+                        <Orders />
+                    </ProtectedRoute>
+                } />
+                <Route path="/orders/:orderId" element={
+                    <ProtectedRoute>
+                        <OrderDetails />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/followed-stores" element={
+                    <ProtectedRoute>
+                        <FollowedStores />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/wishlist" element={
+                    <ProtectedRoute>
+                        <Wishlist />
+                    </ProtectedRoute>
+                } />
+
+                {/* Seller Routes */}
+                <Route path="/seller/signup" element={
+                    <ProtectedRoute>
+                        <Signup /> {/* Reuse signup or dedicated route */}
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/profile" element={
+                    <ProtectedRoute>
+                        <Profile />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/seller/create-store" element={
+                    <ProtectedRoute role="seller">
+                        <CreateStore />
+                    </ProtectedRoute>
+                } />
+
+                <Route path="/seller/dashboard" element={
+                    <ProtectedRoute role="seller">
+                        <SellerDashboard />
+                    </ProtectedRoute>
+                } />
+
+                {/* Admin Routes */}
+                <Route path="/admin" element={
+                    <AdminRouteHandler />
+                } />
+
+
+                <Route path="/:storeName" element={<PublicStore />} />
+                <Route path="/:storeName/section/:sectionName" element={<StoreSection />} />
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+            <LocationOnboarding />
+            <InstallPWA />
+            <Toast
+                message={toast?.message}
+                type={toast?.type}
+                onManualClose={() => setToast({ message: '', type: 'info' })}
+            />
+        </>
+    );
+};
+
 function App() {
     useEffect(() => {
         registerServiceWorker();
@@ -94,85 +189,7 @@ function App() {
             <AuthProvider>
                 <LocationProvider>
                     <CartProvider>
-                        <AuthRedirectHandler />
-                        <Routes>
-                            <Route path="/" element={<Home />} />
-                            <Route path="/search" element={<Search />} />
-                            <Route path="/login" element={<Login />} />
-                            <Route path="/signup" element={<Signup />} />
-                            <Route path="/forgot-password" element={<ForgotPassword />} />
-                            <Route path="/update-password" element={<UpdatePassword />} />
-                            <Route path="/categories" element={<Categories />} />
-                            <Route path="/stores" element={<Stores />} />
-                            <Route path="/product/:productId" element={<ProductDetails />} />
-                            <Route path="/price-filter/:maxPrice" element={<PriceFilter />} />
-                            <Route path="/cart" element={
-                                <ProtectedRoute>
-                                    <Cart />
-                                </ProtectedRoute>
-                            } />
-
-                            <Route path="/orders" element={
-                                <ProtectedRoute>
-                                    <Orders />
-                                </ProtectedRoute>
-                            } />
-                            <Route path="/orders/:orderId" element={
-                                <ProtectedRoute>
-                                    <OrderDetails />
-                                </ProtectedRoute>
-                            } />
-
-                            <Route path="/followed-stores" element={
-                                <ProtectedRoute>
-                                    <FollowedStores />
-                                </ProtectedRoute>
-                            } />
-
-                            <Route path="/wishlist" element={
-                                <ProtectedRoute>
-                                    <Wishlist />
-                                </ProtectedRoute>
-                            } />
-
-                            {/* Seller Routes */}
-                            <Route path="/seller/signup" element={
-                                <ProtectedRoute>
-                                    <Signup /> {/* Reuse signup or dedicated route */}
-                                </ProtectedRoute>
-                            } />
-
-                            <Route path="/profile" element={
-                                <ProtectedRoute>
-                                    <Profile />
-                                </ProtectedRoute>
-                            } />
-
-                            <Route path="/seller/create-store" element={
-                                <ProtectedRoute role="seller">
-                                    <CreateStore />
-                                </ProtectedRoute>
-                            } />
-
-                            <Route path="/seller/dashboard" element={
-                                <ProtectedRoute role="seller">
-                                    <SellerDashboard />
-                                </ProtectedRoute>
-                            } />
-
-                            {/* Admin Routes */}
-                            <Route path="/admin" element={
-                                <AdminRouteHandler />
-                            } />
-
-
-                            <Route path="/:storeName" element={<PublicStore />} />
-                            <Route path="/:storeName/section/:sectionName" element={<StoreSection />} />
-                            {/* Fallback */}
-                            <Route path="*" element={<Navigate to="/" />} />
-                        </Routes>
-                        <LocationOnboarding />
-                        <InstallPWA />
+                        <AppContent />
                     </CartProvider>
                 </LocationProvider>
             </AuthProvider>
