@@ -7,12 +7,13 @@ import ProductCard from '../../components/ProductCard';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { MapPin, ArrowRight, ChevronRight, Store } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getRecentlyViewed } from '../../utils/recentlyViewed';
 
 const Home = () => {
     const { profile } = useAuth();
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const searchQuery = searchParams.get('search') || '';
 
     const [products, setProducts] = useState([]);
@@ -117,7 +118,44 @@ const Home = () => {
 
     if (loading) return <div className="loader-container"><div className="loader"></div></div>;
 
-    const categories = ['Trending Near You', 'Women', 'Men', 'Kids', 'Beauty', 'Footwear', 'Home Decor'];
+    const categoryIcons = {
+        'Men': (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#9333ea" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="5" r="3" />
+                <path d="M12 9C9.5 9 8 10.5 8 12V17H10.5V23H13.5V17H16V12C16 10.5 14.5 9 12 9Z" />
+            </svg>
+        ),
+        'Women': (
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="#9333ea" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="5" r="3" />
+                <path d="M12 9L7 17H10V23H14V17H17L12 9Z" />
+            </svg>
+        ),
+        'Kids': (
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="#9333ea" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="9" />
+                <circle cx="8.5" cy="10" r="1.5" fill="white" />
+                <circle cx="15.5" cy="10" r="1.5" fill="white" />
+                <path d="M8 14.5C8 16.5 10 17.5 12 17.5C14 17.5 16 16.5 16 14.5H8Z" fill="white" />
+                <path d="M12 3C10.5 4.5 11.5 5.5 12 6C12.5 6 13.5 4.5 12 3Z" fill="#9333ea" />
+            </svg>
+        ),
+        'Others': (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="#9333ea" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="3" width="7.5" height="7.5" rx="1" />
+                <rect x="13.5" y="3" width="7.5" height="7.5" rx="1" />
+                <rect x="3" y="13.5" width="7.5" height="7.5" rx="1" />
+                <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1" />
+            </svg>
+        )
+    };
+
+    const categories = [
+        { name: 'Men', svg: categoryIcons['Men'] },
+        { name: 'Women', svg: categoryIcons['Women'] },
+        { name: 'Kids', svg: categoryIcons['Kids'] },
+        { name: 'Others', svg: categoryIcons['Others'] }
+    ];
 
     // If searching, show only search results
     if (searchQuery) {
@@ -154,7 +192,7 @@ const Home = () => {
                     .home-page { background: #fafafa; min-height: 100vh; }
                     .products-grid {
                         display: grid;
-                        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                        grid-template-columns: repeat(2, 1fr);
                         gap: 1.25rem;
                     }
                     @media (max-width: 640px) {
@@ -184,17 +222,22 @@ const Home = () => {
                 </div>
             </header>
 
-            {/* Categories Pills */}
-            <div className="container category-pills-section">
-                <div className="category-pills">
+            {/* Category Navigation (Minimal Style) */}
+            <div className="container category-nav-container">
+                <div className="category-minimal-grid">
                     {categories.map(cat => (
-                        <button
-                            key={cat}
-                            className={`pill ${activeCategory === cat ? 'active' : ''}`}
-                            onClick={() => setActiveCategory(cat)}
+                        <Link
+                            key={cat.name}
+                            to={`/category/${cat.name}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="category-icon-item"
                         >
-                            {cat}
-                        </button>
+                            <div className="category-base">
+                                {cat.svg}
+                            </div>
+                            <span className="category-label">{cat.name}</span>
+                        </Link>
                     ))}
                 </div>
             </div>
@@ -290,6 +333,7 @@ const Home = () => {
                             <h2>Trending Products</h2>
                             <p>Most popular items right now</p>
                         </div>
+                        <Link to="/trending" className="view-all">View All</Link>
                     </div>
                     <div className="products-grid products-slider">
                         {trendingProducts.map(product => (
@@ -417,27 +461,91 @@ const Home = () => {
         }
         .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
 
-        /* Category Pills */
-        .category-pills-section { margin-top: 2rem; margin-bottom: 2rem; }
-        .category-pills {
+        /* Category Navigation (Minimal Style) */
+        .category-nav-container { 
+            margin: -2rem auto 2.5rem; /* Pull up to overlap hero slightly */
+            background: transparent;
+            position: relative;
+            z-index: 10;
+        }
+        .category-minimal-grid {
             display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
             justify-content: center;
+            gap: 2.5rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(255,255,255,0.7), rgba(245,243,255,0.8));
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            max-width: fit-content;
+            margin: 0 auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,0.6);
         }
-        .pill {
-            background: white;
-            border: 1px solid var(--border);
-            padding: 0.5rem 1.5rem;
-            border-radius: 50px;
+        @media (max-width: 640px) {
+            .category-nav-container { margin-top: 1rem; }
+            .category-minimal-grid {
+                gap: 0.75rem;
+                padding: 1rem 0.5rem;
+                background: transparent;
+                box-shadow: none;
+                justify-content: space-around;
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+        
+        .category-icon-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            width: 76px;
+        }
+        @media (max-width: 640px) {
+            .category-icon-item {
+                width: 60px;
+            }
+        }
+        
+        .category-base {
+            width: 74px;
+            height: 74px;
+            background: #ffffff;
+            border-radius: 22px; 
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 16px rgba(147, 51, 234, 0.12); /* Soft purple glow shadow */
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        @media (max-width: 640px) {
+            .category-base {
+                width: 56px;
+                height: 56px;
+                border-radius: 16px;
+                margin-bottom: 0.5rem;
+            }
+            .category-base svg {
+                transform: scale(0.8);
+            }
+        }
+        
+        .category-icon-item:hover .category-base {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(147, 51, 234, 0.2);
+        }
+
+        .category-label {
+            font-size: 0.85rem;
             font-weight: 600;
-            color: var(--text-muted);
-            transition: var(--transition);
+            color: #0f172a;
+            text-align: center;
+            letter-spacing: -0.01em;
         }
-        .pill:hover, .pill.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
+        @media (max-width: 640px) {
+            .category-label {
+                font-size: 0.75rem;
+            }
         }
 
         /* Section Block */
@@ -503,7 +611,7 @@ const Home = () => {
         /* Products Grid */
         .products-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 1.25rem;
         }
 

@@ -17,6 +17,7 @@ import Search from './pages/Search/Search';
 import SellerDashboard from './pages/Seller/Dashboard';
 import Stores from './pages/Stores/Stores';
 import PublicStore from './pages/Stores/PublicStore';
+import TrendingProducts from './pages/Products/TrendingProducts';
 import StoreSection from './pages/Stores/StoreSection';
 import ProductDetails from './pages/Product/ProductDetails';
 import FollowedStores from './pages/Stores/FollowedStores';
@@ -103,6 +104,8 @@ const AppContent = () => {
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/update-password" element={<UpdatePassword />} />
                 <Route path="/categories" element={<Categories />} />
+                <Route path="/category/:categoryName" element={<Categories />} />
+                <Route path="/trending" element={<TrendingProducts />} />
                 <Route path="/stores" element={<Stores />} />
                 <Route path="/product/:productId" element={<ProductDetails />} />
                 <Route path="/price-filter/:maxPrice" element={<PriceFilter />} />
