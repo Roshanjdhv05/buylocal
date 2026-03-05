@@ -97,19 +97,6 @@ const Navbar = () => {
                             <Link to="/" className="logo">
                                 <img src="/logo.png" alt="ByLocal" className="logo-img" />
                             </Link>
-
-                            <div className="location-info" onClick={detectLocation}>
-                                <MapPin size={16} className="loc-icon" />
-                                <div className="loc-text">
-                                    {locLoading ? (
-                                        <span className="loc-loading">...</span>
-                                    ) : location ? (
-                                        <span className="loc-name">{location.city}</span>
-                                    ) : (
-                                        <span className="loc-placeholder">Set</span>
-                                    )}
-                                </div>
-                            </div>
                         </div>
                     </div>
 
@@ -190,15 +177,6 @@ const Navbar = () => {
                 </div>
 
                 <div className="drawer-body">
-                    <div className="drawer-location" onClick={() => { detectLocation(); toggleMenu(); }}>
-                        <MapPin size={18} className="loc-icon" />
-                        <div className="loc-details">
-                            <span className="loc-label">Your Location</span>
-                            <span className="loc-value">
-                                {locLoading ? 'Detecting...' : location ? `${location.city}, ${location.state}` : 'Set Location'}
-                            </span>
-                        </div>
-                    </div>
 
                     <div className="drawer-section">
                         {navLinks.map(link => (
@@ -282,34 +260,6 @@ const Navbar = () => {
             object-fit: contain;
         }
         
-        .location-info {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.4rem 0.75rem;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            max-width: 180px;
-        }
-        .location-info:hover {
-            background: #f1f5f9;
-            border-color: var(--primary-light);
-            transform: translateY(-1px);
-        }
-        .loc-icon { color: var(--primary); }
-        .loc-text {
-            font-size: 0.8rem;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: #475569;
-        }
-        .loc-loading { opacity: 0.6; }
-        .loc-name { color: var(--text-main); }
         
         .nav-center { flex: 1; display: flex; justify-content: flex-start; max-width: 600px; }
         .search-pill {
@@ -435,33 +385,6 @@ const Navbar = () => {
           z-index: 1000;
         }
 
-        .drawer-location {
-            background: #f1f5f9;
-            padding: 1rem;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            cursor: pointer;
-            margin-bottom: 1rem;
-            border: 1px solid #e2e8f0;
-        }
-        .drawer-location .loc-details {
-            display: flex;
-            flex-direction: column;
-        }
-        .drawer-location .loc-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: #64748b;
-            letter-spacing: 0.5px;
-        }
-        .drawer-location .loc-value {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: var(--text-main);
-        }
 
         @media (max-width: 900px) {
           .navbar {
@@ -489,22 +412,6 @@ const Navbar = () => {
             align-items: center;
             gap: 2px;
             margin-top: 14px;
-          }
-          .location-info {
-            max-width: fit-content;
-            padding: 0.15rem 0.5rem;
-            border-radius: 50px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            gap: 0.25rem;
-            transform: scale(0.9);
-          }
-          .loc-icon { width: 12px; height: 12px; }
-          .loc-text {
-            font-size: 0.65rem;
-            max-width: 70px;
-            font-weight: 700;
-            color: #334155;
           }
           .desktop-only { display: none; }
           .mobile-search-btn { display: flex; padding: 0.4rem; }

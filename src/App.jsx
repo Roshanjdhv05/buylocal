@@ -87,6 +87,8 @@ const AdminRouteHandler = () => {
     return <AdminDashboard onLogout={handleLogout} />;
 };
 
+import LocationFAB from './components/LocationFAB';
+
 const AppContent = () => {
     const { toast, setToast } = useLocation();
 
@@ -170,6 +172,7 @@ const AppContent = () => {
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>
             <LocationOnboarding />
+            <LocationFAB />
             <InstallPWA />
             <Toast
                 message={toast?.message}
