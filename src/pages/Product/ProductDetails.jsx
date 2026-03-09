@@ -595,7 +595,7 @@ const ProductDetails = () => {
                 @media (min-width: 1024px) {
                     .pro-name-large { font-size: 2.25rem; }
                     .price-main { font-size: 2.75rem; }
-                    .related-grid-scroll { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); overflow: visible; gap: 1.5rem; }
+                    .related-grid-scroll { display: grid; grid-template-columns: repeat(7, 1fr); overflow: visible; gap: 1.5rem; }
                     .related-card-wrap { flex: unset; }
                     .related-card-wrap img { max-height: unset; }
                     .rev-media-gallery img { width: 100px; height: 100px; }

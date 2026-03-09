@@ -146,14 +146,14 @@ const StoreSection = () => {
             <style>{`
                 .products-grid-section {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                    grid-template-columns: repeat(7, 1fr);
                     gap: 1.5rem;
                 }
 
                 @media (max-width: 768px) {
                     .products-grid-section {
-                        grid-template-columns: repeat(2, 1fr);
-                        gap: 1rem;
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 0.5rem;
                     }
                 }
             `}</style>

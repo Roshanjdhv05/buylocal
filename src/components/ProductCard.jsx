@@ -210,7 +210,7 @@ const ProductCard = ({ product }) => {
         .product-card {
           position: relative;
           background: white;
-          border-radius: 16px;
+          border-radius: 12px;
           overflow: hidden;
           transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
           display: flex;
@@ -275,6 +275,11 @@ const ProductCard = ({ product }) => {
           justify-content: center;
           overflow: hidden;
         }
+        @media (min-width: 1024px) {
+            .product-image {
+                aspect-ratio: 0.85;
+            }
+        }
         .product-image img {
           width: 100%;
           height: 100%;
@@ -321,10 +326,10 @@ const ProductCard = ({ product }) => {
         .dot.active { background: white; width: 12px; border-radius: 10px; }
 
         .product-content {
-          padding: 1rem;
+          padding: 0.5rem;
           display: flex;
           flex-direction: column;
-          gap: 0.4rem;
+          gap: 0.15rem;
           flex-grow: 1;
         }
 
@@ -334,34 +339,47 @@ const ProductCard = ({ product }) => {
             gap: 0.35rem;
             color: var(--text-muted);
             font-size: 0.75rem;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.2rem;
+        }
+        @media (min-width: 1024px) {
+            .store-info {
+                font-size: 0.6rem;
+                margin-bottom: 0.1rem;
+            }
+            .store-icon { width: 10px; height: 10px; }
         }
         .store-icon { color: var(--primary); opacity: 0.8; }
         .store-dist { opacity: 0.7; }
 
         .product-title {
-          font-size: 1rem;
-          font-weight: 700;
+          font-size: 0.8rem;
+          font-weight: 600;
           color: var(--text-main);
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          margin-bottom: 0.1rem;
+          margin-bottom: 0.05rem;
         }
 
         .price-row {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        @media (min-width: 1024px) {
+            .price-row {
+                margin-bottom: 0.5rem;
+                gap: 0.5rem;
+            }
         }
         .current-price {
-            font-size: 1.2rem;
+            font-size: 0.9rem;
             font-weight: 800;
             color: var(--text-main);
         }
         .original-price {
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
             text-decoration: line-through;
         }
@@ -371,16 +389,22 @@ const ProductCard = ({ product }) => {
             background: #0f172a;
             color: white;
             border: none;
-            padding: 0.75rem;
-            border-radius: 10px;
+            padding: 0.5rem;
+            border-radius: 8px;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
             transition: all 0.3s ease;
             margin-top: auto;
+        }
+        @media (min-width: 1024px) {
+            .btn-add-cart {
+                padding: 0.35rem;
+                font-size: 0.65rem;
+            }
         }
         .btn-add-cart:hover {
             background: var(--primary);
@@ -403,13 +427,15 @@ const ProductCard = ({ product }) => {
         }
 
         @media (max-width: 640px) {
-            .product-card { border-radius: 12px; }
-            .product-content { padding: 0.85rem; }
-            .product-title { font-size: 0.95rem; }
-            .current-price { font-size: 1.1rem; }
-            .store-info { font-size: 0.7rem; }
-            .badge-category { font-size: 0.6rem; padding: 0.2rem 0.5rem; }
-            .btn-add-cart { padding: 0.65rem; font-size: 0.8rem; border-radius: 8px; }
+            .product-card { border-radius: 8px; }
+            .product-content { padding: 0.4rem; }
+            .product-title { font-size: 0.75rem; }
+            .current-price { font-size: 0.85rem; }
+            .store-info { font-size: 0.6rem; }
+            .badge-category { font-size: 0.55rem; padding: 0.15rem 0.4rem; }
+            .btn-add-cart { padding: 0.4rem; font-size: 0.7rem; border-radius: 6px; }
+            .badge-wishlist { width: 24px; height: 24px; }
+            .badge-wishlist svg { width: 12px; height: 12px; }
         }
 
       `}</style>

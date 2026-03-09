@@ -87,9 +87,24 @@ const PriceFilter = () => {
                 
                 .products-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                    gap: 2rem;
-                    margin-top: 2rem;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 0.5rem;
+                }
+                @media (min-width: 641px) {
+                    .products-grid {
+                        grid-template-columns: repeat(5, 1fr);
+                        gap: 0.75rem;
+                    }
+                                @media (min-width: 1024px) {
+                        .products-grid {
+                            grid-template-columns: repeat(5, 1fr);
+                        }
+                    }
+                    @media (min-width: 1440px) {
+                        .products-grid {
+                            grid-template-columns: repeat(7, 1fr);
+                        }
+                    }
                 }
                 .empty-state { text-align: center; padding: 5rem 2rem; display: flex; flex-direction: column; align-items: center; gap: 1rem; color: var(--text-muted); }
                 

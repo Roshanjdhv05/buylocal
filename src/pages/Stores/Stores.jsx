@@ -44,7 +44,7 @@ const Stores = () => {
 
             if (error) throw error;
             setStores(data || []);
-            setFilteredStores(data || []);
+            // setFilteredStores is handled by useEffect to ensure distance is calculated
         } catch (error) {
             console.error('Error fetching stores:', error.message);
         } finally {
@@ -117,7 +117,7 @@ const Stores = () => {
                                                 <MapPin size={14} />
                                                 {store.address ? store.address : `${store.city}, ${store.state}`}
                                             </span>
-                                            {store.distance !== Infinity && (
+                                            {store.distance != null && store.distance !== Infinity && (
                                                 <span className="distance-tag">
                                                     {store.distance.toFixed(1)} km away
                                                 </span>

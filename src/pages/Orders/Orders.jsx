@@ -349,7 +349,7 @@ const Orders = () => {
 
         .products-mini-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            grid-template-columns: repeat(7, 1fr);
             gap: 1.25rem;
         }
 

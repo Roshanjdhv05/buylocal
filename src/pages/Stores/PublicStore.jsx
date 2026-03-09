@@ -592,8 +592,8 @@ const PublicStore = () => {
                 /* PRODUCTS */
                 .products-grid {
                     display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-                    gap: 2rem;
+                    grid-template-columns: repeat(7, 1fr);
+                    gap: 1.5rem;
                 }
 
                 /* LEGACY */
@@ -722,11 +722,11 @@ const PublicStore = () => {
                     .testimonials-wrap { padding: 2rem; }
                     .t-text { font-size: 1.2rem; }
 
-                    /* Mobile Product Grid (2 Columns) */
+                    /* Mobile Product Grid (3 Columns) */
                     .products-grid {
                         display: grid;
-                        grid-template-columns: repeat(2, 1fr);
-                        gap: 0.75rem;
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 0.5rem;
                         padding-bottom: 1rem;
                         width: 100%;
                         margin-left: 0;
