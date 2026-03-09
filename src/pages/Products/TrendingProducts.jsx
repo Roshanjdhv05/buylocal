@@ -65,7 +65,6 @@ const TrendingProducts = () => {
                     </div>
                 )}
             </div>
-
             <style>{`
                 .trending-page {
                     background: #fafafa;
@@ -78,13 +77,13 @@ const TrendingProducts = () => {
                 }
                 @media (min-width: 641px) {
                     .products-grid {
-                        grid-template-columns: repeat(5, 1fr);
+                        grid-template-columns: repeat(4, 1fr);
                         gap: 0.75rem;
                     }
                 }
                 @media (min-width: 1024px) {
                     .products-grid {
-                        grid-template-columns: repeat(5, 1fr);
+                        grid-template-columns: repeat(7, 1fr);
                     }
                 }
                 @media (min-width: 1440px) {

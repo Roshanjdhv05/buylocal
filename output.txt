@@ -1,0 +1,30 @@
+ Volume in drive C has no label.
+ Volume Serial Number is 12B9-8951
+
+ Directory of C:\Users\hp\OneDrive\Desktop\buylocal
+
+09-03-2026  22:45    <DIR>          .
+09-03-2026  22:17    <DIR>          ..
+04-03-2026  09:49               375 .env
+10-12-2025  18:21               253 .gitignore
+04-03-2026  19:52    <DIR>          dist
+15-02-2026  21:27           163,236 favicon.png
+09-03-2026  22:32                49 git_log_check.txt
+09-03-2026  22:24               244 git_remote_output.txt
+04-03-2026  20:01             1,084 git_status_check.txt
+09-03-2026  22:31               716 git_status_check_2.txt
+04-03-2026  20:02               572 git_status_check_utf8.txt
+09-03-2026  22:24               666 git_status_output.txt
+15-02-2026  21:32               457 index.html
+04-02-2026  13:05               375 jsconfig.json
+04-03-2026  09:19    <DIR>          node_modules
+09-03-2026  22:45               164 output.txt
+06-02-2026  22:54            71,067 package-lock.json
+06-02-2026  22:54               519 package.json
+05-03-2026  10:28    <DIR>          public
+04-02-2026  12:56    <DIR>          src
+19-02-2026  19:22    <DIR>          supabase
+04-03-2026  09:19    <DIR>          supabase-proxy
+05-02-2026  13:52             4,785 supabase_schema.sql
+              15 File(s)        244,562 bytes
+               8 Dir(s)   7,140,827,136 bytes free

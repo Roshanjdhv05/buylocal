@@ -1,0 +1,10 @@
+error: pathspec 'style:' did not match any file(s) known to git
+error: pathspec 'resize' did not match any file(s) known to git
+error: pathspec 'product' did not match any file(s) known to git
+error: pathspec 'grids' did not match any file(s) known to git
+error: pathspec 'to' did not match any file(s) known to git
+error: pathspec '7' did not match any file(s) known to git
+error: pathspec 'columns' did not match any file(s) known to git
+error: pathspec 'on' did not match any file(s) known to git
+error: pathspec 'laptop' did not match any file(s) known to git
+error: pathspec 'screens\  ' did not match any file(s) known to git

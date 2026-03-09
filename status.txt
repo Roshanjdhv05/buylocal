@@ -1,0 +1,22 @@
+On branch main
+Your branch is ahead of 'origin/main' by 2 commits.
+  (use "git push" to publish your local commits)
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   src/pages/Categories/Categories.jsx
+	modified:   src/pages/Home/Home.jsx
+	modified:   src/pages/Home/PriceFilter.jsx
+	modified:   src/pages/Products/TrendingProducts.jsx
+	modified:   src/pages/Wishlist/Wishlist.jsx
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	branch.txt
+	git_log_check.txt
+	output.txt
+	remote.txt
+	status.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")

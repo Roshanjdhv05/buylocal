@@ -1,0 +1,5 @@
+9207609 update: sync local changes to github
+bdc1f20 Update product grid sizes and store layouts
+268b4e2 feat: complete category redesign and trending products page
+ac087d8 chore: update favicon.png
+ca84ffd feat: implement location FAB with Google branding and remove legacy navbar location UI

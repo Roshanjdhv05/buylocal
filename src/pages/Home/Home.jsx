@@ -209,7 +209,7 @@ const Home = () => {
                     }
                     @media (min-width: 1024px) {
                         .products-grid {
-                            grid-template-columns: repeat(5, 1fr);
+                            grid-template-columns: repeat(7, 1fr);
                             gap: 1.25rem;
                         }
                     }
@@ -790,7 +790,7 @@ const Home = () => {
         }
         @media (min-width: 1024px) {
             .recently-viewed-grid, .products-grid:not(.recently-viewed-grid) {
-                grid-template-columns: repeat(5, 1fr) !important;
+                grid-template-columns: repeat(7, 1fr) !important;
             }
         }
         @media (min-width: 1440px) {

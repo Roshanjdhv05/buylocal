@@ -1,0 +1,5 @@
+warning: in the working copy of 'src/pages/Products/TrendingProducts.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'branch.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'remote.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'status.txt', LF will be replaced by CRLF the next time Git touches it
