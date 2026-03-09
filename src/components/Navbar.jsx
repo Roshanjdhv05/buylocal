@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useLocation } from '../context/LocationContext';
+import { useTranslation } from 'react-i18next';
 import {
     Menu, X, ShoppingCart, User, Home, MapPin,
-    Layers, Package, LogOut, Store, Globe, Heart, LayoutDashboard, Search as SearchIcon
+    Layers, Package, LogOut, Store, Globe, Heart, LayoutDashboard, Search as SearchIcon, ChevronDown
 } from 'lucide-react';
 
 const Navbar = () => {
+    const { t, i18n } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const { user, profile, signOut, upgradeToSeller } = useAuth();
     const { cartCount } = useCart();
@@ -17,6 +19,18 @@ const Navbar = () => {
     const [upgrading, setUpgrading] = useState(false);
     const [visible, setVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
+    const [showLangMenu, setShowLangMenu] = useState(false);
+
+    const changeLanguage = (lng) => {
+        i18n.changeLanguage(lng);
+        setShowLangMenu(false);
+    };
+
+    const languages = [
+        { code: 'en', name: 'English' },
+        { code: 'hi', name: 'हिंदी' },
+        { code: 'mr', name: 'मराठी' }
+    ];
 
     React.useEffect(() => {
         const handleScroll = () => {
@@ -59,19 +73,19 @@ const Navbar = () => {
     };
 
     const navLinks = [
-        { name: 'Home', path: '/', icon: <Home size={20} /> },
-        { name: 'Stores', path: '/stores', icon: <Store size={20} /> },
-        ...(user ? [{ name: 'Followed', path: '/followed-stores', icon: <Heart size={20} /> }] : []),
-        { name: 'Categories', path: '/categories', icon: <Layers size={20} /> },
+        { name: t('nav.home'), path: '/', icon: <Home size={20} /> },
+        { name: t('nav.stores'), path: '/stores', icon: <Store size={20} /> },
+        ...(user ? [{ name: t('nav.followed'), path: '/followed-stores', icon: <Heart size={20} /> }] : []),
+        { name: t('nav.categories'), path: '/categories', icon: <Layers size={20} /> },
     ];
 
     const authLinks = user ? [
-        { name: 'Wishlist', path: '/wishlist', icon: <Heart size={20} /> },
-        { name: 'Orders', path: '/orders', icon: <Package size={20} /> },
-        { name: 'Profile', path: '/profile', icon: <User size={20} /> },
+        { name: t('nav.wishlist'), path: '/wishlist', icon: <Heart size={20} /> },
+        { name: t('nav.orders'), path: '/orders', icon: <Package size={20} /> },
+        { name: t('nav.profile'), path: '/profile', icon: <User size={20} /> },
     ] : [
-        { name: 'Login', path: '/login', icon: <User size={20} /> },
-        { name: 'Sign Up', path: '/signup', icon: <User size={20} /> },
+        { name: t('nav.login'), path: '/login', icon: <User size={20} /> },
+        { name: t('nav.signUp'), path: '/signup', icon: <User size={20} /> },
     ];
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -104,7 +118,7 @@ const Navbar = () => {
                         <div className="search-pill">
                             <input
                                 type="text"
-                                placeholder="Search for local products, brands, or shops..."
+                                placeholder={t('nav.searchPlaceholder')}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 onKeyDown={handleSearch}
@@ -124,7 +138,7 @@ const Navbar = () => {
                         <div className="nav-actions">
                             {user && profile?.role === 'seller' && (
                                 <Link to="/seller/dashboard" className="dashboard-pill desktop-only">
-                                    <LayoutDashboard size={16} /> Dashboard
+                                    <LayoutDashboard size={16} /> {t('nav.dashboard')}
                                 </Link>
                             )}
 
@@ -134,11 +148,30 @@ const Navbar = () => {
                                     className="seller-promo-pill desktop-only"
                                     disabled={upgrading}
                                 >
-                                    {upgrading ? '...' : 'Become Seller'}
+                                    {upgrading ? '...' : t('nav.becomeSeller')}
                                 </button>
                             )}
 
-                            <button className="icon-btn desktop-only"><Globe size={20} /></button>
+                            <div className="lang-switcher-container desktop-only">
+                                <button className="icon-btn" onClick={() => setShowLangMenu(!showLangMenu)}>
+                                    <Globe size={20} />
+                                    <span style={{ fontSize: '0.75rem', fontWeight: '700', marginLeft: '2px', textTransform: 'uppercase' }}>{i18n.language.split('-')[0]}</span>
+                                    <ChevronDown size={14} />
+                                </button>
+                                {showLangMenu && (
+                                    <div className="lang-dropdown glass-card">
+                                        {languages.map(lang => (
+                                            <button 
+                                                key={lang.code}
+                                                className={`lang-option ${i18n.language === lang.code ? 'active' : ''}`}
+                                                onClick={() => changeLanguage(lang.code)}
+                                            >
+                                                {lang.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
 
                             {/* Mobile Search Icon */}
                             <Link to="/search" className="icon-btn mobile-search-btn">
@@ -155,12 +188,12 @@ const Navbar = () => {
                             {user ? (
                                 <div className="user-menu" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <Link to="/profile" className="icon-btn"><User size={20} /></Link>
-                                    <button onClick={handleLogout} className="icon-btn logout-desktop" title="Logout">
+                                    <button onClick={handleLogout} className="icon-btn logout-desktop" title={t('common.logout')}>
                                         <LogOut size={20} color="#ef4444" />
                                     </button>
                                 </div>
                             ) : (
-                                <Link to="/login" className="login-link">Login</Link>
+                                <Link to="/login" className="login-link">{t('nav.login')}</Link>
                             )}
                         </div>
                     </div>
@@ -179,6 +212,31 @@ const Navbar = () => {
                 <div className="drawer-body">
 
                     <div className="drawer-section">
+                        <div style={{ padding: '0 0.5rem', marginBottom: '0.5rem' }}>
+                            <p style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Globe size={16} /> {t('common.language')}
+                            </p>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                {languages.map(lang => (
+                                    <button
+                                        key={lang.code}
+                                        onClick={() => changeLanguage(lang.code)}
+                                        style={{
+                                            padding: '0.4rem 0.8rem',
+                                            borderRadius: '8px',
+                                            fontSize: '0.9rem',
+                                            fontWeight: '600',
+                                            border: '1px solid var(--border)',
+                                            background: i18n.language === lang.code ? 'var(--primary)' : 'white',
+                                            color: i18n.language === lang.code ? 'white' : 'var(--text-main)',
+                                            transition: 'all 0.2s'
+                                        }}
+                                    >
+                                        {lang.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                         {navLinks.map(link => (
                             <Link key={link.path} to={link.path} onClick={toggleMenu}>
                                 {link.icon} {link.name}
@@ -437,6 +495,40 @@ const Navbar = () => {
         }
         .logout-desktop:hover {
             color: #ef4444 !important;
+        }
+
+        .lang-switcher-container {
+            position: relative;
+        }
+        .lang-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            min-width: 120px;
+            background: white;
+            padding: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            z-index: 1002;
+            border: 1px solid var(--border);
+        }
+        .lang-option {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+        .lang-option:hover {
+            background: var(--background);
+            color: var(--primary);
+        }
+        .lang-option.active {
+            background: var(--primary);
+            color: white;
         }
       `}</style>
         </>

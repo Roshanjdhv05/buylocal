@@ -1,0 +1,26 @@
+{
+  "nav": {
+    "home": "Home",
+    "stores": "Stores",
+    "followed": "Followed",
+    "categories": "Categories",
+    "wishlist": "Wishlist",
+    "orders": "Orders",
+    "profile": "Profile",
+    "login": "Login",
+    "signUp": "Sign Up",
+    "dashboard": "Dashboard",
+    "becomeSeller": "Become Seller",
+    "searchPlaceholder": "Search for local products, brands, or shops..."
+  },
+  "home": {
+    "trending": "Trending Near You",
+    "explore": "Explore Local Shops",
+    "viewAll": "View All"
+  },
+  "common": {
+    "language": "Language",
+    "logout": "Logout",
+    "back": "Back"
+  }
+}

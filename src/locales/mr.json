@@ -1,0 +1,26 @@
+{
+  "nav": {
+    "home": "होम",
+    "stores": "दुकाने",
+    "followed": "फॉलो केलेले",
+    "categories": "श्रेणी",
+    "wishlist": "विशलिस्ट",
+    "orders": "ऑर्डर",
+    "profile": "प्रोफाइल",
+    "login": "लॉगिन",
+    "signUp": "साइन अप",
+    "dashboard": "डॅशबोर्ड",
+    "becomeSeller": "विक्रेता बना",
+    "searchPlaceholder": "स्थानिक उत्पादने, ब्रँड किंवा दुकाने शोधा..."
+  },
+  "home": {
+    "trending": "तुमच्या जवळील ट्रेंडिंग",
+    "explore": "स्थानिक दुकानांचा शोध घ्या",
+    "viewAll": "सर्व पहा"
+  },
+  "common": {
+    "language": "भाषा",
+    "logout": "लॉगआउट",
+    "back": "मागे"
+  }
+}

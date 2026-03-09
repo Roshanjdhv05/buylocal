@@ -1,0 +1,1 @@
+8d680d7 style: resize product grids to 7 columns on laptop screens

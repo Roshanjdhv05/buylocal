@@ -9,8 +9,10 @@ import Footer from '../../components/Footer';
 import { MapPin, ArrowRight, ChevronRight, Store } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getRecentlyViewed } from '../../utils/recentlyViewed';
+import { useTranslation } from 'react-i18next';
 
 const Home = () => {
+    const { t } = useTranslation();
     const { profile } = useAuth();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -22,7 +24,7 @@ const Home = () => {
     const [loading, setLoading] = useState(true);
     const { location } = useLocation();
     const [reviews, setReviews] = useState([]);
-    const [activeCategory, setActiveCategory] = useState('Trending Near You');
+    const [activeCategory, setActiveCategory] = useState(t('home.trending'));
 
     useEffect(() => {
         let mounted = true;
@@ -279,7 +281,7 @@ const Home = () => {
                                 )}
                             </p>
                         </div>
-                        <Link to="/stores" className="view-all">View All</Link>
+                        <Link to="/stores" className="view-all">{t('home.viewAll')}</Link>
                     </div>
 
                     <div className="stores-horizontal-scroll">
@@ -333,7 +335,7 @@ const Home = () => {
                                 <h2>Top Rated Products</h2>
                                 <p>Loved by your local community</p>
                             </div>
-                            <Link to="/categories" className="view-all">View All</Link>
+                            <Link to="/categories" className="view-all">{t('home.viewAll')}</Link>
                         </div>
                         <div className="products-grid products-slider">
                             {topRatedProducts.map(product => (
@@ -347,10 +349,10 @@ const Home = () => {
                 <section className="section-block">
                     <div className="section-header">
                         <div className="title-group">
-                            <h2>Trending Products</h2>
+                            <h2>{t('home.trending')}</h2>
                             <p>Most popular items right now</p>
                         </div>
-                        <Link to="/trending" className="view-all">View All</Link>
+                        <Link to="/trending" className="view-all">{t('home.viewAll')}</Link>
                     </div>
                     <div className="products-grid products-slider">
                         {trendingProducts.map(product => (
