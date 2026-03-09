@@ -1,15 +1,17 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Linkedin, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Footer = () => {
+    const { t } = useTranslation();
     return (
         <footer className="footer">
             <div className="container">
                 <div className="footer-content">
                     <div className="footer-brand">
                         <Link to="/" className="logo"><img src="/logo.png" alt="ByLocal" className="logo-img" /></Link>
-                        <p>Connecting you with local merchants for a faster, more sustainable shopping experience. Shop small, dream big.</p>
+                        <p>{t('footer.description')}</p>
                     </div>
 
                     <div className="footer-links">
@@ -39,7 +41,7 @@ const Footer = () => {
                 </div>
 
                 <div className="footer-bottom">
-                    <p>&copy; {new Date().getFullYear()} BuyLocal Marketplace. All rights reserved. Locally sourced. Faster delivery. Better quality.</p>
+                    <p>&copy; {new Date().getFullYear()} BuyLocal Marketplace. {t('footer.allRightsReserved')}</p>
                 </div>
             </div>
 

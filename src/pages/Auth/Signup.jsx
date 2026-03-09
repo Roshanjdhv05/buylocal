@@ -4,8 +4,10 @@ import { useAuth } from '../../context/AuthContext';
 import { supabase, withTimeout } from '../../services/supabase';
 import { MapPin, User, Mail, Lock, ShoppingBag, Store, Navigation, ArrowLeft } from 'lucide-react';
 import AuthLayout from '../../components/AuthLayout';
+import { useTranslation } from 'react-i18next';
 
 const Signup = () => {
+    const { t } = useTranslation();
     const [formData, setFormData] = useState({
         username: '',
         email: '',
@@ -101,19 +103,19 @@ const Signup = () => {
             <div className="auth-nav-top">
                 <Link to="/" className="back-link">
                     <ArrowLeft size={18} />
-                    <span>Back to Home</span>
+                    <span>{t('common.back')}</span>
                 </Link>
             </div>
             <div className="auth-form-header">
-                <h2 className="auth-form-title">Join the community</h2>
-                <p className="auth-form-subtitle">Create your account to start shopping local.</p>
+                <h2 className="auth-form-title">{t('auth.createAccount')}</h2>
+                <p className="auth-form-subtitle">{t('auth.joinCommunity')}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="auth-form-refined">
                 <div className="auth-input-refined">
                     <input
                         type="text"
-                        placeholder="Name"
+                        placeholder={t('auth.fullName')}
                         required
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
@@ -123,7 +125,7 @@ const Signup = () => {
                 <div className="auth-input-refined">
                     <input
                         type="email"
-                        placeholder="Email Address"
+                        placeholder={t('auth.email')}
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
@@ -133,7 +135,7 @@ const Signup = () => {
                 <div className="auth-input-refined">
                     <input
                         type="password"
-                        placeholder="Password"
+                        placeholder={t('auth.password')}
                         required
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -156,7 +158,7 @@ const Signup = () => {
                 {error && <p className="auth-error-refined">{error}</p>}
 
                 <button type="submit" className="auth-submit-refined" disabled={loading}>
-                    {loading ? 'Creating Account...' : 'Create Account'}
+                    {loading ? t('common.loading') : t('auth.createAccount')}
                 </button>
 
                 <div className="auth-divider">
@@ -175,7 +177,7 @@ const Signup = () => {
             </form>
 
             <div className="auth-switch-refined">
-                Already registered? <Link to="/login">Login</Link>
+                {t('auth.alreadyHaveAccount')} <Link to="/login">{t('auth.signIn')}</Link>
             </div>
 
             <style>{`

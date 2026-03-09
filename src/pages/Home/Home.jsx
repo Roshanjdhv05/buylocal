@@ -234,9 +234,9 @@ const Home = () => {
                 <div className="container hero-container">
                     <div className="hero-content">
                         <span className="hero-badge">LIMITED OFFER</span>
-                        <h1>Local Fashion <br /> Deals of the Week</h1>
-                        <p>Up to 40% off on boutique collections from creators in your neighborhood.</p>
-                        <Link to="/stores" className="btn-hero">Shop Now</Link>
+                        <h1>{t('home.heroTitle').split('<br />').map((text, i) => <React.Fragment key={i}>{text}{i === 0 && <br />}</React.Fragment>)}</h1>
+                        <p>{t('home.heroSubtitle')}</p>
+                        <Link to="/stores" className="btn-hero">{t('home.shopNow')}</Link>
                     </div>
                 </div>
             </header>
@@ -266,18 +266,18 @@ const Home = () => {
                 <section className="section-block">
                     <div className="section-header">
                         <div className="title-group">
-                            <h2>Nearby Stores</h2>
+                            <h2>{t('home.nearbyStores')}</h2>
                             <p>
                                 {location ? (
                                     isAnyStoreNear ? (
-                                        'Discover the best-rated shops within walking distance'
+                                        t('home.nearbySubtitle')
                                     ) : (
                                         <span className="location-warning">
-                                            No stores found right near you. Here are the nearest available stores:
+                                            {t('home.noStoresNear')}
                                         </span>
                                     )
                                 ) : (
-                                    'Discover the best shops in your area'
+                                    t('home.nearbySubtitle')
                                 )}
                             </p>
                         </div>
@@ -313,8 +313,8 @@ const Home = () => {
                     <section className="section-block">
                         <div className="section-header">
                             <div className="title-group">
-                                <h2>Your Recently Viewed</h2>
-                                <p>Pick up where you left off</p>
+                            <h2>{t('home.recentlyViewed')}</h2>
+                            <p>{t('home.pickUpWhereLeft')}</p>
                             </div>
                         </div>
                         <div className="products-grid recently-viewed-grid products-slider">
@@ -332,8 +332,8 @@ const Home = () => {
                     <section className="section-block">
                         <div className="section-header">
                             <div className="title-group">
-                                <h2>Top Rated Products</h2>
-                                <p>Loved by your local community</p>
+                                <h2>{t('home.topRated')}</h2>
+                                <p>{t('home.lovedByCommunity')}</p>
                             </div>
                             <Link to="/categories" className="view-all">{t('home.viewAll')}</Link>
                         </div>
@@ -349,8 +349,8 @@ const Home = () => {
                 <section className="section-block">
                     <div className="section-header">
                         <div className="title-group">
-                            <h2>{t('home.trending')}</h2>
-                            <p>Most popular items right now</p>
+                             <h2>{t('home.trendingProducts')}</h2>
+                             <p>{t('home.popularItems')}</p>
                         </div>
                         <Link to="/trending" className="view-all">{t('home.viewAll')}</Link>
                     </div>
@@ -365,24 +365,24 @@ const Home = () => {
                 <section className="section-block">
                     <div className="section-header">
                         <div className="title-group">
-                            <h2>Budget Friendly Deals</h2>
-                            <p>Great fashion doesn't have to be expensive</p>
+                            <h2>{t('home.budgetFriendly')}</h2>
+                            <p>{t('home.budgetSubtitle')}</p>
                         </div>
                     </div>
                     <div className="price-segments-grid">
                         <Link to="/price-filter/99" className="price-segment-card bg-rose">
-                            <h3>Under ₹99</h3>
-                            <p>{productsUnder99.length} Items Available</p>
+                            <h3>{t('home.under99')}</h3>
+                            <p>{productsUnder99.length} {t('home.itemsAvailable')}</p>
                             <ChevronRight size={24} />
                         </Link>
                         <Link to="/price-filter/199" className="price-segment-card bg-amber">
-                            <h3>Under ₹199</h3>
-                            <p>{productsUnder199.length} Items Available</p>
+                            <h3>{t('home.under199')}</h3>
+                            <p>{productsUnder199.length} {t('home.itemsAvailable')}</p>
                             <ChevronRight size={24} />
                         </Link>
                         <Link to="/price-filter/299" className="price-segment-card bg-indigo">
-                            <h3>Under ₹299</h3>
-                            <p>{productsUnder299.length} Items Available</p>
+                            <h3>{t('home.under299')}</h3>
+                            <p>{productsUnder299.length} {t('home.itemsAvailable')}</p>
                             <ChevronRight size={24} />
                         </Link>
                     </div>
@@ -392,8 +392,8 @@ const Home = () => {
                 <section className="section-block">
                     <div className="section-header">
                         <div className="title-group">
-                            <h2>All Products</h2>
-                            <p>Browse everything from your favorite local stores</p>
+                            <h2>{t('home.allProducts')}</h2>
+                            <p>{t('home.browseEverything')}</p>
                         </div>
                     </div>
                     <div className="products-grid">
@@ -408,11 +408,11 @@ const Home = () => {
             <section className="business-cta">
                 <div className="container cta-container">
                     <div className="cta-content">
-                        <h2>Join BuyLocal <br /> for Business</h2>
-                        <p>Are you a local shop owner? List your products and start delivering to customers in your area within hours. Expand your reach today.</p>
+                        <h2>{t('home.joinBusiness').split('<br />').map((text, i) => <React.Fragment key={i}>{text}{i === 0 && <br />}</React.Fragment>)}</h2>
+                        <p>{t('home.businessSubtitle')}</p>
                         <div className="cta-buttons">
-                            <Link to="/seller/signup" className="btn-white">Get Started Today</Link>
-                            <Link to="/seller/signup" className="btn-outline">Learn More</Link>
+                            <Link to="/seller/signup" className="btn-white">{t('home.getStarted')}</Link>
+                            <Link to="/seller/signup" className="btn-outline">{t('home.learnMore')}</Link>
                         </div>
                     </div>
                     <div className="cta-graphic">

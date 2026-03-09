@@ -4,8 +4,10 @@ import { useAuth } from '../../context/AuthContext';
 import { supabase, withTimeout } from '../../services/supabase';
 import { Mail, Lock, ArrowLeft } from 'lucide-react';
 import AuthLayout from '../../components/AuthLayout';
+import { useTranslation } from 'react-i18next';
 
 const Login = () => {
+    const { t } = useTranslation();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -59,19 +61,19 @@ const Login = () => {
             <div className="auth-nav-top">
                 <Link to="/" className="back-link">
                     <ArrowLeft size={18} />
-                    <span>Back to Home</span>
+                    <span>{t('common.back')}</span>
                 </Link>
             </div>
             <div className="auth-form-header">
-                <h2 className="auth-form-title">Welcome Back</h2>
-                <p className="auth-form-subtitle">Login to your BuyLocal account</p>
+                <h2 className="auth-form-title">{t('auth.welcomeBack')}</h2>
+                <p className="auth-form-subtitle">{t('auth.loginToContinue')}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="auth-form-refined">
                 <div className="auth-input-refined">
                     <input
                         type="email"
-                        placeholder="Email Address"
+                        placeholder={t('auth.email')}
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -81,7 +83,7 @@ const Login = () => {
                 <div className="auth-input-refined">
                     <input
                         type="password"
-                        placeholder="Password"
+                        placeholder={t('auth.password')}
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -89,13 +91,13 @@ const Login = () => {
                 </div>
 
                 <div className="forgot-password-link-refined">
-                    <Link to="/forgot-password">Forgot Password?</Link>
+                    <Link to="/forgot-password">{t('auth.forgotPassword')}</Link>
                 </div>
 
                 {error && <p className="auth-error-refined">{error}</p>}
 
                 <button type="submit" className="auth-submit-refined" disabled={loading}>
-                    {loading ? 'Logging in...' : 'Log In'}
+                    {loading ? t('common.loading') : t('nav.login')}
                 </button>
 
                 <div className="auth-divider">
@@ -114,7 +116,7 @@ const Login = () => {
             </form>
 
             <div className="auth-switch-refined">
-                Don't have an account? <Link to="/signup">Sign Up</Link>
+                {t('auth.dontHaveAccount')} <Link to="/signup">{t('nav.signUp')}</Link>
             </div>
 
             <style>{`

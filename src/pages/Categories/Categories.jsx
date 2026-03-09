@@ -13,8 +13,10 @@ import {
     Search
 } from 'lucide-react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Categories = () => {
+    const { t } = useTranslation();
     const { categoryName } = useParams();
     const navigate = useNavigate();
 
@@ -124,8 +126,8 @@ const Categories = () => {
             {/* Dynamic Category Banner */}
             <div className="category-banner" style={getBannerStyle(activeTab)}>
                 <div className="container banner-content">
-                    <h1>{activeTab === 'All' ? 'Explore Local Fashion' : `${activeTab}'s Collection`}</h1>
-                    <p>{activeTab === 'All' ? 'Discover unique styles near you' : `Handpicked ${activeTab.toLowerCase()} fashion from your neighborhood`}</p>
+                    <h1>{activeTab === 'All' ? t('home.exploreFashion') : `${t(`home.${activeTab.toLowerCase()}`)}${t('home.collection')}`}</h1>
+                    <p>{activeTab === 'All' ? t('home.discoverUnique') : `${t('home.handpicked')} ${t(`home.${activeTab.toLowerCase()}`)} ${t('home.fashionNeighborhood')}`}</p>
                 </div>
             </div>
 
@@ -139,7 +141,7 @@ const Categories = () => {
                                 className={`capsule-tab-btn ${activeTab === cat ? 'active' : ''}`}
                                 onClick={() => handleTabClick(cat)}
                             >
-                                {cat}
+                                {t(`home.${cat.toLowerCase()}`)}
                             </button>
                         ))}
                     </div>
@@ -165,17 +167,17 @@ const Categories = () => {
                                         <Clock size={16} color="white" />
                                     </div>
                                 </div>
-                                <h2>New styles coming soon</h2>
+                                <h2>{t('home.comingSoon')}</h2>
                                 <p>
-                                    Local stores are adding products for {activeTab}. <br />
-                                    Check back in a few days or explore other categories.
+                                    {t('home.localStoresAdding')} {t(`home.${activeTab.toLowerCase()}`)}. <br />
+                                    {t('home.checkBack')}
                                 </p>
                                 {activeTab !== 'All' && (
                                     <button
                                         className="browse-alt-btn"
                                         onClick={() => handleTabClick('All')}
                                     >
-                                        BROWSE ALL COLLECTIONS <ArrowRight size={18} />
+                                        {t('home.browseAllCollections')} <ArrowRight size={18} />
                                     </button>
                                 )}
                             </div>
@@ -188,8 +190,8 @@ const Categories = () => {
                             {/* Popular Local Stores */}
                             <section className="stores-section">
                                 <div className="section-header">
-                                    <h2>Popular Local Stores</h2>
-                                    <Link to="/stores" className="see-all">See all</Link>
+                                    <h2>{t('home.popularLocalStores')}</h2>
+                                    <Link to="/stores" className="see-all">{t('home.seeAll')}</Link>
                                 </div>
                                 <div className="stores-grid">
                                     {stores.map(store => (
@@ -201,7 +203,7 @@ const Categories = () => {
                                             <div className="store-info-mini">
                                                 <h3>{store.name}</h3>
                                                 {store.distance !== Infinity && (
-                                                    <span className="distance-tag">{store.distance.toFixed(1)} km away</span>
+                                                    <span className="distance-tag">{store.distance.toFixed(1)} {t('product.kmAway')}</span>
                                                 )}
                                             </div>
                                         </Link>
@@ -212,8 +214,8 @@ const Categories = () => {
                             {/* Trending Near You */}
                             <section className="trending-section">
                                 <div className="section-header">
-                                    <h2>Trending Near You</h2>
-                                    <Link to="/trending" className="see-all">View All</Link>
+                                    <h2>{t('home.trendingNearYou')}</h2>
+                                    <Link to="/trending" className="see-all">{t('home.seeAll')}</Link>
                                 </div>
                                 <div className="products-grid">
                                     {products.slice(0, 4).map(product => (

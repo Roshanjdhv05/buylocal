@@ -4,8 +4,10 @@ import { useCart } from '../context/CartContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 const ProductCard = ({ product }) => {
+  const { t } = useTranslation();
   const { addToCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -190,7 +192,7 @@ const ProductCard = ({ product }) => {
             </span>
           )}
           {product.distance && product.distance !== Infinity && (
-            <span className="store-dist">• {product.distance.toFixed(1)}km away</span>
+            <span className="store-dist">• {product.distance.toFixed(1)}{t('product.kmAway')}</span>
           )}
         </div>
 
@@ -202,7 +204,7 @@ const ProductCard = ({ product }) => {
         </div>
 
         <button className="btn-add-cart" onClick={handleAddToCart}>
-          <ShoppingCart size={16} /> Add to Cart
+          <ShoppingCart size={16} /> {t('product.addToCart')}
         </button>
       </div>
 

@@ -5,8 +5,10 @@ import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabase';
 import Navbar from '../../components/Navbar';
 import { ShoppingBag, Trash2, Plus, Minus, CreditCard, MapPin, Phone } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Cart = () => {
+    const { t } = useTranslation();
     const { cart, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
     const { user, profile } = useAuth();
     const navigate = useNavigate();
@@ -96,14 +98,14 @@ const Cart = () => {
                 <div className="cart-grid">
                     <section className="cart-items-section glass-card">
                         <div className="section-header">
-                            <h2><ShoppingBag size={24} /> Your Cart</h2>
-                            <span>{cart.length} Store(s)</span>
+                            <h2><ShoppingBag size={24} /> {t('cart.title')}</h2>
+                            <span>{cart.length} {t('cart.storesCount')}</span>
                         </div>
 
                         {cart.length === 0 ? (
                             <div className="empty-cart">
-                                <p>Your cart is empty.</p>
-                                <Link to="/" className="btn-primary">Browse Products</Link>
+                                <p>{t('cart.empty')}</p>
+                                <Link to="/" className="btn-primary">{t('cart.browseProducts')}</Link>
                             </div>
                         ) : (
                             <div className="items-list">
@@ -136,28 +138,28 @@ const Cart = () => {
                     {cart.length > 0 && (
                         <section className="checkout-section">
                             <div className="summary-card glass-card">
-                                <h3>Order Summary</h3>
+                                <h3>{t('cart.orderSummary')}</h3>
                                 <div className="summary-row">
-                                    <span>Subtotal</span>
+                                    <span>{t('cart.subtotal')}</span>
                                     <span>₹{cartTotal}</span>
                                 </div>
                                 <div className="summary-row">
-                                    <span>Delivery</span>
+                                    <span>{t('cart.delivery')}</span>
                                     {deliveryCharges > 0 ? (
                                         <span>₹{deliveryCharges}</span>
                                     ) : (
-                                        <span className="free">FREE</span>
+                                        <span className="free">{t('cart.free')}</span>
                                     )}
                                 </div>
                                 <hr />
                                 <div className="summary-row total">
-                                    <span>Total</span>
+                                    <span>{t('cart.total')}</span>
                                     <span>₹{finalTotal}</span>
                                 </div>
 
                                 <form onSubmit={handleCheckout} className="checkout-form">
                                     <div className="input-group">
-                                        <label><Phone size={16} /> Contact Number</label>
+                                        <label><Phone size={16} /> {t('cart.contact')}</label>
                                         <input
                                             type="text"
                                             required
@@ -167,26 +169,26 @@ const Cart = () => {
                                     </div>
 
                                     <div className="options-group">
-                                        <label>Delivery Method</label>
+                                        <label>{t('cart.deliveryMethod')}</label>
                                         <div className="selection-grid">
                                             <div
                                                 className={`option-card ${orderForm.delivery_type === 'Delivery' ? 'active' : ''}`}
                                                 onClick={() => setOrderForm({ ...orderForm, delivery_type: 'Delivery' })}
                                             >
-                                                Home Delivery
+                                                {t('cart.homeDelivery')}
                                             </div>
                                             <div
                                                 className={`option-card self-pick-card ${orderForm.delivery_type === 'Self-pick' ? 'active glow' : ''}`}
                                                 onClick={() => setOrderForm({ ...orderForm, delivery_type: 'Self-pick' })}
                                             >
-                                                <strong>Self pick</strong>
-                                                <p className="option-desc">Buyer can get his order by visiting the store</p>
+                                                <strong>{t('cart.selfPick')}</strong>
+                                                <p className="option-desc">{t('cart.selfPickDesc')}</p>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="options-group">
-                                        <label>Payment Method</label>
+                                        <label>{t('cart.paymentMethod')}</label>
                                         <div className="selection-grid single-option">
                                             <div
                                                 className="option-card active"
@@ -198,7 +200,7 @@ const Cart = () => {
 
                                     {orderForm.delivery_type === 'Delivery' && (
                                         <div className="input-group">
-                                            <label><MapPin size={16} /> Shipping Address</label>
+                                            <label><MapPin size={16} /> {t('cart.address')}</label>
                                             <textarea
                                                 required
                                                 value={orderForm.shipping_address}
@@ -207,7 +209,7 @@ const Cart = () => {
                                         </div>
                                     )}
                                     <button type="submit" className="btn-primary checkout-btn" disabled={loading}>
-                                        {loading ? 'Processing...' : `Place Order (₹${cartTotal})`}
+                                        {loading ? t('cart.processing') : `${t('cart.placeOrder')} (₹${cartTotal})`}
                                         {!loading && <CreditCard size={18} />}
                                     </button>
                                 </form>

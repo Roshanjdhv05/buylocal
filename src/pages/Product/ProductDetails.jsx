@@ -13,8 +13,10 @@ import { useProduct } from '../../hooks/useProduct';
 import ProductSkeleton from '../../components/ProductSkeleton';
 import ProductNotFound from './ProductNotFound';
 import { addToRecentlyViewed } from '../../utils/recentlyViewed';
+import { useTranslation } from 'react-i18next';
 
 const ProductDetails = () => {
+    const { t } = useTranslation();
     const { productId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -136,7 +138,7 @@ const ProductDetails = () => {
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
         if (!user) return navigate('/login', { state: { from: location } });
-        if (!reviewForm.content.trim()) return alert('Please write something');
+        if (!reviewForm.content.trim()) return alert(t('common.error'));
 
         setSubmittingReview(true);
         try {
@@ -188,8 +190,8 @@ const ProductDetails = () => {
     if (error || !product) return (
         <div className="error-page-refined">
             <div className="container center-vh">
-                <h2>Product Not Found</h2>
-                <button onClick={() => navigate('/')} className="btn-primary-purple">Go Home</button>
+                <h2>{t('product.notFound')}</h2>
+                <button onClick={() => navigate('/')} className="btn-primary-purple">{t('common.back')}</button>
             </div>
         </div>
     );
@@ -220,7 +222,7 @@ const ProductDetails = () => {
                             <div className="image-viewport">
                                 <img src={images[selectedImageIndex]} alt={product.name} />
                                 <div className="hero-top-badges">
-                                    <div className="badge-fast">FAST DELIVERY</div>
+                                    <div className="badge-fast">{t('product.fastDelivery')}</div>
                                     <button
                                         className={`btn-wishlist-circle ${isLiked ? 'active' : ''}`}
                                         onClick={handleToggleWishlist}
@@ -268,7 +270,7 @@ const ProductDetails = () => {
                             </div>
 
                             <div className="vendor-link">
-                                Sold by <Link to={`/${encodeURIComponent(store?.name)}`}>{store?.name || 'Local Seller'}</Link>
+                                {t('product.soldBy')} <Link to={`/${encodeURIComponent(store?.name)}`}>{store?.name || 'Local Seller'}</Link>
 
                             </div>
 
@@ -278,11 +280,11 @@ const ProductDetails = () => {
                                     {product.mrp && (
                                         <div className="mrp-row">
                                             <span className="mrp-old">₹{product.mrp}</span>
-                                            <span className="discount-tag">{discount}% OFF</span>
+                                            <span className="discount-tag">{discount}% {t('common.off')}</span>
                                         </div>
                                     )}
                                 </div>
-                                <p className="tax-label">inclusive of all taxes</p>
+                                <p className="tax-label">{t('product.deliveryTaxes')}</p>
 
                                 <div className="desktop-actions desktop-only">
                                     <button className="btn-solid-purple buy-now-btn" onClick={() => {
@@ -290,13 +292,13 @@ const ProductDetails = () => {
                                         addToCart(product);
                                         navigate('/cart');
                                     }}>
-                                        Buy Now
+                                        {t('product.buyNow')}
                                     </button>
                                     <button className="btn-outline-purple add-cart-btn" onClick={() => {
                                         if (!user) return navigate('/login', { state: { from: location } });
                                         addToCart(product);
                                     }}>
-                                        <ShoppingCart size={20} /> Add to Cart
+                                        <ShoppingCart size={20} /> {t('product.addToCart')}
                                     </button>
                                 </div>
                             </div>
@@ -305,27 +307,27 @@ const ProductDetails = () => {
                         <section className="service-features-grid">
                             <div className="feature-col">
                                 <Truck size={20} color="#7c3aed" />
-                                <span className="feat-label">FAST</span>
+                                <span className="feat-label">{t('product.fastDelivery').split(' ')[0]}</span>
                             </div>
                             <div className="feature-col-divider"></div>
                             <div className="feature-col">
                                 <ShieldCheck size={20} color="#7c3aed" />
-                                <span className="feat-label">WARRANTY</span>
+                                <span className="feat-label">{t('product.warranty')}</span>
                             </div>
                             <div className="feature-col-divider"></div>
                             <div className="feature-col">
                                 <RefreshCcw size={20} color="#7c3aed" />
-                                <span className="feat-label">7D RETURNS</span>
+                                <span className="feat-label">{t('product.returns')}</span>
                             </div>
                         </section>
 
                         <section className="description-section">
-                            <h3 className="sub-title">Product Description</h3>
+                            <h3 className="sub-title">{t('product.descriptionTitle')}</h3>
                             <p className={`desc-text ${descExpanded ? 'expanded' : ''}`}>
                                 {product.description || "No detailed description provided for this premium local product. Crafted with excellence and available only on BuyLocal."}
                             </p>
                             <button className="read-more-btn" onClick={() => setDescExpanded(!descExpanded)}>
-                                {descExpanded ? 'Show less' : 'Read full description'}
+                                {descExpanded ? t('product.showLess') : t('product.readFull')}
                             </button>
                         </section>
 
@@ -340,11 +342,11 @@ const ProductDetails = () => {
                                     <div className="store-meta-items">
                                         <div className="meta-item">
                                             <MapPin size={14} color="#94a3b8" />
-                                            <span>0.4 km away</span>
+                                            <span>0.4 {t('product.kmAway')}</span>
                                         </div>
                                         <div className="meta-item">
                                             <Clock size={14} color="#94a3b8" />
-                                            <span>30 min delivery</span>
+                                            <span>30 {t('product.minDelivery')}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -356,7 +358,7 @@ const ProductDetails = () => {
                         <section className="unified-reviews-luxury">
                             <div className="reviews-summary-row">
                                 <div className="summary-col">
-                                    <h4>Customer Reviews</h4>
+                                    <h4>{t('product.customerReviews')}</h4>
                                     <div className="avg-big-row">
                                         <span className="big-num">{avgRating}</span>
                                         <div className="stars-stat-col">
@@ -365,14 +367,14 @@ const ProductDetails = () => {
                                                     <Star key={i} size={14} fill={i <= Math.round(avgRating) ? "#22c55e" : "none"} color="#22c55e" />
                                                 ))}
                                             </div>
-                                            <span className="count-label">{reviews.length} ratings</span>
+                                            <span className="count-label">{reviews.length} {t('product.reviews').toLowerCase()}</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="luxury-review-post-card">
-                                <h5>Write a Review</h5>
+                                <h5>{t('product.writeReview')}</h5>
                                 <form onSubmit={handleReviewSubmit}>
                                     <div className="star-input-row">
                                         {[1, 2, 3, 4, 5].map(s => (
@@ -382,14 +384,14 @@ const ProductDetails = () => {
                                         ))}
                                     </div>
                                     <textarea
-                                        placeholder="Share your experience with this product..."
+                                        placeholder={t('product.shareExperience')}
                                         value={reviewForm.content}
                                         onChange={e => setReviewForm({ ...reviewForm, content: e.target.value })}
                                     />
                                     <div className="media-upload-refined">
                                         <label className="media-drop-zone">
                                             <Camera size={20} />
-                                            <span>Add Photos</span>
+                                            <span>{t('product.addPhotos')}</span>
                                             <input type="file" multiple accept="image/*" hidden onChange={handleMediaChange} />
                                         </label>
                                         <div className="previews-strip">
@@ -399,14 +401,14 @@ const ProductDetails = () => {
                                         </div>
                                     </div>
                                     <button type="submit" className="btn-post-luxury" disabled={submittingReview}>
-                                        {submittingReview ? 'Posting...' : 'Post Review'}
+                                        {submittingReview ? t('product.posting') : t('product.postReview')}
                                     </button>
                                 </form>
                             </div>
 
                             <div className="luxury-reviews-list">
                                 {reviews.length === 0 ? (
-                                    <div className="empty-reviews">Be the first to review this product!</div>
+                                    <div className="empty-reviews">{t('product.firstReview')}</div>
                                 ) : (
                                     reviews.map(review => (
                                         <div key={review.id} className="review-card-modern">
@@ -415,7 +417,7 @@ const ProductDetails = () => {
                                                     {review.users?.username?.charAt(0).toUpperCase() || 'U'}
                                                 </div>
                                                 <div className="rev-meta">
-                                                    <div className="user-name">{review.users?.username || 'Verified Buyer'}</div>
+                                                    <div className="user-name">{review.users?.username || t('product.verifiedBuyer')}</div>
                                                     <div className="stars-mini">
                                                         {[...Array(review.rating)].map((_, i) => <Star key={i} size={12} fill="#22c55e" color="#22c55e" />)}
                                                     </div>
@@ -441,7 +443,7 @@ const ProductDetails = () => {
                 {/* RELATED PRODUCTS */}
                 {relatedProducts.length > 0 && (
                     <section className="related-section">
-                        <h3 className="section-title-alt">YOU MIGHT ALSO LIKE</h3>
+                        <h3 className="section-title-alt">{t('product.mightLike')}</h3>
                         <div className="related-grid-scroll">
                             {relatedProducts.map(p => (
                                 <div key={p.id} className="related-card-wrap">
@@ -460,14 +462,14 @@ const ProductDetails = () => {
                         if (!user) return navigate('/login', { state: { from: location } });
                         addToCart(product);
                     }}>
-                        ADD TO CART
+                        {t('product.addToCart')}
                     </button>
                     <button className="btn-solid-purple" onClick={() => {
                         if (!user) return navigate('/login', { state: { from: location } });
                         addToCart(product);
                         navigate('/cart');
                     }}>
-                        BUY NOW
+                        {t('product.buyNow')}
                     </button>
                 </div>
             </div>
