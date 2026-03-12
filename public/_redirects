@@ -1,1 +1,5 @@
+# Supabase Proxy for Auth/Cookies stability
+/api/supabase/* https://ohnumyohkpwlkcogwotj.supabase.co/auth/v1/:splat 200
+
+# SPA Routing
 /* /index.html 200

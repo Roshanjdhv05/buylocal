@@ -1,15 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_PROXY_URL?.trim() || import.meta.env.VITE_SUPABASE_URL?.trim();
+const isLocal = window.location.hostname === 'localhost';
+const supabaseUrl = isLocal 
+  ? (import.meta.env.VITE_SUPABASE_URL?.trim() || '') 
+  : '/api/supabase';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase URL or Anon Key is missing. Check your .env file.');
 } else {
-  const displayUrl = supabaseUrl.includes('supabase.co')
-    ? supabaseUrl.split('//')[1].split('.')[0]
-    : 'Proxied (' + supabaseUrl + ')';
-  console.log('Supabase Initialized with:', displayUrl);
+  console.log('Supabase Initialized with:', isLocal ? 'Direct (Local)' : 'Netlify Proxy');
 }
 
 export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
