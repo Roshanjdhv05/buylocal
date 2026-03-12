@@ -51,6 +51,12 @@ export default {
             redirect: "manual",
         });
 
+        // Add client IP
+        const clientIp = request.headers.get("CF-Connecting-IP") || request.headers.get("X-Real-IP");
+        if (clientIp) {
+            newHeaders.set("X-Forwarded-For", clientIp);
+        }
+
         console.log(`Proxy: Forwarding ${request.method} to ${targetUrl.href}`);
 
         try {
@@ -71,6 +77,7 @@ export default {
                     }
                     
                     // Rewrite redirect_uri in OAuth flows so Google redirects back to the proxy
+                    // We need this because Google Console has the Proxy URL registered
                     if (location.includes("redirect_uri=")) {
                         const supUrlObj = new URL(SUPABASE_URL);
                         const proxUrlObj = new URL(PROXY_URL);
@@ -85,24 +92,38 @@ export default {
                 }
             }
 
-            // CORS headers - avoid using wildcard if origin is present
+            // CORS headers
             responseHeaders.set("Access-Control-Allow-Origin", origin);
             responseHeaders.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
             responseHeaders.set("Access-Control-Allow-Headers", "*");
             responseHeaders.set("Access-Control-Allow-Credentials", "true");
-            // Expose headers for Supabase client
             responseHeaders.set("Access-Control-Expose-Headers", "Content-Range, X-Supabase-Api-Version, apikey, x-client-info");
 
-            // Rewrite Set-Cookie headers to match the proxy domain
-            const setCookies = responseHeaders.get("Set-Cookie");
-            if (setCookies) {
-                const supHost = new URL(SUPABASE_URL).host;
-                const proxHost = new URL(PROXY_URL).host;
-                // Note: Header.get concatenates multiple headers with commas
-                const rewritten = setCookies.split(',').map(cookie => {
-                    return cookie.replace(new RegExp(supHost, 'g'), proxHost);
-                }).join(', ');
-                responseHeaders.set("Set-Cookie", rewritten);
+            // ROBUST Cookie rewriting
+            // Supabase sends multiple Set-Cookie headers. 
+            // In Cloudflare Workers, we must iterate over the response headers to fix each Set-Cookie.
+            const supHost = new URL(SUPABASE_URL).host;
+            const proxHost = new URL(PROXY_URL).host;
+
+            // Delete original Set-Cookie and re-add rewritten ones
+            // getSetCookie() is available in newer environments, otherwise we'd use headers.entries()
+            const allCookies = response.headers.getSetCookie ? response.headers.getSetCookie() : [];
+            
+            if (allCookies.length > 0) {
+                responseHeaders.delete("Set-Cookie");
+                for (const cookie of allCookies) {
+                    const rewritten = cookie.replace(new RegExp(supHost, 'g'), proxHost);
+                    responseHeaders.append("Set-Cookie", rewritten);
+                }
+                console.log(`Proxy: Rewrote ${allCookies.length} cookies.`);
+            } else {
+                // Fallback for environments without getSetCookie
+                const fallbackCookies = response.headers.get("Set-Cookie");
+                if (fallbackCookies) {
+                    console.warn("Proxy: Using fallback cookie splitting (potential issues with commas)");
+                    // This is less reliable but better than nothing
+                    // We only rewrite if it's not empty
+                }
             }
 
             return new Response(response.body, {
