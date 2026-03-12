@@ -11,7 +11,8 @@
     "signUp": "Sign Up",
     "dashboard": "Dashboard",
     "becomeSeller": "Become Seller",
-    "searchPlaceholder": "Search for local products, brands, or shops..."
+    "searchPlaceholder": "Search for local products, brands, or shops...",
+    "marketing": "Marketing"
   },
   "home": {
     "trending": "Trending Near You",
@@ -266,5 +267,37 @@
     "error": "Something went wrong",
     "save": "Save",
     "cancel": "Cancel"
+  },
+  "marketing": {
+    "title": "Campaign Management",
+    "subtitle": "Boost your store visibility by featuring on the homepage hero section.",
+    "createNew": "Create New Campaign",
+    "newHeroBanner": "New Hero Banner Campaign",
+    "bannerImage": "Banner Image",
+    "uploadPlaceholder": "Click to upload banner",
+    "recommendedSize": "Recommended: 1600 x 600px",
+    "duration": "Campaign Duration",
+    "days": "{{count}} Days",
+    "continuous": "Continuous",
+    "continuousDesc": "Continuous campaigns run until you manually stop them.",
+    "startDate": "Start Date",
+    "today": "Today",
+    "estViews": "Estimated Views",
+    "viewsPerWeek": "5,000+ per week",
+    "placement": "Placement",
+    "homepageHero": "Homepage Hero",
+    "launch": "Launch Campaign",
+    "creating": "Creating...",
+    "active": "ACTIVE",
+    "inactive": "INACTIVE",
+    "started": "Started",
+    "ends": "Ends",
+    "stop": "Stop",
+    "resume": "Resume",
+    "noActiveTitle": "No active campaigns",
+    "noActiveDesc": "Create your first campaign to boost your store's visibility on the homepage.",
+    "featuredStore": "FEATURED STORE",
+    "boostTitle": "Boost Sales!",
+    "boostDesc": "Run a hero banner campaign to increase your store visibility on the homepage."
   }
 }

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase, withTimeout } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import { useTranslation } from 'react-i18next';
 import AddProduct from './AddProduct';
 import {
     Plus, Edit2, Trash2, Package, ShoppingCart,
@@ -10,12 +11,14 @@ import {
     Upload, X, Image as ImageIcon, Settings,
     Archive, DollarSign, LogOut, User, Home,
     LayoutDashboard, BarChart, ShoppingBag, PlusCircle, ExternalLink, Edit, Clock, Truck,
-    Filter, MoreHorizontal, ChevronLeft, Search, MapPin, Zap, Menu, BookOpen
+    Filter, MoreHorizontal, ChevronLeft, Search, MapPin, Zap, Menu, BookOpen,
+    Megaphone, Calendar, Play, Pause, Trash
 } from 'lucide-react';
 import './DashboardStyles.css';
 import InvoiceModal from '../../components/InvoiceModal';
 
 const SellerDashboard = () => {
+    const { t } = useTranslation();
     const { profile } = useAuth();
     const { cartCount } = useCart();
     const navigate = useNavigate();
@@ -42,6 +45,16 @@ const SellerDashboard = () => {
     const [legacyImageUploading, setLegacyImageUploading] = useState(false);
     const [profilePictureUploading, setProfilePictureUploading] = useState(false);
     const [newSectionName, setNewSectionName] = useState('');
+    const [campaigns, setCampaigns] = useState([]);
+    const [isCreatingCampaign, setIsCreatingCampaign] = useState(false);
+    const [campaignFormData, setCampaignFormData] = useState({
+        banner_image: null,
+        mobile_banner_image: null,
+        duration_days: '7',
+        continuous: false
+    });
+    const [campaignPreview, setCampaignPreview] = useState(null);
+    const [campaignMobilePreview, setCampaignMobilePreview] = useState(null);
 
     // src/pages/Seller/Dashboard.jsx - REMOVED
 
@@ -150,6 +163,18 @@ const SellerDashboard = () => {
                     }
                 } catch (secErr) {
                     console.warn('Dashboard: Sections timed out or failed:', secErr.message);
+                }
+
+                // Fetch Campaigns
+                try {
+                    const { data: campaignsData } = await withTimeout(supabase
+                        .from('banner_campaigns')
+                        .select('*')
+                        .eq('store_id', storeData.id)
+                        .order('created_at', { ascending: false }));
+                    setCampaigns(campaignsData || []);
+                } catch (err) {
+                    console.warn('Dashboard: Campaigns fetch failed:', err.message);
                 }
             }
         } catch (error) {
@@ -521,6 +546,127 @@ const SellerDashboard = () => {
         }
     };
 
+    const handleCampaignImageChange = (e, type = 'desktop') => {
+        const file = e.target.files[0];
+        if (file) {
+            if (type === 'desktop') {
+                setCampaignFormData(prev => ({ ...prev, banner_image: file }));
+                setCampaignPreview(URL.createObjectURL(file));
+            } else {
+                setCampaignFormData(prev => ({ ...prev, mobile_banner_image: file }));
+                setCampaignMobilePreview(URL.createObjectURL(file));
+            }
+        }
+    };
+
+    const handleCreateCampaign = async (e) => {
+        e.preventDefault();
+        if (!campaignFormData.banner_image || !store) return;
+
+        setUploading(true);
+        try {
+            // 1. Upload Desktop Banner
+            const dFile = campaignFormData.banner_image;
+            const dExt = dFile.name.split('.').pop();
+            const dName = `campaign_desktop_${Math.random()}.${dExt}`;
+            const dPath = `campaigns/${profile.id}/${dName}`;
+
+            const { error: dUploadError } = await supabase.storage
+                .from('store-gallery')
+                .upload(dPath, dFile);
+
+            if (dUploadError) throw dUploadError;
+
+            const { data: { publicUrl: desktopUrl } } = supabase.storage
+                .from('store-gallery')
+                .getPublicUrl(dPath);
+
+            // 2. Upload Mobile Banner (Optional)
+            let mobileUrl = null;
+            if (campaignFormData.mobile_banner_image) {
+                const mFile = campaignFormData.mobile_banner_image;
+                const mExt = mFile.name.split('.').pop();
+                const mName = `campaign_mobile_${Math.random()}.${mExt}`;
+                const mPath = `campaigns/${profile.id}/${mName}`;
+
+                const { error: mUploadError } = await supabase.storage
+                    .from('store-gallery')
+                    .upload(mPath, mFile);
+
+                if (mUploadError) throw mUploadError;
+
+                const { data: { publicUrl: mUrl } } = supabase.storage
+                    .from('store-gallery')
+                    .getPublicUrl(mPath);
+                
+                mobileUrl = mUrl;
+            }
+
+            // 3. Calculate end date
+            let endDate = null;
+            if (!campaignFormData.continuous) {
+                const days = parseInt(campaignFormData.duration_days);
+                endDate = new Date();
+                endDate.setDate(endDate.getDate() + days);
+            }
+
+            // 4. Create Record
+            const { data, error } = await supabase
+                .from('banner_campaigns')
+                .insert([{
+                    store_id: store.id,
+                    banner_url: desktopUrl,
+                    mobile_banner_url: mobileUrl,
+                    end_date: endDate,
+                    is_active: true
+                }])
+                .select();
+
+            if (error) throw error;
+
+            setCampaigns([data[0], ...campaigns]);
+            setIsCreatingCampaign(false);
+            setCampaignFormData({ banner_image: null, mobile_banner_image: null, duration_days: '7', continuous: false });
+            setCampaignPreview(null);
+            setCampaignMobilePreview(null);
+            setCampaignPreview(null);
+            alert('Campaign created successfully! It is now active on the home page.');
+        } catch (error) {
+            alert('Error creating campaign: ' + error.message);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const toggleCampaignStatus = async (campaign) => {
+        try {
+            const { error } = await supabase
+                .from('banner_campaigns')
+                .update({ is_active: !campaign.is_active })
+                .eq('id', campaign.id);
+
+            if (error) throw error;
+            setCampaigns(campaigns.map(c => c.id === campaign.id ? { ...c, is_active: !c.is_active } : c));
+        } catch (error) {
+            alert(error.message);
+        }
+    };
+
+    const deleteCampaign = async (campaignId) => {
+        if (!window.confirm('Are you sure you want to delete this campaign?')) return;
+        try {
+            const { error } = await supabase
+                .from('banner_campaigns')
+                .delete()
+                .eq('id', campaignId);
+
+            if (error) throw error;
+            setCampaigns(campaigns.filter(c => c.id !== campaignId));
+        } catch (error) {
+            alert(error.message);
+        }
+    };
+
     const handleCreateSection = async () => {
         if (!newSectionName.trim() || !store) return;
         try {
@@ -622,6 +768,9 @@ const SellerDashboard = () => {
                     </button>
                     <button onClick={() => { setActiveTab('orders'); setIsMobileMenuOpen(false); }} className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}>
                         <ShoppingCart size={18} /> <span>Orders</span>
+                    </button>
+                    <button onClick={() => { setActiveTab('marketing'); setIsMobileMenuOpen(false); }} className={`nav-item ${activeTab === 'marketing' ? 'active' : ''}`}>
+                        <Megaphone size={18} /> <span>{t('nav.marketing')}</span>
                     </button>
                     <button onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}>
                         <Settings size={18} /> <span>Store Settings</span>
@@ -833,9 +982,9 @@ const SellerDashboard = () => {
                                         </div>
 
                                         <div className="boost-card">
-                                            <h3 className="boost-title">Boost Sales!</h3>
-                                            <p className="boost-desc">Run a weekend sale campaign to increase your product visibility by up to 40%.</p>
-                                            <button className="btn-boost">Create Campaign</button>
+                                            <h3 className="boost-title">{t('marketing.boostTitle')}</h3>
+                                            <p className="boost-desc">{t('marketing.boostDesc')}</p>
+                                            <button className="btn-boost" onClick={() => setActiveTab('marketing')}>{t('marketing.createNew')}</button>
                                         </div>
                                     </aside>
                                 </div>
@@ -1083,6 +1232,161 @@ const SellerDashboard = () => {
                             </div>
                         )}
 
+                        {activeTab === 'marketing' && (
+                            <div className="marketing-tab-pro">
+                                <div className="orders-page-header">
+                                    <div className="header-text">
+                                        <h2>{t('marketing.title')}</h2>
+                                        <p style={{ color: 'var(--text-muted)' }}>{t('marketing.subtitle')}</p>
+                                    </div>
+                                    <button className="btn-save-all" onClick={() => setIsCreatingCampaign(true)}>
+                                        <PlusCircle size={18} fill="white" style={{ marginRight: '8px' }} /> {t('marketing.createNew')}
+                                    </button>
+                                </div>
+
+                                {isCreatingCampaign && (
+                                    <div className="settings-card-pro campaign-form-card">
+                                        <div className="card-header-pro">
+                                            <div className="card-icon"><Plus size={24} /></div>
+                                            <h3>{t('marketing.newHeroBanner')}</h3>
+                                            <button className="close-form-btn" onClick={() => setIsCreatingCampaign(false)}><X size={20} /></button>
+                                        </div>
+
+                                        <form onSubmit={handleCreateCampaign} className="campaign-form">
+                                            <div className="form-sections-grid">
+                                                <div className="form-full-width">
+                                                    <div className="banner-upload-flex-pro">
+                                                        <div className="settings-input-group flex-1">
+                                                            <label className="settings-label">Laptop Screen Banner (Desktop)</label>
+                                                            <label className="campaign-upload-zone-pro">
+                                                                {campaignPreview ? (
+                                                                    <img src={campaignPreview} alt="Desktop Preview" className="campaign-preview-img-pro" />
+                                                                ) : (
+                                                                    <div className="upload-placeholder">
+                                                                        <ImageIcon size={32} />
+                                                                        <p>{t('marketing.uploadPlaceholder')}</p>
+                                                                        <span className="dimension-label">1600 x 600px</span>
+                                                                    </div>
+                                                                )}
+                                                                <input type="file" hidden accept="image/*" onChange={(e) => handleCampaignImageChange(e, 'desktop')} required={!campaignPreview} />
+                                                            </label>
+                                                        </div>
+
+                                                        <div className="settings-input-group flex-1">
+                                                            <label className="settings-label">Phone Screen Banner (Mobile)</label>
+                                                            <label className="campaign-upload-zone-pro mobile-zone">
+                                                                {campaignMobilePreview ? (
+                                                                    <img src={campaignMobilePreview} alt="Mobile Preview" className="campaign-preview-img-pro" />
+                                                                ) : (
+                                                                    <div className="upload-placeholder">
+                                                                        <ShoppingBag size={32} />
+                                                                        <p>{t('marketing.uploadPlaceholder')}</p>
+                                                                        <span className="dimension-label">800 x 1200px (Vertical)</span>
+                                                                    </div>
+                                                                )}
+                                                                <input type="file" hidden accept="image/*" onChange={(e) => handleCampaignImageChange(e, 'mobile')} />
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="form-right">
+                                                    <div className="settings-input-group">
+                                                        <label className="settings-label">{t('marketing.duration')}</label>
+                                                        <div className="duration-options">
+                                                            <label className={`duration-chip ${campaignFormData.duration_days === '7' ? 'active' : ''}`}>
+                                                                <input type="radio" value="7" checked={campaignFormData.duration_days === '7'} onChange={(e) => setCampaignFormData({...campaignFormData, duration_days: e.target.value, continuous: false})} hidden />
+                                                                {t('marketing.days', { count: 7 })}
+                                                            </label>
+                                                            <label className={`duration-chip ${campaignFormData.duration_days === '15' ? 'active' : ''}`}>
+                                                                <input type="radio" value="15" checked={campaignFormData.duration_days === '15'} onChange={(e) => setCampaignFormData({...campaignFormData, duration_days: e.target.value, continuous: false})} hidden />
+                                                                {t('marketing.days', { count: 15 })}
+                                                            </label>
+                                                            <label className={`duration-chip ${campaignFormData.duration_days === '30' ? 'active' : ''}`}>
+                                                                <input type="radio" value="30" checked={campaignFormData.duration_days === '30'} onChange={(e) => setCampaignFormData({...campaignFormData, duration_days: e.target.value, continuous: false})} hidden />
+                                                                {t('marketing.days', { count: 30 })}
+                                                            </label>
+                                                            <label className={`duration-chip ${campaignFormData.continuous ? 'active' : ''}`}>
+                                                                <input type="checkbox" checked={campaignFormData.continuous} onChange={(e) => setCampaignFormData({...campaignFormData, continuous: e.target.checked, duration_days: e.target.checked ? null : '7'})} hidden />
+                                                                <Zap size={14} /> {t('marketing.continuous')}
+                                                            </label>
+                                                        </div>
+                                                        <p className="field-help">{t('marketing.continuousDesc')}</p>
+                                                    </div>
+
+                                                    <div className="campaign-summary-box">
+                                                        <div className="summary-item">
+                                                            <span>{t('marketing.startDate')}</span>
+                                                            <strong>{t('marketing.today')}</strong>
+                                                        </div>
+                                                        <div className="summary-item">
+                                                            <span>{t('marketing.estViews')}</span>
+                                                            <strong>{t('marketing.viewsPerWeek')}</strong>
+                                                        </div>
+                                                        <div className="summary-item total">
+                                                            <span>{t('marketing.placement')}</span>
+                                                            <strong>{t('marketing.homepageHero')}</strong>
+                                                        </div>
+                                                    </div>
+
+                                                    <button type="submit" className="btn-action-primary" disabled={uploading}>
+                                                        {uploading ? t('marketing.creating') : t('marketing.launch')}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                )}
+
+                                <div className="campaigns-grid">
+                                    {campaigns.length > 0 ? campaigns.map(campaign => (
+                                        <div key={campaign.id} className="settings-card-pro campaign-item-card">
+                                            <div className="campaign-banner-view">
+                                                <img src={campaign.banner_url} alt="Campaign" />
+                                                <div className={`campaign-status-overlay ${campaign.is_active ? 'active' : 'inactive'}`}>
+                                                    {campaign.is_active ? t('marketing.active') : t('marketing.inactive')}
+                                                </div>
+                                            </div>
+                                            <div className="campaign-meta-footer">
+                                                <div className="meta-left">
+                                                    <div className="meta-item">
+                                                        <Calendar size={14} /> 
+                                                        <span>{t('marketing.started')} {new Date(campaign.start_date).toLocaleDateString()}</span>
+                                                    </div>
+                                                    {campaign.end_date && (
+                                                        <div className="meta-item">
+                                                            <Clock size={14} />
+                                                            <span>{t('marketing.ends')} {new Date(campaign.end_date).toLocaleDateString()}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="meta-actions">
+                                                    <button 
+                                                        className={`status-toggle-btn ${campaign.is_active ? 'stop' : 'start'}`}
+                                                        onClick={() => toggleCampaignStatus(campaign)}
+                                                    >
+                                                        {campaign.is_active ? <Pause size={16} /> : <Play size={16} />}
+                                                        {campaign.is_active ? t('marketing.stop') : t('marketing.resume')}
+                                                    </button>
+                                                    <button className="delete-campaign-btn" onClick={() => deleteCampaign(campaign.id)}>
+                                                        <Trash size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )) : (
+                                        <div className="empty-campaigns">
+                                            <Megaphone size={48} />
+                                            <h3>{t('marketing.noActiveTitle')}</h3>
+                                            <p>{t('marketing.noActiveDesc')}</p>
+                                            <button className="btn-action-primary" style={{ width: 'auto', marginTop: '1rem' }} onClick={() => setIsCreatingCampaign(true)}>
+                                                {t('marketing.createNew')}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                         {activeTab === 'settings' && (
                             <div className="settings-tab-pro">
                                 <div className="orders-page-header">

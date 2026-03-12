@@ -6,7 +6,7 @@ import { calculateDistance } from '../../utils/distance';
 import ProductCard from '../../components/ProductCard';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import { MapPin, ArrowRight, ChevronRight, Store } from 'lucide-react';
+import { MapPin, ArrowRight, ChevronRight, Store, ChevronLeft } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getRecentlyViewed } from '../../utils/recentlyViewed';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +25,34 @@ const Home = () => {
     const { location } = useLocation();
     const [reviews, setReviews] = useState([]);
     const [activeCategory, setActiveCategory] = useState(t('home.trending'));
+    const [campaigns, setCampaigns] = useState([]);
+    const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    const handleNext = () => {
+        setCurrentBannerIndex((prev) => (prev + 1) % campaigns.length);
+    };
+
+    const handlePrev = () => {
+        setCurrentBannerIndex((prev) => (prev - 1 + campaigns.length) % campaigns.length);
+    };
+
+    useEffect(() => {
+        if (campaigns.length <= 1 || isPaused) return;
+
+        const timer = setInterval(() => {
+            handleNext();
+        }, 5000);
+
+        return () => clearInterval(timer);
+    }, [campaigns, currentBannerIndex, isPaused]);
 
     useEffect(() => {
         let mounted = true;
@@ -41,11 +69,24 @@ const Home = () => {
                 const { data: storesData } = await withTimeout(supabase.from('stores').select('*'), 30000, 'Home Fetch Stores');
                 const { data: productsData } = await withTimeout(supabase.from('products').select('*'), 30000, 'Home Fetch Products');
                 const { data: reviewsData } = await withTimeout(supabase.from('product_reviews').select('*'), 30000, 'Home Fetch Reviews');
+                
+                const { data: campaignsData } = await supabase
+                    .from('banner_campaigns')
+                    .select('*, stores(name)')
+                    .eq('is_active', true)
+                    .or(`end_date.is.null,end_date.gt.${new Date().toISOString()}`);
 
                 if (mounted) {
                     setStores(storesData || []);
                     setProducts(productsData || []);
                     setReviews(reviewsData || []);
+                    
+                    const sortedCampaigns = (campaignsData || []).sort((a, b) => {
+                        if (!a.store_id && b.store_id) return -1;
+                        if (a.store_id && !b.store_id) return 1;
+                        return 0;
+                    });
+                    setCampaigns(sortedCampaigns);
                 }
             } catch (e) {
                 console.error('Fetch error:', e.message);
@@ -229,16 +270,85 @@ const Home = () => {
         <div className="home-page">
             <Navbar />
 
-            {/* Hero Section */}
+            {/* Hero Section / Banner Carousel */}
             <header className="hero-section">
-                <div className="container hero-container">
-                    <div className="hero-content">
-                        <span className="hero-badge">LIMITED OFFER</span>
-                        <h1>{t('home.heroTitle').split('<br />').map((text, i) => <React.Fragment key={i}>{text}{i === 0 && <br />}</React.Fragment>)}</h1>
-                        <p>{t('home.heroSubtitle')}</p>
-                        <Link to="/stores" className="btn-hero">{t('home.shopNow')}</Link>
+                {campaigns.length > 0 ? (
+                    <div className="banner-carousel">
+                        <div 
+                            className="banner-track"
+                            style={{ 
+                                transform: `translateX(-${currentBannerIndex * 100}%)`,
+                                transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                            }}
+                        >
+                            {campaigns.map((campaign, index) => (
+                                <div 
+                                    key={campaign.id} 
+                                    className={`banner-slide ${index === currentBannerIndex ? 'active' : ''} ${campaign.store_id ? 'is-seller' : ''}`}
+                                    style={{ 
+                                        backgroundImage: `url(${isMobile && campaign.mobile_banner_url ? campaign.mobile_banner_url : campaign.banner_url})` 
+                                    }}
+                                >
+                                    <Link 
+                                        to={campaign.store_id ? `/${encodeURIComponent(campaign.stores?.name)}` : '/stores'}
+                                        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1, cursor: 'pointer' }}
+                                    />
+                                    {!campaign.store_id && (
+                                        <div className="container hero-container" style={{ position: 'relative', zIndex: 2, pointerEvents: 'none' }}>
+                                            <div className="hero-content">
+                                                <span className="hero-badge">LIMITED OFFER</span>
+                                                <h1>{t('home.heroTitle').split('<br />').map((text, i) => <React.Fragment key={i}>{text}{i === 0 && <br />}</React.Fragment>)}</h1>
+                                                <p>{t('home.heroSubtitle')}</p>
+                                                <Link to="/stores" className="btn-hero" style={{ pointerEvents: 'auto' }}>{t('home.shopNow')}</Link>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                        
+                        {campaigns.length > 1 && (
+                            <>
+                                <button 
+                                    className="carousel-nav-btn prev" 
+                                    onClick={handlePrev}
+                                    onMouseEnter={() => setIsPaused(true)}
+                                    onMouseLeave={() => setIsPaused(false)}
+                                >
+                                    <ChevronLeft size={24} />
+                                </button>
+                                <button 
+                                    className="carousel-nav-btn next" 
+                                    onClick={handleNext}
+                                    onMouseEnter={() => setIsPaused(true)}
+                                    onMouseLeave={() => setIsPaused(false)}
+                                >
+                                    <ChevronRight size={24} />
+                                </button>
+                                <div className="carousel-indicators">
+                                    {campaigns.map((_, index) => (
+                                        <button 
+                                            key={index} 
+                                            className={`indicator ${index === currentBannerIndex ? 'active' : ''}`}
+                                            onClick={() => setCurrentBannerIndex(index)}
+                                        />
+                                    ))}
+                                </div>
+                            </>
+                        )}
                     </div>
-                </div>
+                ) : (
+                    <div className="default-hero">
+                        <div className="container hero-container">
+                            <div className="hero-content">
+                                <span className="hero-badge">LIMITED OFFER</span>
+                                <h1>{t('home.heroTitle').split('<br />').map((text, i) => <React.Fragment key={i}>{text}{i === 0 && <br />}</React.Fragment>)}</h1>
+                                <p>{t('home.heroSubtitle')}</p>
+                                <Link to="/stores" className="btn-hero">{t('home.shopNow')}</Link>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </header>
 
             {/* Category Navigation (Minimal Style) */}
@@ -428,19 +538,112 @@ const Home = () => {
         
         /* Hero Section */
         .hero-section {
-            background-image: url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+            height: 500px;
+            position: relative;
+            overflow: hidden;
+            background: #f1f5f9;
+        }
+        .banner-carousel {
+            height: 100%;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        .banner-track {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            will-change: transform;
+        }
+        .banner-slide {
+            flex: 0 0 100%;
+            width: 100%;
+            height: 100%;
             background-size: cover;
             background-position: center;
-            height: 500px;
             display: flex;
             align-items: center;
             position: relative;
         }
-        .hero-section::before {
+        .banner-slide:not(.is-seller)::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.4);
+        }
+        .default-hero {
+            background-image: url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+            background-size: cover;
+            background-position: center;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        .default-hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+        }
+        .carousel-indicators {
+            position: absolute;
+            bottom: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+        .carousel-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 15;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            outline: none;
+        }
+        .banner-carousel:hover .carousel-nav-btn {
+            opacity: 1;
+        }
+        .carousel-nav-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-50%) scale(1.1);
+        }
+        .carousel-nav-btn.prev { left: 2.5rem; }
+        .carousel-nav-btn.next { right: 2.5rem; }
+
+        @media (max-width: 768px) {
+            .carousel-nav-btn { display: none; }
+            .carousel-indicators { bottom: 1.5rem; }
+        }
+
+        .indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.4);
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .indicator.active {
+            background: white;
+            width: 24px;
+            border-radius: 4px;
         }
         .hero-container { position: relative; z-index: 1; }
         .hero-content { max-width: 600px; color: white; }
@@ -737,7 +940,15 @@ const Home = () => {
         }
 
         @media (max-width: 768px) {
-            .hero-content h1 { font-size: 2.5rem; }
+            .hero-section { height: 380px; }
+            .hero-content { padding: 1.5rem; }
+            .hero-content h1 { font-size: 1.85rem; line-height: 1.2; margin-bottom: 0.75rem; }
+            .hero-content p { font-size: 0.9rem; margin-bottom: 1.5rem; max-width: 240px; }
+            .btn-hero { padding: 0.6rem 1.5rem; font-size: 0.85rem; }
+            
+            .category-nav-container { margin-top: 0.5rem; }
+            .category-minimal-grid { padding: 0.75rem 0.25rem; }
+            
             .cta-content h2 { font-size: 2rem; }
             .cta-container { flex-direction: column; text-align: center; }
             .cta-buttons { justify-content: center; }
