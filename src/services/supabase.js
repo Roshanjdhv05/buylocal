@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 const isLocal = window.location.hostname === 'localhost';
 const supabaseUrl = isLocal 
   ? (import.meta.env.VITE_SUPABASE_URL?.trim() || '') 
-  : '/api/supabase';
+  : window.location.origin + '/api/supabase';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
 if (!supabaseUrl || !supabaseAnonKey) {
