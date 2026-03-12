@@ -23,8 +23,7 @@ export const AuthProvider = ({ children }) => {
             console.log('Auth: Hash:', window.location.hash);
             
             if (code) {
-                console.log('Auth: Found code in URL');
-                // alert('Auth: Found code in URL. Exchanging for session...');
+                console.log('Auth: Found code in URL. This is an OAuth redirect callback.');
             }
             if (error) {
                 console.error('Auth: Found error in URL:', error, errorDescription);
@@ -35,7 +34,7 @@ export const AuthProvider = ({ children }) => {
                 const { data: { session }, error: sessionError } = await withTimeout(supabase.auth.getSession(), 30000, 'Initial Session');
                 if (sessionError) {
                     console.error('Auth: Session exchange error:', sessionError);
-                    alert(`Session Error: ${sessionError.message}`);
+                    // alert(`Session Error: ${sessionError.message}`);
                     throw sessionError;
                 }
 
@@ -46,10 +45,9 @@ export const AuthProvider = ({ children }) => {
                         await fetchProfile(session.user.id);
                     } else {
                         console.log('Auth: No initial session.');
-                        // If we had a code but no session, something went wrong in the exchange
+                        // If we had a code but no session, it might still be processing or failed
                         if (code) {
-                            console.error('Auth: Code was present but no session was established.');
-                            alert('Authentication failed: Code was present but no session was created. Check Proxy logs.');
+                            console.log('Auth: Code present but no session yet. Listener might handle it.');
                         }
                         setUser(null);
                         setProfile(null);
@@ -57,11 +55,11 @@ export const AuthProvider = ({ children }) => {
                 }
             } catch (error) {
                 console.error('Auth initialization error:', error.message);
-                alert(`Auth Init Error: ${error.message}`);
+                // alert(`Auth Init Error: ${error.message}`);
             } finally {
                 if (mounted) {
                     setLoading(false);
-                    console.log('Auth: Initial loading finished.');
+                    console.log('Auth: Initial loading finished (from getInitialSession).');
                 }
             }
         };
@@ -91,7 +89,11 @@ export const AuthProvider = ({ children }) => {
                 setProfile(null);
             }
 
-            if (mounted) setLoading(false);
+            // ONLY set loading to false if it's NOT the initial session event without a user
+            // getInitialSession handles the primary loading state for the app start
+            if (mounted && event !== 'INITIAL_SESSION') {
+                setLoading(false);
+            }
         });
 
         return () => {

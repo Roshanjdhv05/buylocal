@@ -65,12 +65,12 @@ export default {
                 if (location) {
                     console.log(`Proxy Redirect: Original Location = ${location}`);
                     
-                    // Rewrite Supabase URL to Proxy URL
+                    // Rewrite Supabase URL to Proxy URL for internal redirects
                     if (location.includes(SUPABASE_URL)) {
                         location = location.replace(SUPABASE_URL, PROXY_URL);
                     }
                     
-                    // Rewrite redirect_uri in OAuth flows
+                    // Rewrite redirect_uri in OAuth flows so Google redirects back to the proxy
                     if (location.includes("redirect_uri=")) {
                         const supUrlObj = new URL(SUPABASE_URL);
                         const proxUrlObj = new URL(PROXY_URL);
@@ -92,6 +92,18 @@ export default {
             responseHeaders.set("Access-Control-Allow-Credentials", "true");
             // Expose headers for Supabase client
             responseHeaders.set("Access-Control-Expose-Headers", "Content-Range, X-Supabase-Api-Version, apikey, x-client-info");
+
+            // Rewrite Set-Cookie headers to match the proxy domain
+            const setCookies = responseHeaders.get("Set-Cookie");
+            if (setCookies) {
+                const supHost = new URL(SUPABASE_URL).host;
+                const proxHost = new URL(PROXY_URL).host;
+                // Note: Header.get concatenates multiple headers with commas
+                const rewritten = setCookies.split(',').map(cookie => {
+                    return cookie.replace(new RegExp(supHost, 'g'), proxHost);
+                }).join(', ');
+                responseHeaders.set("Set-Cookie", rewritten);
+            }
 
             return new Response(response.body, {
                 status: response.status,
