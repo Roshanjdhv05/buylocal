@@ -1,34 +1,31 @@
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
     const SUPABASE_URL = "https://ohnumyohkpwlkcogwotj.supabase.co";
     // We get the proxy URL from the request host to be flexible
     const protocol = event.headers['x-forwarded-proto'] || 'https';
     const PROXY_URL = `${protocol}://${event.headers.host}/api/supabase`;
 
     // Extract the path after /api/supabase/
-    // Example: /api/supabase/auth/v1/authorize -> /auth/v1/authorize
     const path = event.path.replace(/^\/api\/supabase/, "");
     const targetUrl = new URL(path, SUPABASE_URL);
     
     // Add query parameters
-    Object.keys(event.queryStringParameters).forEach(key => {
-        targetUrl.searchParams.append(key, event.queryStringParameters[key]);
-    });
+    if (event.queryStringParameters) {
+        Object.keys(event.queryStringParameters).forEach(key => {
+            targetUrl.searchParams.append(key, event.queryStringParameters[key]);
+        });
+    }
 
     console.log(`Proxy: Forwarding ${event.httpMethod} ${event.path} -> ${targetUrl.href}`);
 
     // Prepare headers for Supabase
     const headers = new Headers();
     Object.keys(event.headers).forEach(key => {
-        // Skip host and other sensitive headers that Supabase should see as its own or handle differently
         if (!['host', 'connection', 'content-length'].includes(key.toLowerCase())) {
             headers.set(key, event.headers[key]);
         }
     });
     
-    // Set explicit headers for proxy identification
-    headers.set("X-Forwarded-Host", event.headers.host);
+    headers.set("X-Forwarded-Host", event.headers.host || '');
     headers.set("X-Forwarded-Proto", protocol);
 
     try {
@@ -41,12 +38,9 @@ exports.handler = async (event, context) => {
 
         const responseHeaders = {};
         
-        // Use Headers object to handle multiple headers of same name (like Set-Cookie)
-        const fetchHeaders = response.headers;
-        
         // Rewrite Location header for redirects
         if ([301, 302, 307, 308].includes(response.status)) {
-            let location = fetchHeaders.get('location');
+            let location = response.headers.get('location');
             if (location) {
                 if (location.includes(SUPABASE_URL)) {
                     location = location.replace(SUPABASE_URL, PROXY_URL);
@@ -69,10 +63,10 @@ exports.handler = async (event, context) => {
         responseHeaders['Access-Control-Allow-Headers'] = '*';
         responseHeaders['Access-Control-Allow-Credentials'] = 'true';
 
-        // Robust Cookie Rewriting
-        // In Node-fetch (Netlify Functions), we use raw() for multiple headers
-        const setCookies = fetchHeaders.raw()['set-cookie'];
-        if (setCookies && setCookies.length > 0) {
+        // Robust Cookie Rewriting - handle multiple Set-Cookie
+        // Use Headers.getSetCookie() which is available in Node 18+
+        const setCookies = response.headers.getSetCookie ? response.headers.getSetCookie() : [];
+        if (setCookies.length > 0) {
             const supHost = new URL(SUPABASE_URL).host;
             const proxHost = event.headers.host;
             responseHeaders['Set-Cookie'] = setCookies.map(cookie => {
@@ -81,16 +75,18 @@ exports.handler = async (event, context) => {
         }
 
         // Copy other headers
-        for (const [key, value] of fetchHeaders.entries()) {
+        for (const [key, value] of response.headers.entries()) {
             if (!['content-encoding', 'transfer-encoding', 'set-cookie', 'location'].includes(key.toLowerCase())) {
                 responseHeaders[key] = value;
             }
         }
 
+        const body = await response.text();
+
         return {
             statusCode: response.status,
-            multiValueHeaders: responseHeaders, // Important for multiple Set-Cookie
-            body: await response.text()
+            multiValueHeaders: responseHeaders,
+            body: body
         };
     } catch (error) {
         console.error('Proxy Error:', error);
