@@ -1,6 +1,6 @@
 # Supabase Proxy for Auth/Cookies stability
-# Supabase Proxy for Auth/Cookies stability
-/api/supabase/* https://ohnumyohkpwlkcogwotj.supabase.co/:splat 200
+# Supabase Proxy for Auth/Cookies stability (Function)
+/api/supabase/* /.netlify/functions/supabase-proxy 200
 
 # SPA Routing
 /* /index.html 200
