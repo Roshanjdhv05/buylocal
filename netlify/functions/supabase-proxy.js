@@ -2,11 +2,9 @@ export const handler = async (event, context) => {
     const SUPABASE_URL = "https://ohnumyohkpwlkcogwotj.supabase.co";
     const protocol = event.headers['x-forwarded-proto'] || 'https';
     
-    // The base path we use for our proxy
     const PROXY_PATH = "/api/supabase";
     const PROXY_URL = `${protocol}://${event.headers.host}${PROXY_PATH}`;
 
-    // Extract the path after /api/supabase/
     const path = event.path.replace(new RegExp(`^${PROXY_PATH}`), "");
     const targetUrl = new URL(path, SUPABASE_URL);
     
@@ -38,7 +36,6 @@ export const handler = async (event, context) => {
 
         const responseHeaders = {};
         const setMultiHeader = (key, value) => {
-            // Netlify multiValueHeaders expects arrays
             const normalizedKey = key.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()).join('-');
             responseHeaders[normalizedKey] = Array.isArray(value) ? value : [value];
         };
@@ -48,20 +45,19 @@ export const handler = async (event, context) => {
             let location = response.headers.get('location');
             if (location) {
                 const supOrigin = new URL(SUPABASE_URL).origin;
-                // CRITICAL: proxOrigin must include the /api/supabase path
-                const proxOrigin = PROXY_URL; 
                 
                 console.log(`Proxy: Original Location = ${location}`);
                 
-                // 1. Replace unencoded
-                location = location.replace(new RegExp(supOrigin, 'g'), proxOrigin);
+                // ONLY rewrite if the redirect is pointing back to Supabase domain
+                // If it's pointing to Google (accounts.google.com), LEAVE IT ALONE.
+                // This ensures the redirect_uri param remains the standard Supabase callback.
+                if (location.startsWith(supOrigin)) {
+                    location = location.replace(supOrigin, PROXY_URL);
+                    console.log(`Proxy: Rewritten Location = ${location}`);
+                } else {
+                    console.log(`Proxy: Keeping external redirect = ${location}`);
+                }
                 
-                // 2. Replace encoded
-                const encodedSup = encodeURIComponent(supOrigin);
-                const encodedProx = encodeURIComponent(proxOrigin);
-                location = location.replace(new RegExp(encodedSup, 'g'), encodedProx);
-                
-                console.log(`Proxy: Rewritten Location = ${location}`);
                 setMultiHeader('Location', location);
             }
         }
@@ -84,7 +80,6 @@ export const handler = async (event, context) => {
             setMultiHeader('Set-Cookie', rewrittenCookies);
         }
 
-        // Copy other headers
         for (const [key, value] of response.headers.entries()) {
             const lowerKey = key.toLowerCase();
             if (!['content-encoding', 'transfer-encoding', 'set-cookie', 'location', 'content-length', 'connection', 'keep-alive'].includes(lowerKey)) {
