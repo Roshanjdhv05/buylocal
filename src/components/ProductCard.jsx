@@ -5,9 +5,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
+import { getLocalizedName } from '../utils/productTranslations';
 
 const ProductCard = ({ product }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { addToCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -196,7 +197,7 @@ const ProductCard = ({ product }) => {
           )}
         </div>
 
-        <h3 className="product-title">{product.name}</h3>
+        <h3 className="product-title">{getLocalizedName(product.name, i18n.language)}</h3>
 
         <div className="price-row">
           <span className="current-price">₹{product.online_price || product.price}</span>

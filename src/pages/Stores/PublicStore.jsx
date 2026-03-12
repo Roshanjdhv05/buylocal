@@ -9,8 +9,11 @@ import {
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
+import { useTranslation } from 'react-i18next';
+import { getLocalizedName } from '../../utils/productTranslations';
 
 const PublicStore = () => {
+    const { t, i18n } = useTranslation();
     const { user } = useAuth(); // Get user for follow logic
     const { storeName } = useParams();
     const navigate = useNavigate();
@@ -171,7 +174,7 @@ const PublicStore = () => {
     };
 
     if (loading) return <div className="loader-container"><div className="loader"></div></div>;
-    if (!store) return <div className="error-container">Store not found</div>;
+    if (!store) return <div className="error-container">{t('publicStore.notFound')}</div>;
 
     return (
         <div className="luxury-store-wrapper">
@@ -206,17 +209,17 @@ const PublicStore = () => {
                             </div>
                             <div className="store-title-wrap">
                                 <h1>{store.name}</h1>
-                                <p className="store-tagline">Curated Luxury Fashion & Artistry</p>
+                                <p className="store-tagline">{t('publicStore.tagline')}</p>
                             </div>
                         </div>
 
                         <div className="hero-actions">
                             <button className={`btn-follow ${isFollowing ? 'following' : ''}`} onClick={toggleFollow} disabled={followLoading}>
                                 {isFollowing ? <UserCheck size={18} /> : <UserCheck size={18} />}
-                                {isFollowing ? 'Following' : 'Follow Store'}
+                                {isFollowing ? t('publicStore.following') : t('publicStore.follow')}
                             </button>
                             <button className="btn-contact-concierge" onClick={() => setIsReviewModalOpen(true)}>
-                                <Star size={18} /> Review our Store
+                                <Star size={18} /> {t('publicStore.review')}
                             </button>
                             {store.whatsapp && (
                                 <a href={`https://wa.me/${store.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="btn-contact-concierge" style={{ background: '#25D366' }}>
@@ -246,7 +249,7 @@ const PublicStore = () => {
                             <Package size={20} />
                         </div>
                         <div className="stat-texts">
-                            <label>Total Products</label>
+                            <label>{t('publicStore.stats.totalProducts')}</label>
                             <p>{products.length}+</p>
                         </div>
                     </div>
@@ -255,7 +258,7 @@ const PublicStore = () => {
                             <Clock size={20} />
                         </div>
                         <div className="stat-texts">
-                            <label>Delivery Days</label>
+                            <label>{t('publicStore.stats.deliveryDays')}</label>
                             <p>{store.delivery_time || '2 - 3 Days'}</p>
                         </div>
                     </div>
@@ -264,8 +267,8 @@ const PublicStore = () => {
                             <CreditCard size={20} />
                         </div>
                         <div className="stat-texts">
-                            <label>COD Facility</label>
-                            <p>Available</p>
+                            <label>{t('publicStore.stats.cod')}</label>
+                            <p>{t('publicStore.stats.available')}</p>
                         </div>
                     </div>
                     <div className="stat-item-luxury glass-card">
@@ -273,7 +276,7 @@ const PublicStore = () => {
                             <Star size={20} />
                         </div>
                         <div className="stat-texts">
-                            <label>Customer Rating</label>
+                            <label>{t('publicStore.stats.rating')}</label>
                             <p>4.85 / 5.0</p>
                         </div>
                     </div>
@@ -286,8 +289,8 @@ const PublicStore = () => {
                     <section className="luxury-section gallery-slider-section">
                         <div className="section-header-luxury">
                             <div>
-                                <h2>Store Gallery</h2>
-                                <p className="sub-header">A glimpse into our curated world</p>
+                                <h2>{t('publicStore.gallery')}</h2>
+                                <p className="sub-header">{t('publicStore.gallerySub')}</p>
                             </div>
                             <div className="scroll-controls">
                                 <button className="control-btn" onClick={() => {
@@ -319,7 +322,7 @@ const PublicStore = () => {
                                             <img src={url} alt={`Gallery ${idx}`} className="slider-media" />
                                         )}
                                         <div className="media-overlay">
-                                            <label>Gallery {idx + 1}</label>
+                                            <label>{t('publicStore.gallery')} {idx + 1}</label>
                                         </div>
                                     </div>
                                 );
@@ -330,7 +333,7 @@ const PublicStore = () => {
 
                 {/* DYNAMIC SECTIONS / PRODUCTS */}
                 {Object.entries(products.reduce((acc, product) => {
-                    const sectionName = product.section?.trim() || 'General Collection';
+                    const sectionName = product.section?.trim() || t('publicStore.generalCollection') || 'General Collection';
                     if (!acc[sectionName]) acc[sectionName] = [];
                     acc[sectionName].push(product);
                     return acc;
@@ -342,12 +345,12 @@ const PublicStore = () => {
                     <section key={sectionName} className="luxury-section" id={`section-${sectionName.replace(/\s+/g, '-').toLowerCase()}`}>
                         <div className="section-header-luxury">
                             <div>
-                                <h2>{sectionName}</h2>
-                                <p className="sub-header">Curated pieces from our {sectionName.toLowerCase()} selection</p>
+                                <h2>{getLocalizedName(sectionName, i18n.language)}</h2>
+                                <p className="sub-header">{t('publicStore.curatedSelection')} {getLocalizedName(sectionName, i18n.language).toLowerCase()}</p>
                             </div>
                             <div className="scroll-controls">
                                 <button className="control-btn view-all-btn" onClick={() => navigate(`/${encodeURIComponent(store.name)}/section/${encodeURIComponent(sectionName)}`)}>
-                                    View All
+                                    {t('home.seeAll')}
                                 </button>
 
                                 <button className="control-btn desktop-only"><ArrowLeft size={16} /></button>
@@ -360,15 +363,16 @@ const PublicStore = () => {
                                 <ProductCard key={product.id} product={{ ...product, storeName: store.name }} />
                             ))}
                         </div>
-                        <div className="debug-marker" style={{ fontSize: '0.6rem', color: '#eee', marginTop: '10px' }}>v1.1 (Section Grouping Active)</div>
+                        {/* Debug marker removed or localized optionally, user asked for whole website language change */}
+                        {/* <div className="debug-marker" style={{ fontSize: '0.6rem', color: '#eee', marginTop: '10px' }}>v1.1 (Section Grouping Active)</div> */}
                     </section>
                 ))}
 
                 {products.length === 0 && (
                     <section className="luxury-section">
-                        <div className="empty-state-luxury glass-card">
-                            <Store size={48} opacity={0.3} />
-                            <p>No pieces curated yet.</p>
+                        <div className="no-products glass-card">
+                            <Box size={40} />
+                            <p>{t('publicStore.noProducts')}</p>
                         </div>
                     </section>
                 )}
@@ -381,17 +385,17 @@ const PublicStore = () => {
                             <p>{store.legacy_description || `Founded in the heart of artistry, ${store.name} has been a beacon of luxury craftsmanship for over three decades. We bridge the gap between traditional artistry and modern sophistication, ensuring every piece in our marketplace meets the highest standards of quality and ethical production.`}</p>
 
                             <div className="legacy-stats">
-                                <div className="l-stat">
-                                    <h3>32</h3>
-                                    <label>Years of Heritage</label>
+                                <div className="stat-item">
+                                    <span className="stat-num">12+</span>
+                                    <label>{t('publicStore.yearsOfHeritage')}</label>
                                 </div>
-                                <div className="l-stat">
-                                    <h3>14</h3>
-                                    <label>Global Boutiques</label>
+                                <div className="stat-item border-l">
+                                    <span className="stat-num">5</span>
+                                    <label>{t('publicStore.globalBoutiques')}</label>
                                 </div>
-                                <div className="l-stat">
-                                    <h3>100%</h3>
-                                    <label>Hand-Picked</label>
+                                <div className="stat-item border-l">
+                                    <span className="stat-num">450+</span>
+                                    <label>{t('publicStore.handPicked')}</label>
                                 </div>
                             </div>
                         </div>
@@ -411,7 +415,7 @@ const PublicStore = () => {
                 <section className="luxury-section">
                     <div className="testimonials-wrap">
                         <div className="testimonial-header">
-                            <h2>Client Testimonials</h2>
+                            <h2>{t('publicStore.testimonials')}</h2>
                             <p>What our community thinks about {store.name}</p>
                         </div>
 
@@ -440,13 +444,13 @@ const PublicStore = () => {
                                         </div>
                                         <div className="author-info">
                                             <strong>{reviews[currentTestimonialIndex].user_name}</strong>
-                                            <label>Verified Purchase</label>
+                                            <label>{t('publicStore.verifiedPurchase')}</label>
                                         </div>
                                     </div>
                                 </div>
                             ) : (
                                 <div className="testimonial-card-luxury">
-                                    <p className="t-text">"Be the first to review our store and share your experience with the community!"</p>
+                                    <p className="t-text">"{t('publicStore.firstReview')}"</p>
                                 </div>
                             )}
                         </div>
@@ -461,8 +465,8 @@ const PublicStore = () => {
                         <button className="modal-close" onClick={() => setIsReviewModalOpen(false)}>
                             <X size={24} />
                         </button>
-                        <h2>Share Your Experience</h2>
-                        <p>Your feedback helps our community discover the best local shops.</p>
+                        <h2>{t('publicStore.shareExperience')}</h2>
+                        <p>{t('publicStore.feedbackHelp')}</p>
 
                         <form onSubmit={submitReview}>
                             <div className="rating-input">
@@ -478,16 +482,16 @@ const PublicStore = () => {
                                 ))}
                             </div>
 
-                            <textarea
-                                placeholder="Tell us about your experience..."
-                                value={comment}
-                                onChange={(e) => setComment(e.target.value)}
-                                required
-                            />
-
-                            <button type="submit" className="btn-follow" style={{ width: '100%', marginTop: '1rem' }} disabled={submittingReview}>
-                                {submittingReview ? 'Submitting...' : 'Submit Review'}
-                            </button>
+                             <textarea
+                                 placeholder={t('publicStore.commentPlaceholder')}
+                                 value={comment}
+                                 onChange={(e) => setComment(e.target.value)}
+                                 required
+                             />
+ 
+                             <button type="submit" className="btn-follow" style={{ width: '100%', marginTop: '1rem' }} disabled={submittingReview}>
+                                 {submittingReview ? t('home.processing') : t('publicStore.submitReview')}
+                             </button>
                         </form>
                     </div>
                 </div>

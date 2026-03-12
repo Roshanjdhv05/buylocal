@@ -3,10 +3,12 @@ import { supabase } from '../../services/supabase';
 import Navbar from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
 import { useLocation as useLocationContext } from '../../context/LocationContext';
+import { useTranslation } from 'react-i18next';
 
 const TrendingProducts = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { t } = useTranslation();
     const { location } = useLocationContext();
 
     useEffect(() => {
@@ -43,8 +45,8 @@ const TrendingProducts = () => {
 
             <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
                 <div className="page-header" style={{ marginBottom: '2rem' }}>
-                    <h1 style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-dark)' }}>Trending Near You</h1>
-                    <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>Most popular items in your lively neighborhood.</p>
+                    <h1 style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--text-dark)' }}>{t('home.trendingTitle')}</h1>
+                    <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>{t('home.trendingSubtitle')}</p>
                 </div>
 
                 {loading ? (
@@ -59,7 +61,7 @@ const TrendingProducts = () => {
                             ))
                         ) : (
                             <div className="empty-state" style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '4rem 0' }}>
-                                <p style={{ color: 'var(--text-muted)' }}>No trending products right now.</p>
+                                <p style={{ color: 'var(--text-muted)' }}>{t('home.noTrending')}</p>
                             </div>
                         )}
                     </div>

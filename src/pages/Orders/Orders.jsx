@@ -11,8 +11,11 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import InvoiceModal from '../../components/InvoiceModal';
+import { useTranslation } from 'react-i18next';
+import { getLocalizedName } from '../../utils/productTranslations';
 
 const Orders = () => {
+    const { t, i18n } = useTranslation();
     const { user } = useAuth();
     const navigate = useNavigate();
     const [orders, setOrders] = useState([]);
@@ -81,14 +84,8 @@ const Orders = () => {
         };
     };
 
-    const getStatusIcon = (status) => {
-        switch (status) {
-            case 'pending': return <Clock size={20} className="text-warning" />;
-            case 'accepted': return <Package size={20} className="text-secondary" />;
-            case 'dispatched': return <Truck size={20} className="text-primary" />;
-            case 'delivered': return <CheckCircle size={20} className="text-success" />;
-            default: return <Clock size={20} />;
-        }
+    const getStatusText = (status) => {
+        return t(`orders.${status}`) || status;
     };
 
 
@@ -100,14 +97,14 @@ const Orders = () => {
                 <div className="hero-icon-blob">
                     <ShoppingBag size={56} />
                 </div>
-                <h2>Your First Treasure Awaits</h2>
-                <p>Support local creators and discover unique products in your neighborhood. Start building your order history today.</p>
+                <h2>{t('orders.emptyTitle')}</h2>
+                <p>{t('orders.emptySubtitle')}</p>
                 <div className="empty-actions">
                     <button onClick={() => navigate('/stores')} className="btn-primary">
-                        Explore Local Stores <ArrowRight size={18} />
+                        {t('orders.exploreStores')} <ArrowRight size={18} />
                     </button>
                     <button onClick={() => navigate('/categories')} className="btn-outline-dark">
-                        Trending Products
+                        {t('orders.popularTitle')}
                     </button>
                 </div>
             </div>
@@ -116,9 +113,9 @@ const Orders = () => {
                 <div className="section-title-group">
                     <div className="title-with-icon">
                         <TrendingUp size={20} className="text-primary" />
-                        <h3>Popular Near You</h3>
+                        <h3>{t('orders.popularTitle')}</h3>
                     </div>
-                    <Link to="/categories" className="link-more">View All <ArrowRight size={14} /></Link>
+                    <Link to="/categories" className="link-more">{t('home.seeAll')} <ArrowRight size={14} /></Link>
                 </div>
                 <div className="products-mini-grid">
                     {trendingProducts.map(product => (
@@ -131,7 +128,7 @@ const Orders = () => {
                 <div className="section-title-group">
                     <div className="title-with-icon">
                         <Store size={20} className="text-primary" />
-                        <h3>Recommended Local Stores</h3>
+                        <h3>{t('orders.recommendedStores')}</h3>
                     </div>
                 </div>
                 <div className="stores-compact-list">
@@ -159,11 +156,11 @@ const Orders = () => {
                 <div className="orders-main-content">
                     <header className="page-header">
                         <div className="header-text">
-                            <h1>My Orders</h1>
-                            <p>Track your local deliveries and support your community.</p>
+                            <h1>{t('orders.title')}</h1>
+                            <p>{t('orders.subtitle')}</p>
                         </div>
                         <Link to="/stores" className="btn-shopping desktop-only">
-                            Start Shopping
+                            {t('orders.startShopping')}
                         </Link>
                     </header>
 
@@ -172,13 +169,13 @@ const Orders = () => {
                             className={`tab-btn ${activeTab === 'active' ? 'active' : ''}`}
                             onClick={() => setActiveTab('active')}
                         >
-                            Active Orders
+                            {t('orders.active')}
                         </button>
                         <button
                             className={`tab-btn ${activeTab === 'past' ? 'active' : ''}`}
                             onClick={() => setActiveTab('past')}
                         >
-                            Past Orders
+                            {t('orders.past')}
                         </button>
                     </div>
 
@@ -189,7 +186,7 @@ const Orders = () => {
                                     ? ['pending', 'accepted', 'dispatched'].includes(order.status)
                                     : order.status === 'delivered'
                             ).length === 0 ? (
-                                <div className="no-orders-msg">No {activeTab} orders found.</div>
+                                <div className="no-orders-msg">{t('orders.noOrders')}</div>
                             ) : orders.filter(order =>
                                 activeTab === 'active'
                                     ? ['pending', 'accepted', 'dispatched'].includes(order.status)
@@ -200,8 +197,8 @@ const Orders = () => {
                                 }}>
                                     <div className="order-header">
                                         <div className="order-main-info">
-                                            <h3>Order #{order.display_id || order.id.slice(0, 8).toUpperCase()}</h3>
-                                            <h3>Store: {order.stores?.name}</h3>
+                                            <h3>{t('orders.orderNumber')}{order.display_id || order.id.slice(0, 8).toUpperCase()}</h3>
+                                            <h3>{t('orders.store')}: {order.stores?.name}</h3>
                                             <span className="order-date">{new Date(order.created_at).toLocaleDateString()}</span>
                                         </div>
                                         <div className={`status-badge ${order.status}`}>
@@ -228,7 +225,7 @@ const Orders = () => {
                                                         />
                                                     </div>
                                                     <div className="item-details">
-                                                        <span className="item-name">{item.name} x {item.quantity}</span>
+                                                        <span className="item-name">{getLocalizedName(item.name, i18n.language)} x {item.quantity}</span>
                                                         <span className="item-price">₹{item.online_price * item.quantity}</span>
                                                     </div>
                                                 </div>
@@ -248,7 +245,7 @@ const Orders = () => {
                                                 </div>
                                             </div>
                                             <div className="order-total">
-                                                <span>Total Amount</span>
+                                                <span>{t('orders.totalAmount')}</span>
                                                 <strong>₹{order.total_amount}</strong>
                                             </div>
                                         </div>

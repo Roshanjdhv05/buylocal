@@ -8,8 +8,11 @@ import {
     MapPin, BookOpen, Calendar, Hash, Info, ShoppingBag
 } from 'lucide-react';
 import InvoiceModal from '../../components/InvoiceModal';
+import { useTranslation } from 'react-i18next';
+import { getLocalizedName } from '../../utils/productTranslations';
 
 const OrderDetails = () => {
+    const { t, i18n } = useTranslation();
     const { orderId } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -65,7 +68,7 @@ const OrderDetails = () => {
                             <div className="tracker-point">
                                 {isCompleted ? <CheckCircle size={14} /> : <div className="dot" />}
                             </div>
-                            <span className="tracker-label">{stage.charAt(0).toUpperCase() + stage.slice(1)}</span>
+                            <span className="tracker-label">{t(`orders.${stage}`)}</span>
                             {idx < stages.length - 1 && <div className="tracker-line" />}
                         </div>
                     );
@@ -80,9 +83,9 @@ const OrderDetails = () => {
         <div className="order-details-page">
             <Navbar />
             <div className="container error-state">
-                <h2>Order Not Found</h2>
-                <p>We couldn't find the order you're looking for.</p>
-                <button onClick={() => navigate('/orders')} className="btn-primary">Back to My Orders</button>
+                <h2>{t('orderDetails.notFound')}</h2>
+                <p>{t('orderDetails.notFoundDesc')}</p>
+                <button onClick={() => navigate('/orders')} className="btn-primary">{t('orderDetails.backToOrders')}</button>
             </div>
         </div>
     );
@@ -96,9 +99,9 @@ const OrderDetails = () => {
             <main className="container order-details-layout">
                 <div className="details-header">
                     <button onClick={() => navigate('/orders')} className="btn-back">
-                        <ChevronLeft size={20} /> Back to Orders
+                        <ChevronLeft size={20} /> {t('orderDetails.backToOrders')}
                     </button>
-                    <h1>Order Details</h1>
+                    <h1>{t('orderDetails.title')}</h1>
                 </div>
 
                 <div className="details-grid">
@@ -108,24 +111,24 @@ const OrderDetails = () => {
                             <div className="overview-header">
                                 <div className="id-group">
                                     <Hash size={18} className="text-subtle" />
-                                    <span>Order ID: <strong>{displayOrderId}</strong></span>
+                                    <span>{t('orderDetails.id')}: <strong>{displayOrderId}</strong></span>
                                 </div>
                                 <div className={`status-badge-lg ${order.status}`}>
-                                    {order.status}
+                                    {t(`orders.${order.status}`)}
                                 </div>
                             </div>
                             <div className="overview-meta">
                                 <div className="meta-item">
                                     <Calendar size={18} />
                                     <div>
-                                        <label>Order Date</label>
+                                        <label>{t('orderDetails.date')}</label>
                                         <p>{new Date(order.created_at).toLocaleDateString(undefined, { dateStyle: 'long' })}</p>
                                     </div>
                                 </div>
                                 <div className="meta-item">
                                     <ShoppingBag size={18} />
                                     <div>
-                                        <label>Store</label>
+                                        <label>{t('orderDetails.store')}</label>
                                         <p>{order.stores?.name}</p>
                                     </div>
                                 </div>
@@ -134,13 +137,13 @@ const OrderDetails = () => {
 
                         {/* Tracker Card */}
                         <div className="tracker-card glass-card">
-                            <h3>Tracking Progress</h3>
+                            <h3>{t('orderDetails.tracking')}</h3>
                             <OrderTracker status={order.status} />
                         </div>
 
                         {/* Items Card */}
                         <div className="items-card glass-card">
-                            <h3>Items Ordered ({order.items?.length})</h3>
+                            <h3>{t('orderDetails.itemsCount')} ({order.items?.length})</h3>
                             <div className="items-list-full">
                                 {order.items?.map((item, i) => (
                                     <div key={i} className="detail-item-row">
@@ -148,8 +151,8 @@ const OrderDetails = () => {
                                             <img src={(Array.isArray(item.images) ? item.images[0] : item.image) || 'https://via.placeholder.com/80'} alt={item.name} />
                                         </div>
                                         <div className="item-info-main">
-                                            <h4>{item.name}</h4>
-                                            <p className="item-qty-price">Quantity: {item.quantity} × ₹{item.online_price || item.price}</p>
+                                            <h4>{getLocalizedName(item.name, i18n.language)}</h4>
+                                            <p className="item-qty-price">{t('orderDetails.quantity')}: {item.quantity} × ₹{item.online_price || item.price}</p>
                                         </div>
                                         <div className="item-subtotal">
                                             ₹{(item.online_price * item.quantity).toFixed(2)}
@@ -164,32 +167,36 @@ const OrderDetails = () => {
                         {/* Shipping & Payment Card */}
                         <div className="summary-card glass-card">
                             <div className="summary-section">
-                                <h3><MapPin size={18} /> Delivery Details</h3>
+                                <h3><MapPin size={18} /> {t('orderDetails.deliveryDetails')}</h3>
                                 <div className="content-box">
                                     <p className="addr-text"><strong>{order.buyer?.username || 'Customer'}</strong></p>
                                     <p className="addr-text">{order.shipping_address}</p>
-                                    <p className="delivery-type-tag">{order.delivery_type || 'Standard Delivery'}</p>
+                                    <p className="delivery-type-tag">{t(`cart.${order.delivery_type.toLowerCase()}`) || order.delivery_type}</p>
                                 </div>
                             </div>
 
                             <div className="summary-section total-summary">
-                                <h3>Total Summary</h3>
+                                <h3>{t('orderDetails.totalSummary')}</h3>
                                 <div className="total-line">
-                                    <span>Subtotal</span>
+                                    <span>{t('orderDetails.subtotal')}</span>
                                     <span>₹{order.total_amount.toFixed(2)}</span>
                                 </div>
                                 <div className="total-line shipping">
-                                    <span>Delivery Charge</span>
-                                    <span className="text-success">FREE</span>
+                                    <span>{t('orderDetails.deliveryCharge')}</span>
+                                    {order.delivery_charges > 0 ? (
+                                        <span>₹{order.delivery_charges.toFixed(2)}</span>
+                                    ) : (
+                                        <span className="text-success">{t('cart.free')}</span>
+                                    )}
                                 </div>
                                 <div className="total-line grand">
-                                    <span>Grand Total</span>
+                                    <span>{t('orderDetails.grandTotal')}</span>
                                     <strong>₹{order.total_amount.toFixed(2)}</strong>
                                 </div>
                             </div>
 
                             <button className="btn-invoice-dedicated" onClick={() => setIsInvoiceModalOpen(true)}>
-                                <BookOpen size={20} /> View Tax Invoice
+                                <BookOpen size={20} /> {t('orderDetails.viewInvoice')}
                             </button>
                         </div>
                     </div>

@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import Navbar from '../../components/Navbar';
+import { useTranslation } from 'react-i18next';
 import { useLocation } from '../../context/LocationContext';
 import { calculateDistance } from '../../utils/distance';
 import { Search, MapPin, Store, ArrowRight, Loader } from 'lucide-react';
 
 const Stores = () => {
+    const { t } = useTranslation();
+    const navigate = useNavigate();
     const [stores, setStores] = useState([]);
     const [filteredStores, setFilteredStores] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -58,8 +61,8 @@ const Stores = () => {
 
             <main className="container">
                 <header className="stores-hero">
-                    <h1>Discover Our Stores</h1>
-                    <p>Explore a curated collection of unique stores and find your next favorite fashion piece.</p>
+                    <h1>{t('stores.title')}</h1>
+                    <p>{t('stores.subtitle')}</p>
                 </header>
 
                 <div className="search-section">
@@ -67,7 +70,7 @@ const Stores = () => {
                         <Search className="search-icon" size={20} />
                         <input
                             type="text"
-                            placeholder="Search for a store..."
+                            placeholder={t('stores.placeholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -83,8 +86,8 @@ const Stores = () => {
                         {filteredStores.length === 0 ? (
                             <div className="empty-state glass-card">
                                 <Store size={48} />
-                                <h3>No stores found</h3>
-                                <p>Try adjusting your search criteria</p>
+                                <h3>{t('stores.notFound')}</h3>
+                                <p>{t('stores.notFoundDesc')}</p>
                             </div>
                         ) : (
                             filteredStores.map(store => (

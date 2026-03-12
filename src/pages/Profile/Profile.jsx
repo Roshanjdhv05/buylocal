@@ -4,10 +4,12 @@ import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabase';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import { useTranslation } from 'react-i18next';
 import { Bell, BellOff, LogOut, Settings, ChevronRight, Clock, CheckCircle, Truck, Package, Store } from 'lucide-react';
 import { requestNotificationPermission } from '../../utils/pushNotification';
 
 const Profile = () => {
+    const { t } = useTranslation();
     const { user, profile, signOut, upgradeToSeller } = useAuth();
     const navigate = useNavigate();
     const [recentOrders, setRecentOrders] = useState([]);
@@ -62,10 +64,10 @@ const Profile = () => {
         setUpgrading(true);
         try {
             await upgradeToSeller();
-            alert('Welcome to the seller community! Let\'s create your store.');
+            alert(t('profile.welcomeSeller'));
             navigate('/seller/create-store');
         } catch (error) {
-            alert('Failed to upgrade account: ' + error.message);
+            alert(t('profile.upgradeFailed') + error.message);
         } finally {
             setUpgrading(false);
         }
@@ -94,20 +96,20 @@ const Profile = () => {
                         <div className="user-avatar">
                             {profile?.username?.charAt(0).toUpperCase() || user.email.charAt(0).toUpperCase()}
                         </div>
-                        <h2 className="username">{profile?.username || 'User'}</h2>
+                        <h2 className="username">{profile?.username || t('auth.user')}</h2>
                         <p className="user-email">{user.email}</p>
 
                         {profile?.role === 'seller' && (
-                            <span className="seller-badge">Seller Account</span>
+                            <span className="seller-badge">{t('profile.sellerAccount')}</span>
                         )}
 
                         <div className="user-stats">
                             <div className="stat">
-                                <span>City</span>
+                                <span>{t('profile.city')}</span>
                                 <strong>{profile?.city || '-'}</strong>
                             </div>
                             <div className="stat">
-                                <span>State</span>
+                                <span>{t('profile.state')}</span>
                                 <strong>{profile?.state || '-'}</strong>
                             </div>
                         </div>
@@ -119,10 +121,10 @@ const Profile = () => {
                                 style={{ marginBottom: '0.5rem', color: pushEnabled ? 'var(--success)' : 'var(--text-muted)' }}
                             >
                                 {pushEnabled ? <Bell size={18} /> : <BellOff size={18} />}
-                                {pushEnabled ? 'Notifications On' : 'Enable Notifications'}
+                                {pushEnabled ? t('profile.notificationsOn') : t('profile.notificationsOff')}
                             </button>
                             <button className="action-btn logout" onClick={handleLogout}>
-                                <LogOut size={18} /> Logout
+                                <LogOut size={18} /> {t('profile.logout')}
                             </button>
                         </div>
                     </div>
@@ -135,25 +137,25 @@ const Profile = () => {
                     {profile?.role === 'seller' ? (
                         <div className="seller-dashboard-card glass-card">
                             <div className="sd-content">
-                                <h3><Store size={24} /> Seller Dashboard</h3>
-                                <p>Manage your store, products, and orders.</p>
+                                <h3><Store size={24} /> {t('profile.sellerDashboard')}</h3>
+                                <p>{t('profile.sellerDashboardDesc')}</p>
                             </div>
                             <Link to="/seller/dashboard" className="btn-primary">
-                                Go to Dashboard <ChevronRight size={18} />
+                                {t('profile.goToDashboard')} <ChevronRight size={18} />
                             </Link>
                         </div>
                     ) : (
                         <div className="seller-promo-card glass-card">
                             <div className="sd-content">
-                                <h3>Become a Seller</h3>
-                                <p>Start selling your products to local customers today.</p>
+                                <h3>{t('profile.becomeSeller')}</h3>
+                                <p>{t('profile.becomeSellerDesc')}</p>
                             </div>
                             <button
                                 onClick={handleBecomeSeller}
                                 className="btn-secondary-outline"
                                 disabled={upgrading}
                             >
-                                {upgrading ? 'Upgrading...' : 'Join Now'}
+                                {upgrading ? t('home.processing') : t('profile.joinNow')}
                             </button>
                         </div>
                     )}
@@ -161,25 +163,25 @@ const Profile = () => {
                     {/* Recent Orders */}
                     <section className="orders-section glass-card">
                         <div className="section-header">
-                            <h3><Package size={20} /> Recent Orders</h3>
-                            <Link to="/orders" className="view-all-link">View All</Link>
+                            <h3><Package size={20} /> {t('profile.recentOrders')}</h3>
+                            <Link to="/orders" className="view-all-link">{t('profile.viewAll')}</Link>
                         </div>
 
                         {loading ? (
-                            <div className="loading-state">Loading orders...</div>
+                            <div className="loading-state">{t('profile.loadingOrders')}</div>
                         ) : recentOrders.length > 0 ? (
                             <div className="orders-list">
                                 {recentOrders.map(order => (
                                     <div key={order.id} className="order-item">
                                         <div className="order-info">
-                                            <h4>{order.stores?.name || 'Store'}</h4>
+                                            <h4>{order.stores?.name || t('orderDetails.store')}</h4>
                                             <span className="order-date">{new Date(order.created_at).toLocaleDateString()}</span>
                                             <div className="order-status warning">
-                                                {getStatusIcon(order.status)} {order.status}
+                                                {getStatusIcon(order.status)} {t(`orders.${order.status}`)}
                                             </div>
                                         </div>
                                         <div className="order-total">
-                                            <span>Total</span>
+                                            <span>{t('orders.totalAmount')}</span>
                                             <strong>₹{order.total_amount}</strong>
                                         </div>
                                     </div>
@@ -187,8 +189,8 @@ const Profile = () => {
                             </div>
                         ) : (
                             <div className="empty-state">
-                                <p>No orders yet. Start shopping!</p>
-                                <Link to="/" className="btn-text">Browse Products</Link>
+                                <p>{t('profile.emptyOrders')}</p>
+                                <Link to="/" className="btn-text">{t('profile.browseProducts')}</Link>
                             </div>
                         )}
                     </section>

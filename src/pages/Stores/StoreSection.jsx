@@ -5,8 +5,11 @@ import { supabase } from '../../services/supabase';
 import { ArrowLeft, Store } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
+import { useTranslation } from 'react-i18next';
+import { getLocalizedName } from '../../utils/productTranslations';
 
 const StoreSection = () => {
+    const { t, i18n } = useTranslation();
     const { storeName, sectionName } = useParams();
 
     const [store, setStore] = useState(null);
@@ -65,11 +68,11 @@ const StoreSection = () => {
     }, [loading, products, decodedSectionName]);
 
     if (loading) return <div className="loader-container"><div className="loader"></div></div>;
-    if (!store) return <div className="error-container">Store not found</div>;
+    if (!store) return <div className="error-container">{t('publicStore.notFound') || 'Store not found'}</div>;
 
     // Group products by section
     const groupedProducts = products.reduce((acc, product) => {
-        const sec = product.section?.trim() || 'General Collection';
+        const sec = product.section?.trim() || t('storeSection.fullCollection');
         if (!acc[sec]) acc[sec] = [];
         acc[sec].push(product);
         return acc;
@@ -99,9 +102,9 @@ const StoreSection = () => {
                         <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#1e293b', lineHeight: '1.2' }}>{store.name}</h1>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b', fontSize: '0.9rem', fontWeight: '500' }}>
                             <Store size={14} />
-                            <span>Full Collection</span>
+                            <span>{t('storeSection.fullCollection')}</span>
                             <span>•</span>
-                            <span>{products.length} Items</span>
+                            <span>{products.length} {t('storeSection.itemsCount')}</span>
                         </div>
                     </div>
                 </div>
@@ -124,8 +127,8 @@ const StoreSection = () => {
                             justifyContent: 'space-between',
                             alignItems: 'baseline'
                         }}>
-                            {secName}
-                            <span style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: '500' }}>{secProducts.length} items</span>
+                            {getLocalizedName(secName, i18n.language)}
+                            <span style={{ fontSize: '0.9rem', color: '#94a3b8', fontWeight: '500' }}>{secProducts.length} {t('storeSection.itemsCount').toLowerCase()}</span>
                         </h2>
 
                         <div className="products-grid-section">
@@ -138,7 +141,7 @@ const StoreSection = () => {
 
                 {products.length === 0 && (
                     <div className="empty-state" style={{ textAlign: 'center', padding: '4rem 0', color: '#94a3b8' }}>
-                        <p>No products found in this store.</p>
+                        <p>{t('storeSection.noProducts')}</p>
                     </div>
                 )}
             </div>

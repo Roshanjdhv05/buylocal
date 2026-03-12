@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { supabase, withTimeout } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import Navbar from '../../components/Navbar';
+import { useTranslation } from 'react-i18next';
 import { Store, MapPin, ArrowRight, Heart } from 'lucide-react';
 
 const FollowedStores = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [stores, setStores] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -48,8 +50,8 @@ const FollowedStores = () => {
             <Navbar />
             <div className="container" style={{ paddingTop: '2rem' }}>
                 <header className="page-header">
-                    <h1><Heart size={32} fill="var(--secondary)" color="var(--secondary)" /> Followed Stores</h1>
-                    <p>Your curated list of favorite local shops.</p>
+                    <h1><Heart size={32} fill="var(--secondary)" color="var(--secondary)" /> {t('followedStores.title')}</h1>
+                    <p>{t('followedStores.subtitle')}</p>
                 </header>
 
                 {loading ? (
@@ -61,10 +63,10 @@ const FollowedStores = () => {
                         {stores.length === 0 ? (
                             <div className="empty-state glass-card">
                                 <Store size={48} />
-                                <h3>You haven't followed any stores yet.</h3>
-                                <p>Explore our marketplace to find stores you love.</p>
+                                <h3>{t('followedStores.empty')}</h3>
+                                <p>{t('followedStores.emptyDesc')}</p>
                                 <Link to="/stores" className="btn-primary" style={{ marginTop: '1rem' }}>
-                                    Explore Stores
+                                    {t('followedStores.exploreStores')}
                                 </Link>
                             </div>
                         ) : (

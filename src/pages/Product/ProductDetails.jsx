@@ -14,9 +14,10 @@ import ProductSkeleton from '../../components/ProductSkeleton';
 import ProductNotFound from './ProductNotFound';
 import { addToRecentlyViewed } from '../../utils/recentlyViewed';
 import { useTranslation } from 'react-i18next';
+import { getLocalizedName } from '../../utils/productTranslations';
 
 const ProductDetails = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { productId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
@@ -262,7 +263,7 @@ const ProductDetails = () => {
                     <div className="info-column">
                         <section className="product-info-wrap">
                             <div className="info-header-row">
-                                <h1 className="pro-name-large">{product.name}</h1>
+                                <h1 className="product-title-detail">{getLocalizedName(product.name, i18n.language)}</h1>
                                 <div className="rating-pill">
                                     <Star size={12} fill="#22c55e" color="#22c55e" />
                                     <span>{avgRating}</span>
@@ -323,8 +324,8 @@ const ProductDetails = () => {
 
                         <section className="description-section">
                             <h3 className="sub-title">{t('product.descriptionTitle')}</h3>
-                            <p className={`desc-text ${descExpanded ? 'expanded' : ''}`}>
-                                {product.description || "No detailed description provided for this premium local product. Crafted with excellence and available only on BuyLocal."}
+                            <p className={`product-description ${descExpanded ? 'expanded' : ''}`}>
+                                {getLocalizedName(product.description, i18n.language) || "No detailed description provided for this premium local product. Crafted with excellence and available only on BuyLocal."}
                             </p>
                             <button className="read-more-btn" onClick={() => setDescExpanded(!descExpanded)}>
                                 {descExpanded ? t('product.showLess') : t('product.readFull')}

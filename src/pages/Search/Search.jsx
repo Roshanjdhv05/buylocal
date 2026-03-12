@@ -6,8 +6,11 @@ import { getRecentlyViewed } from '../../utils/recentlyViewed';
 import { supabase } from '../../services/supabase';
 import { useLocation } from '../../context/LocationContext';
 import { calculateDistance } from '../../utils/distance';
+import { useTranslation } from 'react-i18next';
+import { getLocalizedName } from '../../utils/productTranslations';
 
 const Search = () => {
+    const { t, i18n } = useTranslation();
     const navigate = useNavigate();
     const [query, setQuery] = useState('');
     const [recentSearches, setRecentSearches] = useState([]);
@@ -75,7 +78,7 @@ const Search = () => {
                     <input
                         ref={inputRef}
                         type="text"
-                        placeholder="Search for anything..."
+                        placeholder={t('search.placeholder')}
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         onKeyDown={handleKeyDown}
@@ -93,9 +96,9 @@ const Search = () => {
                 {recentSearches.length > 0 && (
                     <div className="section">
                         <div className="section-title">
-                            <h3>Recent Searches</h3>
+                            <h3>{t('search.recent')}</h3>
                             <button onClick={clearHistory} className="clear-history-btn">
-                                <Trash2 size={14} /> Clear
+                                <Trash2 size={14} /> {t('search.clear')}
                             </button>
                         </div>
                         <div className="recent-searches-list">
@@ -113,7 +116,7 @@ const Search = () => {
                 {recentProducts.length > 0 && (
                     <div className="section">
                         <div className="section-title">
-                            <h3>Recently Viewed</h3>
+                            <h3>{t('search.recentlyViewed')}</h3>
                         </div>
                         <div className="products-scroll">
                             {recentProducts.map(product => (
@@ -121,13 +124,13 @@ const Search = () => {
                                     <div className="mini-product-img-wrapper">
                                         <img
                                             src={product.images?.[0] || product.image}
-                                            alt={product.name}
+                                            alt={getLocalizedName(product.name, i18n.language)}
                                             className="mini-product-img"
                                         />
                                     </div>
-                                    <p className="mini-product-name">{product.name}</p>
+                                    <p className="mini-product-name">{getLocalizedName(product.name, i18n.language)}</p>
                                     {product.distance !== Infinity && (
-                                        <span className="mini-product-dist">{product.distance.toFixed(1)} km</span>
+                                        <span className="mini-product-dist">{product.distance.toFixed(1)} {t('product.km')}</span>
                                     )}
                                 </Link>
                             ))}

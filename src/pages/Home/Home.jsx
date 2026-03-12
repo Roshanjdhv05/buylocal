@@ -167,11 +167,11 @@ const Home = () => {
                 <main className="container main-content" style={{ paddingTop: '2rem' }}>
                     <div className="section-header">
                         <div className="title-group">
-                            <h2>Search Results for "{searchQuery}"</h2>
-                            <p>Found {searchResults.length} items matching your search</p>
+                            <h2>{t('home.searchResults')} "{searchQuery}"</h2>
+                            <p>{t('home.foundItems')} {searchResults.length} {t('home.itemsMatching')}</p>
                         </div>
                         {searchResults.length === 0 && (
-                            <Link to="/" className="btn-primary">Clear Search</Link>
+                            <Link to="/" className="btn-primary">{t('home.clearSearch')}</Link>
                         )}
                     </div>
 
@@ -184,8 +184,8 @@ const Home = () => {
                     ) : (
                         <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--text-muted)' }}>
                             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
-                            <h3>No matches found</h3>
-                            <p>Try checking your spelling or using different keywords.</p>
+                            <h3>{t('home.noMatches')}</h3>
+                            <p>{t('home.tryChecking')}</p>
                         </div>
                     )}
                 </main>
@@ -255,7 +255,7 @@ const Home = () => {
                             <div className="category-base">
                                 {cat.svg}
                             </div>
-                            <span className="category-label">{cat.name}</span>
+                            <span className="category-label">{t(`home.${cat.name.toLowerCase()}`)}</span>
                         </Link>
                     ))}
                 </div>
@@ -302,7 +302,7 @@ const Home = () => {
                         ) : (
                             <div className="empty-inline-stores">
                                 <Store size={32} opacity={0.2} />
-                                <p>No stores nearby yet. Check back soon!</p>
+                                <p>{t('home.noStoresNear')}</p>
                             </div>
                         )}
                     </div>

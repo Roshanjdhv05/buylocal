@@ -13,10 +13,31 @@ export const AuthProvider = ({ children }) => {
         let mounted = true;
 
         const getInitialSession = async () => {
-            console.log('Auth: Getting initial session...');
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const error = urlParams.get('error');
+            const errorDescription = urlParams.get('error_description');
+
+            console.log('Auth: Initializing...');
+            console.log('Auth: Current URL:', window.location.href);
+            console.log('Auth: Hash:', window.location.hash);
+            
+            if (code) {
+                console.log('Auth: Found code in URL');
+                // alert('Auth: Found code in URL. Exchanging for session...');
+            }
+            if (error) {
+                console.error('Auth: Found error in URL:', error, errorDescription);
+                alert(`Auth Error in URL: ${error} - ${errorDescription}`);
+            }
+
             try {
-                const { data: { session }, error } = await withTimeout(supabase.auth.getSession(), 30000, 'Initial Session');
-                if (error) throw error;
+                const { data: { session }, error: sessionError } = await withTimeout(supabase.auth.getSession(), 30000, 'Initial Session');
+                if (sessionError) {
+                    console.error('Auth: Session exchange error:', sessionError);
+                    alert(`Session Error: ${sessionError.message}`);
+                    throw sessionError;
+                }
 
                 if (mounted) {
                     if (session?.user) {
@@ -25,12 +46,18 @@ export const AuthProvider = ({ children }) => {
                         await fetchProfile(session.user.id);
                     } else {
                         console.log('Auth: No initial session.');
+                        // If we had a code but no session, something went wrong in the exchange
+                        if (code) {
+                            console.error('Auth: Code was present but no session was established.');
+                            alert('Authentication failed: Code was present but no session was created. Check Proxy logs.');
+                        }
                         setUser(null);
                         setProfile(null);
                     }
                 }
             } catch (error) {
                 console.error('Auth initialization error:', error.message);
+                alert(`Auth Init Error: ${error.message}`);
             } finally {
                 if (mounted) {
                     setLoading(false);
@@ -44,7 +71,7 @@ export const AuthProvider = ({ children }) => {
         const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
             if (!mounted) return;
 
-            console.log('Auth Event Triggered:', event);
+            console.log(`Auth Event: ${event}`, session?.user?.email || 'No User');
             const currentUser = session?.user ?? null;
 
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || (event === 'INITIAL_SESSION' && session)) {

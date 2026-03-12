@@ -6,9 +6,10 @@ import { supabase } from '../../services/supabase';
 import Navbar from '../../components/Navbar';
 import { ShoppingBag, Trash2, Plus, Minus, CreditCard, MapPin, Phone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { getLocalizedName } from '../../utils/productTranslations';
 
 const Cart = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { cart, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
     const { user, profile } = useAuth();
     const navigate = useNavigate();
@@ -114,7 +115,7 @@ const Cart = () => {
                                         <Link to={`/product/${item.id}`} className="item-info-link">
                                             <img src={item.images?.[0] || item.image} alt={item.name} className="item-img" />
                                             <div className="item-details">
-                                                <h3>{item.name}</h3>
+                                                <h3>{getLocalizedName(item.name, i18n.language)}</h3>
                                                 <p className="item-store">{item.storeName}</p>
                                                 <p className="item-price">₹{item.online_price} {item.delivery_charges > 0 && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(+₹{item.delivery_charges} Del.)</span>}</p>
                                             </div>

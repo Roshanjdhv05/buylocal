@@ -5,8 +5,10 @@ import Navbar from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
 import { Heart, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Wishlist = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [wishlistItems, setWishlistItems] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -50,20 +52,20 @@ const Wishlist = () => {
             <main className="container luxury-main">
                 <div className="wishlist-header">
                     <div className="header-text">
-                        <h1><Heart size={32} className="heart-icon-styled" /> My Wishlist</h1>
-                        <p>Your curated collection of local treasures.</p>
+                        <h1><Heart size={32} className="heart-icon-styled" /> {t('wishlist.title')}</h1>
+                        <p>{t('wishlist.subtitle')}</p>
                     </div>
                     <Link to="/" className="btn-continue-shopping">
-                        <ArrowLeft size={18} /> Continue Shopping
+                        <ArrowLeft size={18} /> {t('wishlist.continueShopping')}
                     </Link>
                 </div>
 
                 {wishlistItems.length === 0 ? (
                     <div className="empty-wishlist glass-card">
                         <Heart size={64} opacity={0.1} />
-                        <h2>Your wishlist is empty</h2>
-                        <p>Start exploring local shops and heart the products you love!</p>
-                        <Link to="/" className="btn-primary">Explore Products</Link>
+                        <h2>{t('wishlist.empty')}</h2>
+                        <p>{t('wishlist.emptySubtitle')}</p>
+                        <Link to="/" className="btn-primary">{t('wishlist.exploreProducts')}</Link>
                     </div>
                 ) : (
                     <div className="products-grid">
