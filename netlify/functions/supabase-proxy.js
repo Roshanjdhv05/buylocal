@@ -1,9 +1,13 @@
 export const handler = async (event, context) => {
     const SUPABASE_URL = "https://ohnumyohkpwlkcogwotj.supabase.co";
     const protocol = event.headers['x-forwarded-proto'] || 'https';
-    const PROXY_URL = `${protocol}://${event.headers.host}/api/supabase`;
+    
+    // The base path we use for our proxy
+    const PROXY_PATH = "/api/supabase";
+    const PROXY_URL = `${protocol}://${event.headers.host}${PROXY_PATH}`;
 
-    const path = event.path.replace(/^\/api\/supabase/, "");
+    // Extract the path after /api/supabase/
+    const path = event.path.replace(new RegExp(`^${PROXY_PATH}`), "");
     const targetUrl = new URL(path, SUPABASE_URL);
     
     if (event.queryStringParameters) {
@@ -32,31 +36,32 @@ export const handler = async (event, context) => {
             redirect: 'manual'
         });
 
-        // multiValueHeaders MUST contain arrays of strings for EVERY key
         const responseHeaders = {};
         const setMultiHeader = (key, value) => {
-            const normalizedKey = key.toLowerCase().split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('-');
-            if (Array.isArray(value)) {
-                responseHeaders[normalizedKey] = value;
-            } else {
-                responseHeaders[normalizedKey] = [value];
-            }
+            // Netlify multiValueHeaders expects arrays
+            const normalizedKey = key.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()).join('-');
+            responseHeaders[normalizedKey] = Array.isArray(value) ? value : [value];
         };
         
         // Rewrite Location header for redirects
         if ([301, 302, 307, 308].includes(response.status)) {
             let location = response.headers.get('location');
             if (location) {
-                if (location.includes(SUPABASE_URL)) {
-                    location = location.replace(SUPABASE_URL, PROXY_URL);
-                }
+                const supOrigin = new URL(SUPABASE_URL).origin;
+                // CRITICAL: proxOrigin must include the /api/supabase path
+                const proxOrigin = PROXY_URL; 
                 
-                if (location.includes("redirect_uri=")) {
-                    const supOrigin = new URL(SUPABASE_URL).origin;
-                    const proxOrigin = new URL(PROXY_URL).origin;
-                    location = location.replace(new RegExp(encodeURIComponent(supOrigin), 'g'), encodeURIComponent(proxOrigin));
-                    location = location.replace(new RegExp(supOrigin, 'g'), proxOrigin);
-                }
+                console.log(`Proxy: Original Location = ${location}`);
+                
+                // 1. Replace unencoded
+                location = location.replace(new RegExp(supOrigin, 'g'), proxOrigin);
+                
+                // 2. Replace encoded
+                const encodedSup = encodeURIComponent(supOrigin);
+                const encodedProx = encodeURIComponent(proxOrigin);
+                location = location.replace(new RegExp(encodedSup, 'g'), encodedProx);
+                
+                console.log(`Proxy: Rewritten Location = ${location}`);
                 setMultiHeader('Location', location);
             }
         }
@@ -75,13 +80,14 @@ export const handler = async (event, context) => {
             const rewrittenCookies = setCookies.map(cookie => {
                 return cookie.replace(new RegExp(supHost, 'g'), proxHost);
             });
+            console.log(`Proxy: Rewriting ${rewrittenCookies.length} cookies`);
             setMultiHeader('Set-Cookie', rewrittenCookies);
         }
 
         // Copy other headers
         for (const [key, value] of response.headers.entries()) {
             const lowerKey = key.toLowerCase();
-            if (!['content-encoding', 'transfer-encoding', 'set-cookie', 'location', 'content-length'].includes(lowerKey)) {
+            if (!['content-encoding', 'transfer-encoding', 'set-cookie', 'location', 'content-length', 'connection', 'keep-alive'].includes(lowerKey)) {
                 setMultiHeader(key, value);
             }
         }
