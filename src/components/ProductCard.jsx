@@ -199,6 +199,17 @@ const ProductCard = ({ product }) => {
 
         <h3 className="product-title">{getLocalizedName(product.name, i18n.language)}</h3>
 
+        {product.tags && product.tags.length > 0 && (
+          <div className="product-tags-list" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', margin: '4px 0' }}>
+            {product.tags.slice(0, 2).map((tag, i) => (
+              <span key={i} style={{ fontSize: '0.6rem', color: 'var(--primary)', fontWeight: '700', opacity: 0.8 }}>
+                #{tag}
+              </span>
+            ))}
+            {product.tags.length > 2 && <span style={{ fontSize: '0.6rem', color: '#94a3b8' }}>+{product.tags.length - 2}</span>}
+          </div>
+        )}
+
         <div className="price-row">
           <span className="current-price">₹{product.online_price || product.price}</span>
           {product.mrp && <span className="original-price">₹{product.mrp}</span>}

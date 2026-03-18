@@ -16,7 +16,8 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
         marketPrice: '',
         deliveryCharges: '0',
         images: [],
-        section: ''
+        section: '',
+        tags: []
     });
 
     const [step, setStep] = useState(1);
@@ -37,13 +38,34 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                 marketPrice: initialData.offline_price || '',
                 deliveryCharges: initialData.delivery_charges || '0',
                 images: initialData.images || [],
-                section: initialData.section || ''
+                section: initialData.section || '',
+                tags: initialData.tags || []
             });
         }
     }, [initialData]);
 
     const [customSize, setCustomSize] = useState('');
     const [availableSizes] = useState(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
+    const [tagInput, setTagInput] = useState('');
+
+    const handleAddTag = (e) => {
+        if (e) e.preventDefault();
+        const tag = tagInput.trim();
+        if (tag && !formData.tags.includes(tag)) {
+            setFormData(prev => ({
+                ...prev,
+                tags: [...prev.tags, tag]
+            }));
+            setTagInput('');
+        }
+    };
+
+    const removeTag = (tagToRemove) => {
+        setFormData(prev => ({
+            ...prev,
+            tags: prev.tags.filter(t => t !== tagToRemove)
+        }));
+    };
 
     const handleSizeToggle = (size) => {
         setFormData(prev => ({
@@ -222,6 +244,49 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                         </button>
                                     ))}
                                 </div>
+                            </div>
+
+                            {/* Tags Section */}
+                            <div className="form-group-mobile">
+                                <label>Product Tags</label>
+                                <div className="tag-input-wrapper" style={{ display: 'flex', gap: '8px', marginBottom: '1rem' }}>
+                                    <input
+                                        type="text"
+                                        placeholder="Add tag (e.g. Cotton, Trendy)"
+                                        value={tagInput}
+                                        onChange={(e) => setTagInput(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && handleAddTag(e)}
+                                        style={{ height: '48px' }}
+                                    />
+                                    <button
+                                        onClick={handleAddTag}
+                                        className="size-chip"
+                                        style={{ height: '48px', minWidth: '80px', background: '#f8fafc' }}
+                                    >
+                                        Add
+                                    </button>
+                                </div>
+                                <div className="tags-display" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                    {formData.tags?.map((tag, idx) => (
+                                        <div key={idx} className="tag-chip active" style={{ 
+                                            background: '#f1f5f9', 
+                                            padding: '6px 12px', 
+                                            borderRadius: '20px', 
+                                            fontSize: '0.85rem', 
+                                            fontWeight: '600',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            color: '#475569'
+                                        }}>
+                                            {tag}
+                                            <X size={14} onClick={() => removeTag(tag)} style={{ cursor: 'pointer' }} />
+                                        </div>
+                                    ))}
+                                </div>
+                                <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                                    Tags help in identifying and filtering products in search.
+                                </p>
                             </div>
                         </div>
 

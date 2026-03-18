@@ -71,20 +71,44 @@ const LocationOnboarding = () => {
 
         setStatus('saving');
         try {
+            let finalLat = lat;
+            let finalLng = lng;
+
+            // If coordinates are missing (manual entry), try to fetch them
+            if (finalLat === null || finalLng === null) {
+                console.log('LocationOnboarding: Missing coordinates for manual entry, fetching...');
+                try {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city + ', ' + state)}&limit=1`,
+                        {
+                            headers: { 'User-Agent': 'ByLocal-App-V2' }
+                        }
+                    );
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        finalLat = parseFloat(data[0].lat);
+                        finalLng = parseFloat(data[0].lon);
+                        console.log('LocationOnboarding: Found coordinates for manual entry:', { finalLat, finalLng });
+                    }
+                } catch (err) {
+                    console.error('LocationOnboarding: Manual geocode failed:', err);
+                }
+            }
+
             if (user) {
                 await updateProfile({
                     city,
                     state,
-                    lat,
-                    lng
+                    lat: finalLat,
+                    lng: finalLng
                 });
             } else {
                 // For guest users, save to localStorage
                 localStorage.setItem('user_location', JSON.stringify({
                     city,
                     state,
-                    lat,
-                    lng,
+                    lat: finalLat,
+                    lng: finalLng,
                     timestamp: new Date().getTime()
                 }));
                 // Wait a bit to simulate saving experience

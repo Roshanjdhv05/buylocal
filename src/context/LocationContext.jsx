@@ -46,16 +46,21 @@ export const LocationProvider = ({ children }) => {
                 showToast('Position found, identifying city...', 'loading');
 
                 try {
-                    console.log('LocationContext: Fetching city name...');
+                    console.log('LocationContext: Fetching city name for:', { lat, lng });
                     const response = await fetch(
                         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
                         {
                             headers: {
                                 'Accept-Language': 'en',
-                                'User-Agent': 'ByLocal-App'
+                                'User-Agent': 'ByLocal-App-V2'
                             }
                         }
                     );
+                    
+                    if (!response.ok) {
+                        throw new Error(`Nominatim API returned ${response.status}`);
+                    }
+
                     const data = await response.json();
                     console.log('LocationContext: Geocode success:', data.address);
 
@@ -69,10 +74,11 @@ export const LocationProvider = ({ children }) => {
                     showToast(`Location updated: ${city}`, 'success');
                 } catch (err) {
                     console.error('LocationContext: Geocode fetch failed:', err);
+                    // Still set lat/lng even if city lookup fails so distances work
                     const newLocation = { lat, lng, city: 'Unknown', state: '', timestamp: new Date().getTime() };
                     setLocation(newLocation);
                     localStorage.setItem('user_location', JSON.stringify(newLocation));
-                    showToast('City not found, showing coordinates', 'info');
+                    showToast('City not found, showing local stores', 'info');
                 } finally {
                     setLoading(false);
                 }
@@ -85,17 +91,19 @@ export const LocationProvider = ({ children }) => {
                 if (err.code === 1) { // PERMISSION_DENIED
                     msg = 'Please allow location access in your browser settings and try again.';
                 } else if (err.code === 3) { // TIMEOUT
-                    msg = 'Location request timed out. Trying again with different settings...';
-                    // Retry once with high accuracy off and long timeout if not already done
+                    msg = 'Location request timed out. Trying again with simpler settings...';
+                    console.log('LocationContext: Timeout, switching to simple detection.');
                     detectSimpleLocation();
                     return;
+                } else {
+                    msg = `Location error: ${err.message}`;
                 }
 
                 setError(msg);
                 setLoading(false);
                 showToast(msg, type);
             },
-            { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 } // Request fresh position with high accuracy
+            { timeout: 20000, enableHighAccuracy: true, maximumAge: 0 } // Increased timeout to 20s
         );
     };
 

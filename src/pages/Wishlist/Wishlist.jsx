@@ -112,23 +112,23 @@ const Wishlist = () => {
 
                 .products-grid {
                     display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 0.5rem;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 0.75rem;
                 }
                 @media (min-width: 641px) {
                     .products-grid {
-                        grid-template-columns: repeat(5, 1fr);
-                        gap: 0.75rem;
+                        grid-template-columns: repeat(3, 1fr);
+                        gap: 1rem;
                     }
                 }
                 @media (min-width: 1024px) {
                     .products-grid {
-                        grid-template-columns: repeat(7, 1fr);
+                        grid-template-columns: repeat(4, 1fr);
                     }
                 }
                 @media (min-width: 1440px) {
                     .products-grid {
-                        grid-template-columns: repeat(7, 1fr);
+                        grid-template-columns: repeat(5, 1fr);
                     }
                 }
 
@@ -146,8 +146,17 @@ const Wishlist = () => {
                 .empty-wishlist p { color: #64748b; max-width: 400px; line-height: 1.6; }
                 
                 @media (max-width: 768px) {
-                    .wishlist-header { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
-                    .header-text h1 { font-size: 2rem; }
+                    .luxury-main { padding-top: 1.5rem; }
+                    .wishlist-header { 
+                        flex-direction: column; 
+                        align-items: flex-start; 
+                        gap: 1rem; 
+                        margin-bottom: 2rem;
+                        padding-bottom: 1rem;
+                    }
+                    .header-text h1 { font-size: 1.75rem; gap: 0.75rem; }
+                    .header-text p { font-size: 0.95rem; }
+                    .products-grid { gap: 0.5rem; }
                 }
             `}</style>
         </div>

@@ -68,7 +68,8 @@ const SellerDashboard = () => {
         sizes: [],
         age_group: 'Adults',
         cod_available: true,
-        delivery_time: '2-3 days'
+        delivery_time: '2-3 days',
+        tags: []
     });
 
     const [selectedImages, setSelectedImages] = useState([]);
@@ -297,7 +298,8 @@ const SellerDashboard = () => {
                 delivery_time: productData.delivery_time || productData.deliveryTime || '2-3 days',
                 delivery_charges: parseFloat(productData.delivery_charges || productData.deliveryCharges || 0),
                 store_id: store.id,
-                images: imageUrls
+                images: imageUrls,
+                tags: productData.tags || []
             };
 
             let result;
@@ -333,7 +335,8 @@ const SellerDashboard = () => {
             setNewProduct({
                 name: '', category: '', section: '', online_price: '', offline_price: '',
                 description: '', sizes: [], age_group: 'Adults',
-                cod_available: true, delivery_time: '1-2 days'
+                cod_available: true, delivery_time: '1-2 days',
+                tags: []
             });
             setSelectedImages([]);
             setImagePreviews([]);
@@ -1070,6 +1073,16 @@ const SellerDashboard = () => {
                                                 </span>
                                             </div>
                                             <h3 className="pro-card-name" title={product.name}>{product.name}</h3>
+                                            {product.tags && product.tags.length > 0 && (
+                                                <div className="pro-card-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                                                    {product.tags.slice(0, 3).map((tag, i) => (
+                                                        <span key={i} style={{ fontSize: '0.65rem', background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', color: '#64748b' }}>
+                                                            #{tag}
+                                                        </span>
+                                                    ))}
+                                                    {product.tags.length > 3 && <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>+{product.tags.length - 3}</span>}
+                                                </div>
+                                            )}
                                             <div className="pro-card-footer">
                                                 <span className="pro-price">₹{product.online_price}</span>
                                                 <span className="pro-stock">{product.stock_quantity || 12} in stock</span>

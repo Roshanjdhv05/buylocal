@@ -6,7 +6,7 @@ import { calculateDistance } from '../../utils/distance';
 import ProductCard from '../../components/ProductCard';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import { MapPin, ArrowRight, ChevronRight, Store, ChevronLeft } from 'lucide-react';
+import { MapPin, ArrowRight, ChevronRight, Store, ChevronLeft, ArrowLeft } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getRecentlyViewed } from '../../utils/recentlyViewed';
 import { useTranslation } from 'react-i18next';
@@ -66,9 +66,19 @@ const Home = () => {
 
         const fetchData = async () => {
             try {
-                const { data: storesData } = await withTimeout(supabase.from('stores').select('*'), 30000, 'Home Fetch Stores');
-                const { data: productsData } = await withTimeout(supabase.from('products').select('*'), 30000, 'Home Fetch Products');
-                const { data: reviewsData } = await withTimeout(supabase.from('product_reviews').select('*'), 30000, 'Home Fetch Reviews');
+                console.log('Home: Fetching initial data...');
+                const { data: storesData, error: storesError } = await withTimeout(supabase.from('stores').select('*'), 30000, 'Home Fetch Stores');
+                if (storesError) {
+                    console.error('Home: Fetch stores error:', storesError);
+                } else {
+                    console.log('Home: Stores fetched successfully, count:', storesData?.length);
+                }
+
+                const { data: productsData, error: productsError } = await withTimeout(supabase.from('products').select('*'), 30000, 'Home Fetch Products');
+                if (productsError) console.error('Home: Fetch products error:', productsError);
+
+                const { data: reviewsData, error: reviewsError } = await withTimeout(supabase.from('product_reviews').select('*'), 30000, 'Home Fetch Reviews');
+                if (reviewsError) console.error('Home: Fetch reviews error:', reviewsError);
                 
                 const { data: campaignsData } = await supabase
                     .from('banner_campaigns')
@@ -89,7 +99,7 @@ const Home = () => {
                     setCampaigns(sortedCampaigns);
                 }
             } catch (e) {
-                console.error('Fetch error:', e.message);
+                console.error('Home: General fetch error:', e.message);
             }
         };
 
@@ -100,10 +110,13 @@ const Home = () => {
 
     // Process Data
     const nearestStores = stores
-        .map(store => ({
-            ...store,
-            distance: location ? calculateDistance(location, { lat: store.lat, lng: store.lng }) : Infinity
-        }))
+        .map(store => {
+            const distance = location ? calculateDistance(location, { lat: store.lat, lng: store.lng }) : Infinity;
+            return {
+                ...store,
+                distance: distance
+            };
+        })
         .sort((a, b) => {
             if (a.distance === b.distance) return 0;
             if (a.distance === Infinity) return 1;
@@ -111,6 +124,13 @@ const Home = () => {
             return a.distance - b.distance;
         })
         .slice(0, 8); // Top 8 nearest stores
+
+    // Log calculation results for debugging
+    if (location) {
+        console.log('Home: Location set, calculating distances. Nearest store dist:', nearestStores[0]?.distance);
+    } else {
+        console.log('Home: Location not set, stores will show Infinity distance.');
+    }
 
     const isAnyStoreNear = nearestStores.some(s => s.distance <= 10); // 10km radius
 
@@ -138,7 +158,8 @@ const Home = () => {
             p.name?.toLowerCase().includes(query) ||
             p.description?.toLowerCase().includes(query) ||
             p.category?.toLowerCase().includes(query) ||
-            p.storeName?.toLowerCase().includes(query)
+            p.storeName?.toLowerCase().includes(query) ||
+            p.tags?.some(tag => tag.toLowerCase().includes(query))
         );
     }) : [];
 
@@ -206,10 +227,31 @@ const Home = () => {
             <div className="home-page">
                 <Navbar />
                 <main className="container main-content" style={{ paddingTop: '2rem' }}>
-                    <div className="section-header">
-                        <div className="title-group">
-                            <h2>{t('home.searchResults')} "{searchQuery}"</h2>
-                            <p>{t('home.foundItems')} {searchResults.length} {t('home.itemsMatching')}</p>
+                    <div className="section-header" style={{ alignItems: 'flex-start', gap: '1rem' }}>
+                        <div className="title-group" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <button 
+                                onClick={() => navigate('/categories')} 
+                                className="back-btn-circle"
+                                style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: '50%',
+                                    background: '#fff',
+                                    border: '1px solid #e2e8f0',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#475569',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                                    flexShrink: 0
+                                }}
+                            >
+                                <ArrowLeft size={20} />
+                            </button>
+                            <div className="text-group">
+                                <h2 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0 }}>{t('home.searchResults')} "{searchQuery}"</h2>
+                                <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '2px 0 0' }}>{t('home.foundItems')} {searchResults.length} {t('home.itemsMatching')}</p>
+                            </div>
                         </div>
                         {searchResults.length === 0 && (
                             <Link to="/" className="btn-primary">{t('home.clearSearch')}</Link>
@@ -772,12 +814,12 @@ const Home = () => {
 
         /* Section Block */
         .main-content { padding-bottom: 4rem; }
-        .section-block { margin-bottom: 4rem; }
+        .section-block { margin-bottom: 2.5rem; }
         .section-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
-            margin-bottom: 2rem;
+            margin-bottom: 1.25rem;
         }
         .title-group h2 { font-size: 1.75rem; font-weight: 800; margin-bottom: 0.25rem; }
         .title-group p { color: var(--text-muted); }
@@ -952,7 +994,8 @@ const Home = () => {
             .cta-content h2 { font-size: 2rem; }
             .cta-container { flex-direction: column; text-align: center; }
             .cta-buttons { justify-content: center; }
-            .section-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+            .section-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; margin-bottom: 1rem; }
+            .section-block { margin-bottom: 2rem; }
             .view-all { align-self: flex-end; }
         }
 

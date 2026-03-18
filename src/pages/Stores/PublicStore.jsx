@@ -173,6 +173,10 @@ const PublicStore = () => {
         }
     };
 
+    const averageRating = reviews.length > 0
+        ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+        : '5.0';
+
     if (loading) return <div className="loader-container"><div className="loader"></div></div>;
     if (!store) return <div className="error-container">{t('publicStore.notFound')}</div>;
 
@@ -209,7 +213,7 @@ const PublicStore = () => {
                             </div>
                             <div className="store-title-wrap">
                                 <h1>{store.name}</h1>
-                                <p className="store-tagline">{t('publicStore.tagline')}</p>
+                                <p className="store-tagline">{t('publicStore.tagline', 'Curated Luxury Fashion & Artistry')}</p>
                             </div>
                         </div>
 
@@ -241,7 +245,6 @@ const PublicStore = () => {
                 </div>
             </div>
 
-            {/* QUICK STATS BAR */}
             <div className="stats-bar-container container">
                 <div className="stats-grid-refined">
                     <div className="stat-item-luxury glass-card">
@@ -250,20 +253,20 @@ const PublicStore = () => {
                         </div>
                         <div className="stat-texts">
                             <label>{t('publicStore.stats.totalProducts')}</label>
-                            <p>{products.length}+</p>
-                        </div>
-                    </div>
-                    <div className="stat-item-luxury glass-card">
-                        <div className="stat-icon-wrap green">
-                            <Clock size={20} />
-                        </div>
-                        <div className="stat-texts">
-                            <label>{t('publicStore.stats.deliveryDays')}</label>
-                            <p>{store.delivery_time || '2 - 3 Days'}</p>
+                            <p>{products.length || 5}+</p>
                         </div>
                     </div>
                     <div className="stat-item-luxury glass-card">
                         <div className="stat-icon-wrap gold">
+                            <Clock size={20} />
+                        </div>
+                        <div className="stat-texts">
+                            <label>{t('publicStore.stats.deliveryDays')}</label>
+                            <p>2 - 3 Days</p>
+                        </div>
+                    </div>
+                    <div className="stat-item-luxury glass-card">
+                        <div className="stat-icon-wrap green">
                             <CreditCard size={20} />
                         </div>
                         <div className="stat-texts">
@@ -277,7 +280,7 @@ const PublicStore = () => {
                         </div>
                         <div className="stat-texts">
                             <label>{t('publicStore.stats.rating')}</label>
-                            <p>4.85 / 5.0</p>
+                            <p>{averageRating} Stars</p>
                         </div>
                     </div>
                 </div>
@@ -333,7 +336,7 @@ const PublicStore = () => {
 
                 {/* DYNAMIC SECTIONS / PRODUCTS */}
                 {Object.entries(products.reduce((acc, product) => {
-                    const sectionName = product.section?.trim() || t('publicStore.generalCollection') || 'General Collection';
+                    const sectionName = product.section?.trim() || t('publicStore.generalCollection', 'General Collection');
                     if (!acc[sectionName]) acc[sectionName] = [];
                     acc[sectionName].push(product);
                     return acc;
@@ -689,7 +692,7 @@ const PublicStore = () => {
 
                 /* RESPONSIVE */
                 @media (max-width: 1200px) {
-                    .stats-grid-refined { grid-template-columns: repeat(2, 1fr); }
+                    .stats-grid-refined { grid-template-columns: repeat(4, 1fr); }
                     .legacy-content { grid-template-columns: 1fr; }
                     .legacy-visual { height: 350px; }
                     .legacy-img { border-radius: 0 0 24px 24px; }

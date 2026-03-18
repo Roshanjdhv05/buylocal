@@ -1,16 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import Navbar from '../../components/Navbar';
-import ProductCard from '../../components/ProductCard';
+import Footer from '../../components/Footer';
 import { useLocation } from '../../context/LocationContext';
 import {
     ShoppingBag,
     ArrowRight,
-    Clock,
     Store,
     MapPin,
     ChevronRight,
-    Search
+    ChevronDown,
+    Search,
+    Filter,
+    LayoutGrid,
+    ChevronLeft,
+    ArrowLeft,
+    Star,
+    Shirt,
+    Palette,
+    Monitor,
+    Smartphone,
+    Gem,
+    Footprints,
+    Gamepad2,
+    Armchair,
+    Laptop,
+    Tv,
+    Wind,
+    Headphones,
+    Tablet,
+    Watch,
+    Printer,
+    Battery,
+    Activity
 } from 'lucide-react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -20,452 +42,760 @@ const Categories = () => {
     const { categoryName } = useParams();
     const navigate = useNavigate();
 
-    const [products, setProducts] = useState([]);
-    const [stores, setStores] = useState([]);
-    const [activeTab, setActiveTab] = useState(categoryName || 'All');
-    const [loading, setLoading] = useState(true);
+    const [expandedCats, setExpandedCats] = useState({ 'Fashion': true });
     const { location } = useLocation();
+    
+    const [availableTags, setAvailableTags] = useState(new Set());
+    const [loading, setLoading] = useState(true);
+    const [activeCategory, setActiveCategory] = useState(categoryName || 'Fashion');
 
-    // Sync activeTab when categoryName param changes
-    useEffect(() => {
-        if (categoryName) {
-            setActiveTab(categoryName);
+    // Banner Slider State
+    const [currentBanner, setCurrentBanner] = useState(0);
+    const banners = [
+        {
+            title: "Fresh Seasonal Picks",
+            desc: "Get up to 40% off on organic fruits sourced directly from local artisans.",
+            image: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=800",
+            bg: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)"
+        },
+        {
+            title: "Summer Collection",
+            desc: "Trendy fashion arrivals with exclusive member discounts up to 50%.",
+            image: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=800",
+            bg: "linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)"
+        },
+        {
+            title: "Next-Gen Tech",
+            desc: "Upgrade your lifestyle with the latest gadgets and electronics accessories.",
+            image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800",
+            bg: "linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)"
         }
-    }, [categoryName]);
+    ];
 
     useEffect(() => {
-        fetchData();
+        const timer = setInterval(() => {
+            setCurrentBanner((prev) => (prev + 1) % banners.length);
+        }, 5000);
+        return () => clearInterval(timer);
     }, []);
 
-    const handleTabClick = (cat) => {
-        setActiveTab(cat);
-        navigate(`/category/${cat}`);
+
+
+    const categoriesList = [
+        { 
+            id: 'fashion', 
+            name: 'Fashion', 
+            icon: <Shirt size={24} />,
+            subcategories: [
+                { name: 'Men', color: '#f5f3ff', icon: '👕' },
+                { name: 'Women', color: '#fdf2f8', icon: '👗' },
+                { name: 'Kids', color: '#fffbeb', icon: '👶' },
+                { name: 'Accessories', color: '#f0fdf4', icon: '👜' },
+            ]
+        },
+        { 
+            id: 'beauty', 
+            name: 'Beauty', 
+            icon: <Palette size={24} />,
+            subcategories: [
+                { name: 'Skincare', color: '#fef2f2', icon: '🧴' },
+                { name: 'Makeup', color: '#fdf2f8', icon: '💄' },
+                { name: 'Haircare', color: '#f5f3ff', icon: '💇' },
+                { name: 'Fragrance', color: '#fff7ed', icon: '✨' },
+            ]
+        },
+        { 
+            id: 'electronics', 
+            name: 'Electronics', 
+            icon: <Monitor size={24} />,
+            subcategories: [
+                { name: 'Laptops', color: '#f5f3ff', icon: '💻' },
+                { name: 'Televisions', color: '#fffbeb', icon: '📺' },
+                { name: 'Hair Dryers', color: '#fdf2f8', icon: '💨' },
+                { name: 'Headphones', color: '#f5f3ff', icon: '🎧' },
+                { name: 'Tablets', color: '#fff1f2', icon: '📱' },
+                { name: 'Mobile Covers', color: '#f0fdf4', icon: '🤳' },
+                { name: 'Printers', color: '#f5f3ff', icon: '🖨️' },
+                { name: 'Healthcare', color: '#fff7ed', icon: '⚕️' },
+                { name: 'Batteries', color: '#f5f3ff', icon: '🔋' },
+                { name: 'Watches', color: '#f0fdf4', icon: '⌚' },
+            ]
+        },
+        { 
+            id: 'jewellery', 
+            name: 'Jewellery', 
+            icon: <Gem size={24} />,
+            subcategories: [
+                { name: 'Rings', color: '#fffbeb', icon: '💍' },
+                { name: 'Necklaces', color: '#fef2f2', icon: '📿' },
+                { name: 'Earrings', color: '#f5f3ff', icon: '💎' },
+            ]
+        },
+        { 
+            id: 'footwear', 
+            name: 'Footwear', 
+            icon: <Footprints size={24} />,
+            subcategories: [
+                { name: 'Sneakers', color: '#f0fdf4', icon: '👟' },
+                { name: 'Formal', color: '#f8fafc', icon: '👞' },
+                { name: 'Sandals', color: '#fff7ed', icon: '👡' },
+            ]
+        },
+        { 
+            id: 'toys', 
+            name: 'Toys', 
+            icon: <Gamepad2 size={24} />,
+            subcategories: [
+                { name: 'Action Figures', color: '#fff1f2', icon: '🧸' },
+                { name: 'Puzzles', color: '#f5f3ff', icon: '🧩' },
+                { name: 'Dolls', color: '#fdf2f8', icon: '🪆' },
+            ]
+        },
+        { 
+            id: 'furniture', 
+            name: 'Furniture', 
+            icon: <Armchair size={24} />,
+            subcategories: [
+                { name: 'Chairs', color: '#f8fafc', icon: '🪑' },
+                { name: 'Tables', color: '#fffbeb', icon: '🛋️' },
+            ]
+        },
+    ];
+
+    useEffect(() => {
+        const fetchAvailableTags = async () => {
+            setLoading(true);
+            try {
+                const { data, error } = await supabase.from('products').select('tags');
+                if (error) throw error;
+                const tagsSet = new Set();
+                data.forEach(p => {
+                    if (p.tags) p.tags.forEach(t => {
+                        if (t) tagsSet.add(t.toLowerCase().trim());
+                    });
+                });
+                setAvailableTags(tagsSet);
+            } catch (e) {
+                console.error('Error fetching available tags:', e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchAvailableTags();
+    }, []);
+
+    const toggleExpand = (cat) => {
+        setExpandedCats(prev => ({ ...prev, [cat]: !prev[cat] }));
     };
 
-    const calculateDistance = (lat1, lon1, lat2, lon2) => {
-        if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
-        const R = 6371; // Radius of the earth in km
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-            Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c; // Distance in km
-    };
-
-    const fetchData = async () => {
-        try {
-            const [productsRes, storesRes] = await Promise.all([
-                supabase.from('products').select('*, stores(name, lat, lng)'),
-                supabase.from('stores').select('*').limit(4)
-            ]);
-
-            const userLat = location?.lat;
-            const userLng = location?.lng;
-
-            const formattedProducts = (productsRes.data || []).map(p => ({
-                ...p,
-                storeName: p.stores?.name,
-                distance: calculateDistance(userLat, userLng, p.stores?.lat, p.stores?.lng)
-            }));
-
-            const formattedStores = (storesRes.data || []).map(s => ({
-                ...s,
-                distance: calculateDistance(userLat, userLng, s.lat, s.lng)
-            }));
-
-            setProducts(formattedProducts);
-            setStores(formattedStores);
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const categories = ['All', 'Men', 'Women', 'Kids', 'Others'];
-    const filteredProducts = activeTab === 'All'
-        ? products
-        : products.filter(p => p.category === activeTab);
-
-    const getBannerStyle = (tab) => {
-        switch (tab) {
-            case 'Men':
-                return {
-                    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1617137968427-85924c800a22?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center 30%',
-                };
-            case 'Women':
-                return {
-                    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center 20%',
-                };
-            case 'Kids':
-                return {
-                    backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6)), url('https://images.unsplash.com/photo-1514090458221-65bb69cf63e6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center 40%',
-                };
-            default:
-                return {
-                    background: 'linear-gradient(135deg, #a855f7 0%, #6366f1 100%)'
-                };
-        }
-    };
-
-    if (loading) return <div className="loader-container"><div className="loader"></div></div>;
+    if (loading) {
+        return (
+            <div className="categories-page-new">
+                <Navbar />
+                <main className="container main-layout" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+                    <div className="loader" style={{ 
+                        width: '40px', 
+                        height: '40px', 
+                        border: '3px solid #f3f3f3', 
+                        borderTop: '3px solid var(--primary)', 
+                        borderRadius: '50%', 
+                        animation: 'spin 1s linear infinite' 
+                    }}></div>
+                    <style>{`
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    `}</style>
+                </main>
+                <Footer />
+            </div>
+        );
+    }
 
     return (
-        <div className="categories-page">
+        <div className="categories-page-new">
             <Navbar />
+            
+            <div className="container main-layout">
+                {/* Desktop View (Current) */}
+                <div className="desktop-view-container">
+                    <aside className="sidebar">
+                        <div className="sidebar-section">
+                            <h3 className="sidebar-title">CATEGORIES</h3>
+                            <ul className="category-tree">
+                                {categoriesList.map(cat => (
+                                    <li key={cat.id} className="category-item">
+                                        <div 
+                                            className={`category-header ${activeCategory === cat.name ? 'active' : ''}`}
+                                            onClick={() => {
+                                                setActiveCategory(cat.name);
+                                                if (cat.subcategories) toggleExpand(cat.name);
+                                            }}
+                                        >
+                                            <span>{cat.name}</span>
+                                            {cat.subcategories && (
+                                                expandedCats[cat.name] ? <ChevronDown size={16} /> : <ChevronRight size={16} />
+                                            )}
+                                        </div>
+                                        {cat.subcategories && expandedCats[cat.name] && (
+                                            <ul className="subcategory-list">
+                                                {cat.subcategories.map(sub => {
+                                                    const isAvailable = availableTags.has((typeof sub === 'string' ? sub : sub.name).toLowerCase().trim());
+                                                    return (
+                                                        <li 
+                                                            key={typeof sub === 'string' ? sub : sub.name} 
+                                                            className="subcategory-item"
+                                                            onClick={() => navigate(`/?search=${encodeURIComponent(typeof sub === 'string' ? sub : sub.name)}`)}
+                                                            style={{ position: 'relative' }}
+                                                        >
+                                                            {typeof sub === 'string' ? sub : sub.name}
+                                                            {!isAvailable && <span className="availability-tag" style={{
+                                                                fontSize: '10px',
+                                                                color: '#ef4444',
+                                                                fontWeight: 'normal',
+                                                                marginLeft: '8px',
+                                                                fontStyle: 'italic'
+                                                            }}>(Product not available)</span>}
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
 
-            {/* Dynamic Category Banner */}
-            <div className="category-banner" style={getBannerStyle(activeTab)}>
-                <div className="container banner-content">
-                    <h1>{activeTab === 'All' ? t('home.exploreFashion') : `${t(`home.${activeTab.toLowerCase()}`)}${t('home.collection')}`}</h1>
-                    <p>{activeTab === 'All' ? t('home.discoverUnique') : `${t('home.handpicked')} ${t(`home.${activeTab.toLowerCase()}`)} ${t('home.fashionNeighborhood')}`}</p>
+                    </aside>
+
+                    <main className="content-main">
+                        {/* Hero Banner */}
+                        <section className="hero-banner-new" style={{ background: banners[currentBanner].bg }}>
+                            <div className="banner-text">
+                                <h2>{banners[currentBanner].title}</h2>
+                                <p>{banners[currentBanner].desc}</p>
+                                <button className="shop-now-btn">Shop Now</button>
+                            </div>
+                            <div className="banner-image-container">
+                                <img src={banners[currentBanner].image} alt={banners[currentBanner].title} />
+                            </div>
+                        </section>
+
+                        {/* Breadcrumbs */}
+                        <nav className="breadcrumbs">
+                            <Link to="/">Home</Link>
+                            <ChevronRight size={14} />
+                            <Link to="/categories">Categories</Link>
+                            <ChevronRight size={14} />
+                            <span className="current">{activeCategory}</span>
+                        </nav>
+                    </main>
+                </div>
+
+                {/* Mobile View (New) */}
+                <div className="mobile-view-container">
+                    {/* Hero Banner Slider for Mobile */}
+                    <div className="mobile-banner-slider">
+                        <section className="hero-banner-new mobile-banner" style={{ background: banners[currentBanner].bg }}>
+                            <div className="banner-text">
+                                <h2>{banners[currentBanner].title}</h2>
+                                <p>{banners[currentBanner].desc}</p>
+                                <button className="shop-now-btn">Shop Now</button>
+                            </div>
+                            <div className="banner-image-container">
+                                <img src={banners[currentBanner].image} alt={banners[currentBanner].title} />
+                            </div>
+                        </section>
+                        <div className="banner-dots">
+                            {banners.map((_, i) => (
+                                <div key={i} className={`dot ${currentBanner === i ? 'active' : ''}`} />
+                            ))}
+                        </div>
+                    </div>
+                    
+                    <div className="mobile-category-layout">
+                        {/* Mobile Sidebar */}
+                        <aside className="mobile-sidebar">
+                            {categoriesList.map(cat => (
+                                <div 
+                                    key={cat.id} 
+                                    className={`mobile-nav-item ${activeCategory === cat.name ? 'active' : ''}`}
+                                    onClick={() => setActiveCategory(cat.name)}
+                                >
+                                    <div className="mobile-nav-icon">
+                                        {cat.icon}
+                                    </div>
+                                    <span className="mobile-nav-text">{cat.name}</span>
+                                </div>
+                            ))}
+                        </aside>
+
+                        {/* Mobile Content Area */}
+                        <main className="mobile-content">
+                            <div className="subcategory-grid">
+                                {categoriesList.find(c => c.name === activeCategory)?.subcategories?.map((sub, index) => {
+                                    const isAvailable = availableTags.has(sub.name.toLowerCase().trim());
+                                    return (
+                                        <div key={index} className="subcategory-card-wrapper" onClick={() => {
+                                            navigate(`/?search=${encodeURIComponent(sub.name)}`);
+                                        }}>
+                                            <div className="subcategory-card" style={{ backgroundColor: sub.color, opacity: isAvailable ? 1 : 0.6 }}>
+                                                <div className="subcategory-icon">
+                                                    {sub.icon}
+                                                </div>
+                                                {!isAvailable && (
+                                                    <div className="availability-overlay" style={{
+                                                        position: 'absolute',
+                                                        bottom: '4px',
+                                                        left: '50%',
+                                                        transform: 'translateX(-50%)',
+                                                        width: '100%',
+                                                        textAlign: 'center',
+                                                        fontSize: '8px',
+                                                        color: '#fff',
+                                                        background: 'rgba(239, 68, 68, 0.8)',
+                                                        padding: '2px 0'
+                                                    }}>
+                                                        Not Available
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <span className="subcategory-label" style={{ color: isAvailable ? 'inherit' : '#94a3b8' }}>{sub.name}</span>
+                                        </div>
+                                    );
+                                }) || (
+                                    <div className="no-subcategories">
+                                        <p>No subcategories available for {activeCategory}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                        </main>
+                    </div>
                 </div>
             </div>
 
-            <main className="container">
-                {/* Capsule Tabs */}
-                <div className="tabs-scroll-wrapper">
-                    <div className="tabs-capsule-container">
-                        {categories.map(cat => (
-                            <button
-                                key={cat}
-                                className={`capsule-tab-btn ${activeTab === cat ? 'active' : ''}`}
-                                onClick={() => handleTabClick(cat)}
-                            >
-                                {t(`home.${cat.toLowerCase()}`)}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="content-area">
-                    {/* Products Section */}
-                    <div className="products-container">
-                        {filteredProducts.length > 0 ? (
-                            <div className="products-grid">
-                                {filteredProducts.map(product => (
-                                    <ProductCard key={product.id} product={product} />
-                                ))}
-                            </div>
-                        ) : (
-                            /* Redesigned Empty State */
-                            <div className="coming-soon-card">
-                                <div className="icon-stack">
-                                    <div className="store-circle">
-                                        <Store size={40} color="#a855f7" />
-                                    </div>
-                                    <div className="clock-badge">
-                                        <Clock size={16} color="white" />
-                                    </div>
-                                </div>
-                                <h2>{t('home.comingSoon')}</h2>
-                                <p>
-                                    {t('home.localStoresAdding')} {t(`home.${activeTab.toLowerCase()}`)}. <br />
-                                    {t('home.checkBack')}
-                                </p>
-                                {activeTab !== 'All' && (
-                                    <button
-                                        className="browse-alt-btn"
-                                        onClick={() => handleTabClick('All')}
-                                    >
-                                        {t('home.browseAllCollections')} <ArrowRight size={18} />
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Discovery Sections - Only show on "All" (Discovery Mode) */}
-                    {activeTab === 'All' && (
-                        <>
-                            {/* Popular Local Stores */}
-                            <section className="stores-section">
-                                <div className="section-header">
-                                    <h2>{t('home.popularLocalStores')}</h2>
-                                    <Link to="/stores" className="see-all">{t('home.seeAll')}</Link>
-                                </div>
-                                <div className="stores-grid">
-                                    {stores.map(store => (
-                                        <Link to={`/${encodeURIComponent(store.name)}`} key={store.id} className="store-card-mini">
-                                            <div className="store-images">
-                                                <img src={store.banner_url || "https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400"} alt="" />
-                                                <img src={store.logo_url || "https://images.unsplash.com/photo-1441984908747-5c19ebb2c09c?w=400"} alt="" />
-                                            </div>
-                                            <div className="store-info-mini">
-                                                <h3>{store.name}</h3>
-                                                {store.distance !== Infinity && (
-                                                    <span className="distance-tag">{store.distance.toFixed(1)} {t('product.kmAway')}</span>
-                                                )}
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </section>
-
-                            {/* Trending Near You */}
-                            <section className="trending-section">
-                                <div className="section-header">
-                                    <h2>{t('home.trendingNearYou')}</h2>
-                                    <Link to="/trending" className="see-all">{t('home.seeAll')}</Link>
-                                </div>
-                                <div className="products-grid">
-                                    {products.slice(0, 4).map(product => (
-                                        <ProductCard key={product.id} product={product} />
-                                    ))}
-                                </div>
-                            </section>
-                        </>
-                    )}
-                </div>
-            </main>
+            <Footer />
 
             <style>{`
-                .categories-page { 
-                    padding-bottom: 6rem;
-                    background: #fdfdfd; 
+                .categories-page-new {
+                    background: #fff;
+                    min-height: 100vh;
+                }
+                .main-layout {
+                    padding-top: 2rem;
+                    padding-bottom: 4rem;
                 }
 
-                .category-banner {
-                    background: linear-gradient(135deg, #a855f7 0%, #6366f1 100%);
-                    padding: 4rem 1rem;
-                    color: white;
-                    text-align: left;
-                    margin-bottom: 2rem;
+                /* SIDEBAR */
+                .sidebar {
+                    border-right: 1px solid #f1f5f9;
+                    padding-right: 1.5rem;
                 }
-
-                .banner-content h1 {
-                    font-size: 2.25rem;
-                    font-weight: 800;
-                    margin-bottom: 0.5rem;
+                .sidebar-section {
+                    margin-bottom: 2.5rem;
                 }
-
-                .banner-content p {
-                    font-size: 1.1rem;
-                    opacity: 0.9;
-                }
-
-                .tabs-scroll-wrapper {
-                    overflow-x: auto;
-                    padding-bottom: 0.5rem;
-                    margin-bottom: 2rem;
-                    -webkit-overflow-scrolling: touch;
-                }
-                .tabs-scroll-wrapper::-webkit-scrollbar { display: none; }
-
-                .tabs-capsule-container {
-                    display: flex;
-                    gap: 1rem;
-                    min-width: max-content;
-                }
-
-                .capsule-tab-btn {
-                    padding: 0.6rem 1.75rem;
-                    border-radius: 50px;
-                    font-weight: 700;
-                    font-size: 0.9rem;
-                    background: white;
-                    color: #475569;
-                    border: 1px solid #e2e8f0;
-                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-                }
-
-                .capsule-tab-btn.active {
-                    background: #a855f7;
-                    color: white;
-                    border-color: #a855f7;
-                    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
-                }
-
-                .coming-soon-card {
-                    background: white;
-                    border-radius: 24px;
-                    padding: 4rem 2rem;
-                    text-align: center;
-                    border: 1px solid #f1f5f9;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
-                    margin-bottom: 4rem;
-                }
-
-                .icon-stack {
-                    position: relative;
-                    width: 100px;
-                    height: 100px;
-                    margin: 0 auto 2rem;
-                }
-
-                .store-circle {
-                    width: 100%;
-                    height: 100%;
-                    background: #f5f3ff;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-
-                .clock-badge {
-                    position: absolute;
-                    bottom: 5px;
-                    right: 5px;
-                    background: #a855f7;
-                    width: 32px;
-                    height: 32px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border: 4px solid white;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                }
-
-                .coming-soon-card h2 {
-                    font-size: 1.5rem;
+                .sidebar-title {
+                    font-size: 0.85rem;
                     font-weight: 800;
                     color: #1e293b;
-                    margin-bottom: 1rem;
+                    margin-bottom: 1.5rem;
+                    letter-spacing: 1px;
                 }
-
-                .coming-soon-card p {
-                    color: #64748b;
-                    line-height: 1.6;
-                    margin-bottom: 2rem;
-                }
-
-                .browse-alt-btn {
-                    color: #a855f7;
-                    font-weight: 800;
-                    font-size: 0.95rem;
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    margin: 0 auto;
-                    background: none;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                }
-
-                .section-header {
+                .category-tree { list-style: none; }
+                .category-item { margin-bottom: 0.5rem; }
+                .category-header {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    margin-bottom: 1.5rem;
+                    padding: 0.75rem 0;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    color: #475569;
+                    cursor: pointer;
+                    transition: color 0.2s;
+                    border-bottom: 1px solid #f8fafc;
                 }
-
-                .section-header h2 {
-                    font-size: 1.25rem;
-                    font-weight: 800;
-                    color: #1e293b;
-                }
-
-                .see-all {
-                    color: #a855f7;
+                .category-header:hover, .category-header.active { color: var(--primary); }
+                .category-header.active { 
+                    color: var(--primary); 
+                    border-bottom-color: var(--primary); 
                     font-weight: 700;
-                    font-size: 0.9rem;
+                }
+                
+                .subcategory-list {
+                    list-style: none;
+                    padding-left: 1rem;
+                    margin-top: 0.5rem;
+                }
+                .subcategory-item {
+                    padding: 0.5rem 0;
+                    font-size: 0.85rem;
+                    color: #64748b;
+                    cursor: pointer;
+                    transition: color 0.2s;
+                }
+                .subcategory-item:hover, .subcategory-item.active { 
+                    color: var(--primary); 
+                    font-weight: 700; 
                 }
 
-                .products-grid {
-                    display: grid;
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 0.75rem;
-                }
-                @media (min-width: 641px) {
-                    .products-grid {
-                        grid-template-columns: repeat(4, 1fr);
-                        gap: 1rem;
-                    }
-                }
-                @media (min-width: 1024px) {
-                    .products-grid {
-                        grid-template-columns: repeat(7, 1fr);
-                        gap: 1.25rem;
-                    }
-                }
-                @media (min-width: 1440px) {
-                    .products-grid {
-                        grid-template-columns: repeat(7, 1fr);
+                .price-filter-box, .price-slider, .price-labels, .current-price-val { display: none; }
+
+                @media (min-width: 1025px) {
+                    .mobile-view-container { display: none; }
+                    .desktop-view-container {
+                        display: grid;
+                        grid-template-columns: 280px 1fr;
+                        gap: 2rem;
                     }
                 }
 
-                .stores-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-                    gap: 1.5rem;
-                    margin-bottom: 3.5rem;
+                @media (max-width: 1024px) {
+                    .desktop-view-container { display: none; }
+                    .mobile-view-container { display: block; margin-top: -1rem; }
                 }
 
-                .store-card-mini {
-                    background: white;
-                    border-radius: 16px;
+                /* MAIN CONTENT */
+                .hero-banner-new {
+                    height: 240px;
+                    border-radius: 12px;
+                    background: linear-gradient(135deg, #ffd3a5 0%, #fd6585 100%);
                     overflow: hidden;
-                    border: 1px solid #f1f5f9;
-                    transition: transform 0.2s ease;
-                }
-
-                .store-card-mini:hover {
-                    transform: translateY(-4px);
-                }
-
-                .store-images {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    height: 120px;
-                    gap: 2px;
-                }
-
-                .store-images img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                }
-
-                .store-info-mini {
-                    padding: 1rem;
-                }
-
-                .store-info-mini h3 {
-                    font-size: 1rem;
-                    font-weight: 700;
+                    display: flex;
+                    margin-bottom: 1.5rem;
                     color: #1e293b;
-                    margin-bottom: 0.25rem;
+                    position: relative;
+                }
+                .hero-banner-new {
+                    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark, #4f46e5) 100%);
+                }
+                .banner-text {
+                    flex: 1;
+                    padding: 2.5rem;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    gap: 0.75rem;
+                    z-index: 2;
+                }
+                .banner-text h2 { font-size: 2.25rem; font-weight: 800; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                .banner-text p { color: #fff; font-size: 1rem; opacity: 0.95; max-width: 400px; }
+                .shop-now-btn {
+                    align-self: flex-start;
+                    background: white;
+                    color: var(--primary);
+                    padding: 0.6rem 1.75rem;
+                    border-radius: 4px;
+                    font-weight: 800;
+                    font-size: 0.85rem;
+                    margin-top: 1rem;
+                    transition: transform 0.2s;
+                }
+                .shop-now-btn:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+                .banner-image-container {
+                    flex: 1;
+                    display: flex;
+                    justify-content: flex-end;
+                    position: relative;
+                }
+                .banner-image-container img {
+                    height: 100%;
+                    width: 100%;
+                    object-fit: cover;
+                    mask-image: linear-gradient(to right, transparent, black 40%);
                 }
 
-                .distance-tag {
+                .breadcrumbs {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
                     font-size: 0.8rem;
                     color: #94a3b8;
-                    font-weight: 500;
+                    margin-bottom: 2rem;
+                }
+                .breadcrumbs a:hover { color: var(--primary); }
+                .breadcrumbs .current { color: #1e293b; font-weight: 600; }
+
+                .filter-bar {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 1rem 0;
+                    border-top: 1px solid #f1f5f9;
+                    border-bottom: 1px solid #f1f5f9;
+                    margin-bottom: 2rem;
+                }
+                .filter-group { display: flex; gap: 0.75rem; align-items: center; }
+                .filter-dropdown {
+                    background: white;
+                    border: 1px solid #e2e8f0;
+                    padding: 0.5rem 1rem;
+                    border-radius: 6px;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    color: #475569;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                }
+                .filter-dropdown:hover { border-color: var(--primary); color: var(--primary); }
+                .active-filter-tag {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    background: #eef2ff;
+                    color: var(--primary);
+                    padding: 0.4rem 0.75rem;
+                    border-radius: 6px;
+                    font-size: 0.8rem;
+                    font-weight: 700;
+                    border: 1px solid #e0e7ff;
+                }
+                .active-filter-tag svg { cursor: pointer; }
+                .sort-group { display: flex; align-items: center; gap: 0.75rem; font-size: 0.85rem; color: #64748b; font-weight: 600; }
+                .sort-dropdown { background: none; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 0.5rem; }
+
+                .results-header h2 { font-size: 1.25rem; font-weight: 800; color: #1e293b; margin-bottom: 2rem; }
+                .results-header span { font-weight: 500; font-size: 0.95rem; color: #94a3b8; margin-left: 0.5rem; }
+
+                .products-grid-new {
+                    display: grid;
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 1.5rem;
+                    margin-bottom: 4rem;
                 }
 
-                .trending-section .products-grid {
-                    display: grid;
-                    grid-template-columns: repeat(7, 1fr);
+                .no-results-premium, .coming-soon-container {
+                    grid-column: 1 / -1;
+                    padding: 6rem 2rem;
+                    text-align: center;
+                    color: #94a3b8;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
                     gap: 1rem;
                 }
+                .coming-soon-container h3, .no-results-premium h3 {
+                    color: #1e293b;
+                    font-size: 1.5rem;
+                    font-weight: 800;
+                }
+                .coming-soon-container svg { color: var(--primary); }
 
-                @media (max-width: 640px) {
-                    .category-banner { padding: 3rem 1.25rem; }
-                    .banner-content h1 { font-size: 1.75rem; }
+                .pagination-premium {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 0.5rem;
+                }
+                .page-nav, .page-num {
+                    width: 40px;
+                    height: 40px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 1px solid #e2e8f0;
+                    background: white;
+                    border-radius: 4px;
+                    font-weight: 700;
+                    color: #475569;
+                    transition: 0.2s;
+                }
+                .page-num.active {
+                    background: var(--primary);
+                    color: white;
+                    border-color: var(--primary);
+                    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+                }
+                .page-num:hover:not(.active) { background: #f1f5f9; border-color: var(--primary); color: var(--primary); }
+                .page-dots { color: #94a3b8; font-weight: 800; padding: 0 0.5rem; }
+
+                @media (min-width: 1025px) {
+                    .mobile-view-container { display: none; }
+                    .desktop-view-container {
+                        display: grid;
+                        grid-template-columns: 280px 1fr;
+                        gap: 2rem;
+                    }
+                }
+
+                @media (max-width: 1024px) {
+                    .desktop-view-container { display: none; }
+                    .mobile-view-container { display: block; margin-top: -1rem; }
                     
-                    .stores-grid {
+                    .mobile-banner {
+                        height: 180px;
+                        margin: 0;
+                        border-radius: 0;
+                    }
+                    .mobile-banner-slider {
+                        position: relative;
+                        margin-bottom: 0.5rem;
+                    }
+                    .banner-dots {
+                        position: absolute;
+                        bottom: 12px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        display: flex;
+                        gap: 6px;
+                        z-index: 10;
+                    }
+                    .dot {
+                        width: 6px;
+                        height: 6px;
+                        border-radius: 50%;
+                        background: rgba(255,255,255,0.4);
+                        transition: all 0.3s;
+                    }
+                    .dot.active {
+                        background: #fff;
+                        width: 16px;
+                        border-radius: 3px;
+                    }
+                    .mobile-banner .banner-text {
+                        padding: 1.25rem;
+                        gap: 0.35rem;
+                    }
+                    .mobile-banner .banner-text h2 {
+                        font-size: 1.4rem;
+                        line-height: 1.2;
+                    }
+                    .mobile-banner .banner-text p {
+                        font-size: 0.75rem;
+                        max-width: 180px;
+                        line-height: 1.3;
+                    }
+                    .mobile-banner .shop-now-btn {
+                        padding: 0.35rem 0.85rem;
+                        font-size: 0.7rem;
+                        margin-top: 0.5rem;
+                    }
+
+                    .mobile-category-layout {
+                        display: flex;
+                        height: calc(100vh - 70px);
+                        background: #fff;
+                    }
+
+                    /* MOBILE SIDEBAR */
+                    .mobile-sidebar {
+                        width: 90px;
+                        background: #f8fafc;
+                        border-right: 1px solid #f1f5f9;
+                        overflow-y: auto;
+                        display: flex;
+                        flex-direction: column;
+                        padding-bottom: 2rem;
+                    }
+                    .mobile-nav-item {
+                        padding: 1.25rem 0.5rem;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 0.5rem;
+                        cursor: pointer;
+                        position: relative;
+                        transition: all 0.2s;
+                    }
+                    .mobile-nav-icon {
+                        width: 44px;
+                        height: 44px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #64748b;
+                        background: #fff;
+                        transition: all 0.2s;
+                    }
+                    .mobile-nav-text {
+                        font-size: 0.7rem;
+                        font-weight: 600;
+                        color: #64748b;
+                        text-align: center;
+                    }
+                    .mobile-nav-item.active {
+                        background: #fff;
+                    }
+                    .mobile-nav-item.active::before {
+                        content: '';
+                        position: absolute;
+                        left: 0;
+                        top: 20%;
+                        height: 60%;
+                        width: 5px;
+                        background: #8b5cf6;
+                        border-radius: 0 4px 4px 0;
+                    }
+                    .mobile-nav-item.active .mobile-nav-icon {
+                        background: #f5f3ff;
+                        color: #8b5cf6;
+                        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+                    }
+                    .mobile-nav-item.active .mobile-nav-text {
+                        color: #8b5cf6;
+                        font-weight: 800;
+                    }
+
+                    /* MOBILE CONTENT */
+                    .mobile-content {
+                        flex: 1;
+                        padding: 1.5rem 1rem;
+                        overflow-y: auto;
+                        background: #fff;
+                    }
+                    .subcategory-grid {
+                        display: grid;
                         grid-template-columns: repeat(2, 1fr);
+                        gap: 1.5rem 1rem;
+                    }
+                    .subcategory-card-wrapper {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
                         gap: 0.75rem;
                     }
-                    .store-images { height: 90px; }
-                    
-                    .trending-section .products-grid {
-                        grid-template-columns: repeat(3, 1fr);
-                        gap: 0.5rem;
+                    .subcategory-card {
+                        width: 100%;
+                        aspect-ratio: 1;
+                        border-radius: 12px;
+                        position: relative;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
                     }
-
-                    .coming-soon-card { padding: 3rem 1.25rem; }
+                    .subcategory-icon {
+                        font-size: 2.5rem;
+                    }
+                    .count-badge {
+                        position: absolute;
+                        top: 8px;
+                        right: 8px;
+                        background: #fff;
+                        color: #64748b;
+                        padding: 2px 6px;
+                        border-radius: 10px;
+                        font-size: 0.65rem;
+                        font-weight: 700;
+                        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                    }
+                    .subcategory-label {
+                        font-size: 0.8rem;
+                        font-weight: 700;
+                        color: #1e293b;
+                        text-align: center;
+                    }
+                    
+                    .no-subcategories {
+                        grid-column: 1 / -1;
+                        padding: 4rem 1rem;
+                        text-align: center;
+                        color: #94a3b8;
+                    }
                 }
             `}</style>
         </div>

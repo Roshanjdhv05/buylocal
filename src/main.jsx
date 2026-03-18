@@ -5,6 +5,7 @@ import ErrorBoundary from './components/ErrorBoundary.jsx'
 import './index.css'
 import './i18n'
 
+
 ReactDOM.createRoot(document.getElementById('app')).render(
     <React.StrictMode>
         <ErrorBoundary>
@@ -12,3 +13,4 @@ ReactDOM.createRoot(document.getElementById('app')).render(
         </ErrorBoundary>
     </React.StrictMode>,
 )
+
