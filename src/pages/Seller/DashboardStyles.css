@@ -1576,6 +1576,49 @@ button:disabled {
     transition: 0.2s;
 }
 
+.banner-upload-flex-pro {
+    display: flex;
+    gap: 1.5rem;
+    width: 100%;
+    align-items: flex-start;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+.campaign-upload-zone-pro {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 16 / 6;
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    transition: 0.2s;
+}
+
+.campaign-upload-zone-pro:hover {
+    border-color: var(--primary);
+    background: #f5f3ff;
+}
+
+.campaign-upload-zone-pro.mobile-zone {
+    aspect-ratio: 2 / 3;
+    max-height: 480px; 
+}
+
+.campaign-preview-img-pro {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .campaign-upload-zone:hover {
     border-color: var(--primary);
     background: #f5f3ff;
@@ -1813,6 +1856,11 @@ button:disabled {
     
     .form-sections-grid {
         grid-template-columns: 1fr;
+    }
+
+    .banner-upload-flex-pro {
+        flex-direction: column;
+        gap: 1.5rem;
     }
 }
 
