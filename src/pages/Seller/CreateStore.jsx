@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase, withTimeout } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { Upload, Store, MapPin, Phone, Truck, Image as ImageIcon } from 'lucide-react';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 
 const CreateStore = () => {
     const { user, profile, loading: authLoading } = useAuth();
@@ -100,7 +101,7 @@ const CreateStore = () => {
         }
     };
 
-    if (authLoading) return <div className="loader-container"><div className="loader"></div></div>;
+    if (authLoading) return <LoadingSpinner fullPage />;
 
     return (
         <div className="create-store-container">
@@ -310,7 +311,6 @@ const CreateStore = () => {
         }
 
         .submit-btn { width: 100%; margin-top: 1rem; padding: 1rem; font-size: 1.125rem; }
-        .loader-container { height: 100vh; display: flex; align-items: center; justify-content: center; }
       `}</style>
         </div>
     );

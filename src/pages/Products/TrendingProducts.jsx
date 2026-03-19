@@ -4,6 +4,7 @@ import Navbar from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
 import { useLocation as useLocationContext } from '../../context/LocationContext';
 import { useTranslation } from 'react-i18next';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 
 const TrendingProducts = () => {
     const [products, setProducts] = useState([]);
@@ -50,9 +51,7 @@ const TrendingProducts = () => {
                 </div>
 
                 {loading ? (
-                    <div className="loader-container" style={{ minHeight: '50vh' }}>
-                        <div className="loader"></div>
-                    </div>
+                    <LoadingSpinner />
                 ) : (
                     <div className="products-grid">
                         {products.length > 0 ? (

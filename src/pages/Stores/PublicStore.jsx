@@ -10,6 +10,7 @@ import {
 import Navbar from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
 import { useTranslation } from 'react-i18next';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import { getLocalizedName } from '../../utils/productTranslations';
 
 const PublicStore = () => {
@@ -177,7 +178,7 @@ const PublicStore = () => {
         ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
         : '5.0';
 
-    if (loading) return <div className="loader-container"><div className="loader"></div></div>;
+    if (loading) return <LoadingSpinner fullPage />;
     if (!store) return <div className="error-container">{t('publicStore.notFound')}</div>;
 
     return (

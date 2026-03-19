@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
 import { Users, Store, Package, ShoppingBag, IndianRupee, LogOut, TrendingUp, Search, ChevronLeft } from 'lucide-react';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import './AdminDashboard.css';
 
 const AdminDashboard = ({ onLogout }) => {
@@ -216,7 +217,7 @@ const AdminDashboard = ({ onLogout }) => {
     if (loading) {
         return (
             <div className="admin-loading">
-                <div className="loader"></div>
+                <LoadingSpinner />
                 <p>Loading overview...</p>
             </div>
         );

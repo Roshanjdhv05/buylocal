@@ -6,6 +6,7 @@ import ProductCard from '../../components/ProductCard';
 import { Heart, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 
 const Wishlist = () => {
     const { t } = useTranslation();
@@ -43,7 +44,7 @@ const Wishlist = () => {
         }
     };
 
-    if (loading) return <div className="loader-container"><div className="loader"></div></div>;
+    if (loading) return <LoadingSpinner fullPage />;
 
     return (
         <div className="wishlist-page">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation as useRouteLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 
@@ -28,12 +28,13 @@ import AdminLogin from './pages/Admin/AdminLogin';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import LocationOnboarding from './components/LocationOnboarding';
 import Toast from './components/Toast';
-import { useLocation } from './context/LocationContext';
+import LoadingSpinner from './components/LoadingSpinner/LoadingSpinner';
+import PageTransitionLoader from './components/PageTransitionLoader';
 
 const ProtectedRoute = ({ children, role }) => {
     const { user, profile, loading } = useAuth();
 
-    if (loading) return <div className="loader-container"><div className="loader"></div></div>;
+    if (loading) return <LoadingSpinner fullPage />;
     if (!user) return <Navigate to="/login" />;
     if (role && profile?.role !== role) return <Navigate to="/" />;
 
@@ -42,8 +43,9 @@ const ProtectedRoute = ({ children, role }) => {
 
 import PriceFilter from './pages/Home/PriceFilter';
 import InstallPWA from './components/InstallPWA';
-import { LocationProvider } from './context/LocationContext';
-import { useEffect } from 'react';
+import { LocationProvider, useLocation } from './context/LocationContext';
+
+import { useEffect, useState } from 'react';
 
 const AuthRedirectHandler = () => {
     const { user, loading } = useAuth();
@@ -91,9 +93,20 @@ import LocationFAB from './components/LocationFAB';
 
 const AppContent = () => {
     const { toast, setToast } = useLocation();
+    const routeLocation = useRouteLocation();
+    const [isPageChanging, setIsPageChanging] = useState(false);
+
+    useEffect(() => {
+        setIsPageChanging(true);
+        const timer = setTimeout(() => {
+            setIsPageChanging(false);
+        }, 800); // Show for 800ms
+        return () => clearTimeout(timer);
+    }, [routeLocation.pathname]);
 
     return (
         <>
+            {isPageChanging && <PageTransitionLoader />}
             <AuthRedirectHandler />
             <Routes>
 

@@ -4,6 +4,7 @@ import { supabase, withTimeout } from '../../services/supabase';
 import ProductCard from '../../components/ProductCard';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import { ArrowLeft, ShoppingBag, Filter } from 'lucide-react';
 
 const PriceFilter = () => {
@@ -43,7 +44,7 @@ const PriceFilter = () => {
         fetchFilteredProducts();
     }, [maxPrice]);
 
-    if (loading) return <div className="loader-container"><div className="loader"></div></div>;
+    if (loading) return <LoadingSpinner fullPage />;
 
     return (
         <div className="price-filter-page">

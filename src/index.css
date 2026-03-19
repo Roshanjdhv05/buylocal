@@ -115,40 +115,6 @@ textarea:focus {
   transform: translateY(0);
 }
 
-/* Loading Spinner */
-.loader {
-  width: 48px;
-  height: 48px;
-  border: 5px solid #FFF;
-  border-bottom-color: var(--primary);
-  border-radius: 50%;
-  display: inline-block;
-  box-sizing: border-box;
-  animation: rotation 1s linear infinite;
-}
-
-@keyframes rotation {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-.loader-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--background);
-  z-index: 9999;
-}
 
 /* Toast Notification */
 .toast-container {
@@ -203,19 +169,6 @@ textarea:focus {
   color: var(--text-main);
 }
 
-.spinner {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
 
 @media (max-width: 640px) {
   .toast-container {

@@ -15,6 +15,7 @@ import {
     Megaphone, Calendar, Play, Pause, Trash
 } from 'lucide-react';
 import './DashboardStyles.css';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import InvoiceModal from '../../components/InvoiceModal';
 
 const SellerDashboard = () => {
@@ -742,7 +743,7 @@ const SellerDashboard = () => {
         }
     };
 
-    if (loading) return <div className="loader-container"><div className="loader"></div></div>;
+    if (loading) return <LoadingSpinner fullPage />;
 
     if (error) return (
         <div style={{ padding: '2rem', textAlign: 'center', color: 'red' }}>

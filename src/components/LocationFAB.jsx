@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from '../context/LocationContext';
-import { MapPin, Navigation, Loader, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { MapPin, Navigation, X, ChevronUp, ChevronDown } from 'lucide-react';
+import LoadingSpinner from './LoadingSpinner/LoadingSpinner';
 
 const LocationFAB = () => {
     const { location, loading, detectLocation } = useLocation();
@@ -57,7 +58,7 @@ const LocationFAB = () => {
                             onClick={handleDetect}
                             disabled={loading}
                         >
-                            {loading ? <Loader size={18} className="spinner" /> : <Navigation size={18} />}
+                            {loading ? <LoadingSpinner size={24} /> : <Navigation size={18} />}
                             {loading ? 'Detecting...' : 'Update My Location'}
                         </button>
                     </div>
@@ -202,8 +203,6 @@ const LocationFAB = () => {
                 }
 
                 .detect-btn-fab:disabled { opacity: 0.7; cursor: not-allowed; }
-
-                .spinner { animation: spin 1s linear infinite; }
 
                 @media (max-width: 640px) {
                     .location-fab-container {

@@ -6,6 +6,7 @@ import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import ProductCard from '../../components/ProductCard';
 import { useTranslation } from 'react-i18next';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import { Store, MapPin, ArrowRight, Heart, ChevronLeft, ChevronRight, Sparkles, TrendingUp } from 'lucide-react';
 
 const FollowedStores = () => {
@@ -132,7 +133,7 @@ const FollowedStores = () => {
     // Remaining products shuffled
     const shopMoreProducts = sortedProducts.slice(16).sort(() => Math.random() - 0.5);
 
-    if (loading) return <div className="loader-container relative-loader"><div className="loader"></div></div>;
+    if (loading) return <LoadingSpinner fullPage />;
 
     return (
         <div className="followed-stores-page">
@@ -299,7 +300,7 @@ const FollowedStores = () => {
                 .dot.active { background: #fff; width: 24px; border-radius: 4px; }
 
                 /* MAIN CONTENT */
-                .main-content-followed { padding: 3rem 0; }
+                .main-content-followed { padding: 3rem 1rem; }
                 .section-block-followed { margin-bottom: 4rem; }
                 
                 .section-header-luxury { margin-bottom: 2rem; }

@@ -10,11 +10,11 @@ import {
     ChevronRight, Info, MessageCircle, Clock, Camera
 } from 'lucide-react';
 import { useProduct } from '../../hooks/useProduct';
-import ProductSkeleton from '../../components/ProductSkeleton';
 import ProductNotFound from './ProductNotFound';
 import { addToRecentlyViewed } from '../../utils/recentlyViewed';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedName } from '../../utils/productTranslations';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 
 const ProductDetails = () => {
     const { t, i18n } = useTranslation();
@@ -95,7 +95,7 @@ const ProductDetails = () => {
     const [reviewMediaPreviews, setReviewMediaPreviews] = useState([]);
 
     // UI Handle for loading and error states
-    if (loading) return <ProductSkeleton />;
+    if (loading) return <LoadingSpinner fullPage />;
     if (!product && !loading) return <ProductNotFound />;
 
     const handleToggleWishlist = async () => {
@@ -187,7 +187,7 @@ const ProductDetails = () => {
         : '0.0';
     const discount = product && product.mrp ? Math.round(((product.mrp - (product.online_price || product.price)) / product.mrp) * 100) : 0;
 
-    if (loading) return <div className="loader-container"><div className="loader"></div></div>;
+    if (loading) return <LoadingSpinner fullPage />;
     if (error || !product) return (
         <div className="error-page-refined">
             <div className="container center-vh">
@@ -622,10 +622,6 @@ const ProductDetails = () => {
                     .hero-product-card { border-radius: 0; margin: 0 -1rem; border: none; border-bottom: 1px solid #f1f5f9; }
                     .pricing-box { margin: 0; margin-bottom: 1rem; }
                 }
-
-                .loader-container { height: 100vh; display: flex; align-items: center; justify-content: center; }
-                .loader { width: 50px; height: 50px; border: 5px solid #f1f5f9; border-top-color: #7c3aed; border-radius: 50%; animation: spin 0.8s linear infinite; }
-                @keyframes spin { to { transform: rotate(360deg); } }
             `}</style>
         </div>
     );

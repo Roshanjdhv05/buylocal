@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import Navbar from '../../components/Navbar';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from '../../context/LocationContext';
 import { calculateDistance } from '../../utils/distance';
-import { Search, MapPin, Store, ArrowRight, Loader } from 'lucide-react';
+import { Search, MapPin, Store, ArrowRight } from 'lucide-react';
 
 const Stores = () => {
     const { t } = useTranslation();
@@ -78,9 +79,7 @@ const Stores = () => {
                 </div>
 
                 {loading ? (
-                    <div className="loader-container">
-                        <Loader className="spinner" size={40} />
-                    </div>
+                    <LoadingSpinner fullPage />
                 ) : (
                     <div className="stores-grid">
                         {filteredStores.length === 0 ? (
@@ -331,11 +330,6 @@ const Stores = () => {
                     text-align: center;
                     padding: 5rem;
                     color: var(--text-muted);
-                }
-
-                .spinner {
-                    animation: spin 1s linear infinite;
-                    color: var(--primary);
                 }
 
                 @keyframes spin {

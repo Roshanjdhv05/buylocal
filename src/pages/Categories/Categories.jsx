@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 
 const Categories = () => {
     const { t } = useTranslation();
@@ -192,21 +193,8 @@ const Categories = () => {
         return (
             <div className="categories-page-new">
                 <Navbar />
-                <main className="container main-layout" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-                    <div className="loader" style={{ 
-                        width: '40px', 
-                        height: '40px', 
-                        border: '3px solid #f3f3f3', 
-                        borderTop: '3px solid var(--primary)', 
-                        borderRadius: '50%', 
-                        animation: 'spin 1s linear infinite' 
-                    }}></div>
-                    <style>{`
-                        @keyframes spin {
-                            0% { transform: rotate(0deg); }
-                            100% { transform: rotate(360deg); }
-                        }
-                    `}</style>
+                <main className="container main-layout">
+                    <LoadingSpinner fullPage />
                 </main>
                 <Footer />
             </div>

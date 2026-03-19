@@ -13,6 +13,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import InvoiceModal from '../../components/InvoiceModal';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedName } from '../../utils/productTranslations';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 
 const Orders = () => {
     const { t, i18n } = useTranslation();
@@ -89,7 +90,7 @@ const Orders = () => {
     };
 
 
-    if (loading) return <div className="loader-container"><div className="loader"></div></div>;
+    if (loading) return <LoadingSpinner fullPage />;
 
     const EmptyState = () => (
         <div className="orders-empty-state">

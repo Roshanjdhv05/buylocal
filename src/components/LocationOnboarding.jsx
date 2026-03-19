@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from '../context/LocationContext';
-import { MapPin, Navigation, Loader } from 'lucide-react';
+import { MapPin, Navigation } from 'lucide-react';
+import LoadingSpinner from './LoadingSpinner/LoadingSpinner';
 
 const LocationOnboarding = () => {
     const { user, profile, updateProfile, loading: authLoading } = useAuth();
@@ -141,7 +142,7 @@ const LocationOnboarding = () => {
                         onClick={handleDetect}
                         disabled={status === 'detecting' || status === 'saving'}
                     >
-                        {status === 'detecting' ? <Loader className="spinner" size={18} /> : <Navigation size={18} />}
+                        {status === 'detecting' ? <LoadingSpinner size={24} /> : <Navigation size={18} />}
                         {status === 'success' ? 'Location Detected!' : 'Detect My Location'}
                     </button>
 
@@ -264,8 +265,6 @@ const LocationOnboarding = () => {
 
                 .error-msg { color: #ef4444; font-size: 0.85rem; font-weight: 500; }
                 
-                .spinner { animation: spin 1s linear infinite; }
-                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
                 @media (max-width: 480px) {
                     .onboarding-card { padding: 1.5rem; }

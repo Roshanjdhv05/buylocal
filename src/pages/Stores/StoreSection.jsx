@@ -6,6 +6,7 @@ import { ArrowLeft, Store } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
 import { useTranslation } from 'react-i18next';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import { getLocalizedName } from '../../utils/productTranslations';
 
 const StoreSection = () => {
@@ -67,7 +68,7 @@ const StoreSection = () => {
         }
     }, [loading, products, decodedSectionName]);
 
-    if (loading) return <div className="loader-container"><div className="loader"></div></div>;
+    if (loading) return <LoadingSpinner fullPage />;
     if (!store) return <div className="error-container">{t('publicStore.notFound') || 'Store not found'}</div>;
 
     // Group products by section

@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import { ShoppingBag, Apple, Carrot, Package, Gift, Sparkles, MapPin, Store } from 'lucide-react';
+import Lottie from 'lottie-react';
 import './SplashScreen.css';
 
 const SplashScreen = ({ onComplete, isLoading = false }) => {
+    const animationUrl = "https://lottie.host/95226b1f-91be-498e-b351-ebc8fc7a55c0/WHvKiOo252.json";
+    const [animationData, setAnimationData] = useState(null);
+
+    useEffect(() => {
+        fetch(animationUrl)
+            .then(res => res.json())
+            .then(data => setAnimationData(data))
+            .catch(err => console.error("Error loading Lottie animation:", err));
+    }, []);
 
     const [animationStage, setAnimationStage] = useState('initial');
     const [animationComplete, setAnimationComplete] = useState(false);
@@ -106,17 +116,24 @@ const SplashScreen = ({ onComplete, isLoading = false }) => {
             <div className="splash-content">
                 <div className="animation-container" style={{ margin: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     <motion.div
-                        className="gif-container"
+                        className="lottie-container"
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={animationStage !== 'initial' ? { opacity: 1, scale: 1 } : {}}
                         transition={{ duration: 0.8, ease: "easeOut" }}
                         style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                     >
-                        <img 
-                            src="/splash.gif" 
-                            alt="ByLocal Splash Animation" 
-                            style={{ maxWidth: '300px', width: '100%', height: 'auto', objectFit: 'contain', filter: 'drop-shadow(0 15px 20px rgba(124, 58, 237, 0.2))' }} 
-                        />
+                        {animationData && (
+                            <Lottie 
+                                animationData={animationData} 
+                                loop={true} 
+                                style={{ 
+                                    maxWidth: '400px', 
+                                    width: '100%', 
+                                    height: 'auto',
+                                    filter: 'drop-shadow(0 15px 20px rgba(124, 58, 237, 0.2))'
+                                }} 
+                            />
+                        )}
                     </motion.div>
                 </div>
 

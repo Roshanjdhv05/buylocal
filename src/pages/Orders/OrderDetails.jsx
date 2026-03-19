@@ -10,6 +10,7 @@ import {
 import InvoiceModal from '../../components/InvoiceModal';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedName } from '../../utils/productTranslations';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 
 const OrderDetails = () => {
     const { t, i18n } = useTranslation();
@@ -77,7 +78,7 @@ const OrderDetails = () => {
         );
     };
 
-    if (loading) return <div className="loader-container"><div className="loader"></div></div>;
+    if (loading) return <LoadingSpinner fullPage />;
 
     if (!order) return (
         <div className="order-details-page">
