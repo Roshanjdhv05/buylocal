@@ -26,11 +26,17 @@ export const handler = async (event, context) => {
     headers.set("X-Forwarded-Host", event.headers.host || '');
     headers.set("X-Forwarded-Proto", protocol);
 
+    // CRITICAL: Handle binary bodies from Netlify (which are base64 encoded)
+    let requestBody = event.body;
+    if (event.body && event.isBase64Encoded) {
+        requestBody = Buffer.from(event.body, 'base64');
+    }
+
     try {
         const response = await fetch(targetUrl.href, {
             method: event.httpMethod,
             headers: headers,
-            body: ['GET', 'HEAD'].includes(event.httpMethod) ? undefined : event.body,
+            body: ['GET', 'HEAD'].includes(event.httpMethod) ? undefined : requestBody,
             redirect: 'manual'
         });
 
@@ -48,14 +54,9 @@ export const handler = async (event, context) => {
                 
                 console.log(`Proxy: Original Location = ${location}`);
                 
-                // ONLY rewrite if the redirect is pointing back to Supabase domain
-                // If it's pointing to Google (accounts.google.com), LEAVE IT ALONE.
-                // This ensures the redirect_uri param remains the standard Supabase callback.
                 if (location.startsWith(supOrigin)) {
                     location = location.replace(supOrigin, PROXY_URL);
                     console.log(`Proxy: Rewritten Location = ${location}`);
-                } else {
-                    console.log(`Proxy: Keeping external redirect = ${location}`);
                 }
                 
                 setMultiHeader('Location', location);
@@ -67,6 +68,7 @@ export const handler = async (event, context) => {
         setMultiHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
         setMultiHeader('Access-Control-Allow-Headers', '*');
         setMultiHeader('Access-Control-Allow-Credentials', 'true');
+        setMultiHeader('Access-Control-Expose-Headers', 'Content-Range, X-Supabase-Api-Version, apikey, x-client-info');
 
         // Robust Cookie Rewriting
         const setCookies = response.headers.getSetCookie ? response.headers.getSetCookie() : [];
@@ -76,7 +78,6 @@ export const handler = async (event, context) => {
             const rewrittenCookies = setCookies.map(cookie => {
                 return cookie.replace(new RegExp(supHost, 'g'), proxHost);
             });
-            console.log(`Proxy: Rewriting ${rewrittenCookies.length} cookies`);
             setMultiHeader('Set-Cookie', rewrittenCookies);
         }
 
@@ -87,13 +88,27 @@ export const handler = async (event, context) => {
             }
         }
 
-        const body = await response.text();
+        // Handle binary responses (e.g. image downloads)
+        const contentType = response.headers.get('content-type') || '';
+        const isBinary = contentType.includes('image/') || contentType.includes('video/') || contentType.includes('audio/') || contentType.includes('application/octet-stream') || contentType.includes('pdf');
 
-        return {
-            statusCode: response.status,
-            multiValueHeaders: responseHeaders,
-            body: body
-        };
+        if (isBinary) {
+            const buffer = await response.arrayBuffer();
+            return {
+                statusCode: response.status,
+                multiValueHeaders: responseHeaders,
+                body: Buffer.from(buffer).toString('base64'),
+                isBase64Encoded: true
+            };
+        } else {
+            const body = await response.text();
+            return {
+                statusCode: response.status,
+                multiValueHeaders: responseHeaders,
+                body: body,
+                isBase64Encoded: false
+            };
+        }
     } catch (error) {
         console.error('Proxy Error:', error);
         return {
@@ -101,4 +116,5 @@ export const handler = async (event, context) => {
             body: JSON.stringify({ error: 'Proxy implementation error', details: error.message })
         };
     }
+
 };
