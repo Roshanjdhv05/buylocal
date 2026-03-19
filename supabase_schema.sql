@@ -65,12 +65,25 @@ CREATE TABLE IF NOT EXISTS public.orders (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 5. Banner Campaigns Table
+CREATE TABLE IF NOT EXISTS public.banner_campaigns (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    store_id UUID REFERENCES public.stores(id) ON DELETE CASCADE,
+    banner_url TEXT NOT NULL,
+    mobile_banner_url TEXT,
+    start_date TIMESTAMPTZ DEFAULT NOW(),
+    end_date TIMESTAMPTZ,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- RLS POLICIES
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.banner_campaigns ENABLE ROW LEVEL SECURITY;
 
 -- Users Table Policies
 CREATE POLICY "Public profiles are viewable by everyone." ON public.users FOR SELECT USING (true);
@@ -120,5 +133,27 @@ CREATE POLICY "Sellers can update order status." ON public.orders FOR UPDATE USI
     )
 );
 
+-- Banner Campaigns Table Policies
+CREATE POLICY "Campaigns are viewable by everyone." ON public.banner_campaigns FOR SELECT USING (true);
+CREATE POLICY "Sellers can create their own campaigns." ON public.banner_campaigns FOR INSERT WITH CHECK (
+    EXISTS (
+        SELECT 1 FROM public.stores s 
+        WHERE s.id = banner_campaigns.store_id AND s.owner_id = auth.uid()
+    )
+);
+CREATE POLICY "Owners can update their own campaigns." ON public.banner_campaigns FOR UPDATE USING (
+    EXISTS (
+        SELECT 1 FROM public.stores s 
+        WHERE s.id = banner_campaigns.store_id AND s.owner_id = auth.uid()
+    )
+);
+CREATE POLICY "Owners can delete their own campaigns." ON public.banner_campaigns FOR DELETE USING (
+    EXISTS (
+        SELECT 1 FROM public.stores s 
+        WHERE s.id = banner_campaigns.store_id AND s.owner_id = auth.uid()
+    )
+);
+
 -- Realtime Configuration (Needs to be run in Supabase SQL Editor usually)
 -- ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
+

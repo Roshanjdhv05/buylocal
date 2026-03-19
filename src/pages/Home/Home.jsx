@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase, withTimeout } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useLocation } from '../../context/LocationContext';
@@ -10,6 +11,7 @@ import { MapPin, ArrowRight, ChevronRight, Store, ChevronLeft, ArrowLeft } from 
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getRecentlyViewed } from '../../utils/recentlyViewed';
 import { useTranslation } from 'react-i18next';
+import SplashScreen from '../../components/SplashScreen/SplashScreen';
 
 const Home = () => {
     const { t } = useTranslation();
@@ -29,6 +31,12 @@ const Home = () => {
     const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+    const [showSplash, setShowSplash] = useState(true);
+
+    const handleSplashComplete = () => {
+        setShowSplash(false);
+    };
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -180,7 +188,19 @@ const Home = () => {
     const productsUnder199 = enrichedProducts.filter(p => p.online_price < 199).slice(0, 4);
     const productsUnder299 = enrichedProducts.filter(p => p.online_price < 299).slice(0, 4);
 
-    if (loading) return <div className="loader-container"><div className="loader"></div></div>;
+    if (showSplash || loading) {
+        return (
+            <AnimatePresence>
+                {showSplash && (
+                    <SplashScreen 
+                        key="splash"
+                        onComplete={handleSplashComplete} 
+                        isLoading={loading} 
+                    />
+                )}
+            </AnimatePresence>
+        );
+    }
 
     const categoryIcons = {
         'Men': (

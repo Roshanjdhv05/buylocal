@@ -568,17 +568,22 @@ const SellerDashboard = () => {
 
         setUploading(true);
         try {
+            console.log('Campaign: Starting creation process...');
             // 1. Upload Desktop Banner
             const dFile = campaignFormData.banner_image;
             const dExt = dFile.name.split('.').pop();
             const dName = `campaign_desktop_${Math.random()}.${dExt}`;
             const dPath = `campaigns/${profile.id}/${dName}`;
 
+            console.log('Campaign: Uploading desktop banner...');
             const { error: dUploadError } = await supabase.storage
                 .from('store-gallery')
                 .upload(dPath, dFile);
 
-            if (dUploadError) throw dUploadError;
+            if (dUploadError) {
+                console.error('Campaign: Desktop upload error:', dUploadError);
+                throw new Error(`Desktop banner upload failed: ${dUploadError.message}`);
+            }
 
             const { data: { publicUrl: desktopUrl } } = supabase.storage
                 .from('store-gallery')
@@ -592,11 +597,15 @@ const SellerDashboard = () => {
                 const mName = `campaign_mobile_${Math.random()}.${mExt}`;
                 const mPath = `campaigns/${profile.id}/${mName}`;
 
+                console.log('Campaign: Uploading mobile banner...');
                 const { error: mUploadError } = await supabase.storage
                     .from('store-gallery')
                     .upload(mPath, mFile);
 
-                if (mUploadError) throw mUploadError;
+                if (mUploadError) {
+                    console.error('Campaign: Mobile upload error:', mUploadError);
+                    throw new Error(`Mobile banner upload failed: ${mUploadError.message}`);
+                }
 
                 const { data: { publicUrl: mUrl } } = supabase.storage
                     .from('store-gallery')
@@ -614,6 +623,7 @@ const SellerDashboard = () => {
             }
 
             // 4. Create Record
+            console.log('Campaign: Inserting record into banner_campaigns...');
             const { data, error } = await supabase
                 .from('banner_campaigns')
                 .insert([{
@@ -625,20 +635,25 @@ const SellerDashboard = () => {
                 }])
                 .select();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Campaign: DB Insert error:', error);
+                throw error;
+            }
 
+            console.log('Campaign: Created successfully!', data);
             setCampaigns([data[0], ...campaigns]);
             setIsCreatingCampaign(false);
             setCampaignFormData({ banner_image: null, mobile_banner_image: null, duration_days: '7', continuous: false });
             setCampaignPreview(null);
             setCampaignMobilePreview(null);
-            setCampaignPreview(null);
             alert('Campaign created successfully! It is now active on the home page.');
         } catch (error) {
-            alert('Error creating campaign: ' + error.message);
+            console.error('Campaign Creation Error:', error);
+            alert('Error creating campaign: ' + (error.details || error.message || 'Unknown error'));
         } finally {
             setUploading(false);
         }
+
     };
 
     const toggleCampaignStatus = async (campaign) => {

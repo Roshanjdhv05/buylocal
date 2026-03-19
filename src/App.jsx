@@ -29,7 +29,6 @@ import AdminDashboard from './pages/Admin/AdminDashboard';
 import LocationOnboarding from './components/LocationOnboarding';
 import Toast from './components/Toast';
 import { useLocation } from './context/LocationContext';
-import { useState } from 'react';
 
 const ProtectedRoute = ({ children, role }) => {
     const { user, profile, loading } = useAuth();
