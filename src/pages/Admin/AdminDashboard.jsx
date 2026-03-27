@@ -1,32 +1,101 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../services/supabase';
-import { Users, Store, Package, ShoppingBag, IndianRupee, LogOut, TrendingUp, Search, ChevronLeft } from 'lucide-react';
+import { 
+    Users, Store, Package, ShoppingBag, IndianRupee, LogOut, 
+    TrendingUp, Search, ChevronLeft, ShieldCheck, UserPlus, 
+    ShieldAlert, Edit, Trash2, CheckCircle, XCircle, Settings,
+    Lock, Unlock, Clock, Database, Plus, Eye
+} from 'lucide-react';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import './AdminDashboard.css';
 
 const AdminDashboard = ({ onLogout }) => {
     const [stats, setStats] = useState({
         totalUsers: 0,
+        activeUsers: 0,
         totalStores: 0,
+        activeStores: 0,
+        totalSellers: 0,
+        activeSellers: 0,
         totalProducts: 0,
         totalOrders: 0,
         totalRevenue: 0
     });
     const [stores, setStores] = useState([]);
+    const [users, setUsers] = useState([]);
+    const [sellers, setSellers] = useState([]);
     const [selectedStore, setSelectedStore] = useState(null);
+    const [selectedSubSeller, setSelectedSubSeller] = useState(null);
+    const [subTier, setSubTier] = useState('free');
+    const [subMonths, setSubMonths] = useState(1);
+    const [subProductLimit, setSubProductLimit] = useState(50);
+    const [storeProducts, setStoreProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [uploading, setUploading] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('overview');
+    const [allProducts, setAllProducts] = useState([]);
     const [banners, setBanners] = useState([]);
     const [desktopBanner, setDesktopBanner] = useState(null);
     const [mobileBanner, setMobileBanner] = useState(null);
     const [desktopPreview, setDesktopPreview] = useState(null);
     const [mobilePreview, setMobilePreview] = useState(null);
 
+    // Subscription Control State
+    const [isSubSectionEnabled, setIsSubSectionEnabled] = useState(false);
+    const [showPasswordPopup, setShowPasswordPopup] = useState(false);
+    const [subPassword, setSubPassword] = useState('');
+    const [globalProductLimit, setGlobalProductLimit] = useState(50);
+
+    // Product CRUD State (within Store Details)
+    const [showProductModal, setShowProductModal] = useState(false);
+    const [editingProduct, setEditingProduct] = useState(null);
+    const [productForm, setProductForm] = useState({
+        name: '',
+        description: '',
+        online_price: '',
+        market_price: '',
+        category: '',
+        stock_status: 'in_stock',
+        delivery_type: 'express',
+        images: []
+    });
+    const [productImages, setProductImages] = useState([]);
+    const [productPreviews, setProductPreviews] = useState([]);
+
     useEffect(() => {
         fetchAdminData();
         fetchBanners();
     }, []);
+
+    useEffect(() => {
+        if (editingProduct) {
+            setProductForm({
+                name: editingProduct.name || '',
+                description: editingProduct.description || '',
+                online_price: editingProduct.online_price || '',
+                market_price: editingProduct.market_price || '',
+                category: editingProduct.category || '',
+                stock_status: editingProduct.stock_status || 'in_stock',
+                delivery_type: editingProduct.delivery_type || 'express',
+                images: editingProduct.images || []
+            });
+            setProductPreviews(editingProduct.images || []);
+        } else {
+            setProductForm({
+                name: '',
+                description: '',
+                online_price: '',
+                market_price: '',
+                category: '',
+                stock_status: 'in_stock',
+                delivery_type: 'express',
+                images: []
+            });
+            setProductPreviews([]);
+            setProductImages([]);
+        }
+    }, [editingProduct, showProductModal]);
 
     const fetchBanners = async () => {
         try {
@@ -45,21 +114,18 @@ const AdminDashboard = ({ onLogout }) => {
     const fetchAdminData = async () => {
         setLoading(true);
         try {
-            // Fetch users count
-            const { count: userCount } = await supabase
+            // Fetch users data
+            const { data: usersData, error: usersError } = await supabase
                 .from('users')
-                .select('*', { count: 'exact', head: true });
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (usersError) throw usersError;
 
             // Fetch stores data
             const { data: storesData, error: storesError } = await supabase
                 .from('stores')
-                .select(`
-                    id, 
-                    name, 
-                    city,
-                    owner_id,
-                    created_at
-                `);
+                .select(`*`);
 
             if (storesError) throw storesError;
 
@@ -94,20 +160,211 @@ const AdminDashboard = ({ onLogout }) => {
             });
 
             const totalRev = ordersData.reduce((sum, o) => sum + Number(o.total_amount), 0);
+            
+            const sellersData = usersData.filter(u => u.role === 'seller');
+            const buyersData = usersData.filter(u => u.role === 'buyer');
 
             setStats({
-                totalUsers: userCount || 0,
+                totalUsers: usersData.length,
+                activeUsers: usersData.filter(u => u.is_active !== false).length,
                 totalStores: storesData.length,
+                activeStores: storesData.filter(s => s.is_active !== false).length,
+                totalSellers: sellersData.length,
+                activeSellers: sellersData.filter(u => u.is_active !== false).length,
                 totalProducts: productCount || 0,
                 totalOrders: ordersData.length,
                 totalRevenue: totalRev
             });
 
+            setUsers(usersData);
+            setSellers(sellersData);
             setStores(storeStats);
         } catch (error) {
             console.error('Error fetching admin data:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleUserStatusToggle = async (userId, currentStatus) => {
+        try {
+            const { error } = await supabase
+                .from('users')
+                .update({ is_active: !currentStatus })
+                .eq('id', userId);
+
+            if (error) throw error;
+            fetchAdminData();
+        } catch (error) {
+            alert('Error updating user status: ' + error.message);
+        }
+    };
+
+    const deleteUser = async (userId) => {
+        if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+        try {
+            const { error } = await supabase
+                .from('users')
+                .delete()
+                .eq('id', userId);
+
+            if (error) throw error;
+            fetchAdminData();
+        } catch (error) {
+            alert('Error deleting user: ' + error.message);
+        }
+    };
+
+    const fetchAllProducts = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('products')
+                .select('*, stores(name)')
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            setAllProducts(data || []);
+        } catch (error) {
+            console.error('Error fetching all products:', error.message);
+        }
+    };
+
+    const fetchStoreProducts = async (storeId) => {
+        try {
+            const { data, error } = await supabase
+                .from('products')
+                .select('*')
+                .eq('store_id', storeId)
+                .order('created_at', { ascending: false });
+            
+            if (error) throw error;
+            console.log('Fetched products for store:', storeId, data);
+            setStoreProducts(data || []);
+        } catch (error) {
+            console.error('Error fetching store products:', error.message);
+        }
+    };
+
+    const handleUpdateSubscription = async (storeId, tier, months, limit) => {
+        try {
+            const endDate = new Date();
+            endDate.setMonth(endDate.getMonth() + months);
+
+            const { error } = await supabase
+                .from('stores')
+                .update({ 
+                    subscription_tier: tier,
+                    subscription_end_date: months === 0 ? null : endDate.toISOString(),
+                    product_limit: limit || 50
+                })
+                .eq('id', storeId);
+
+            if (error) throw error;
+            
+            // Refresh local state
+            const updatedStores = stores.map(s => 
+                s.id === storeId 
+                    ? { ...s, subscription_tier: tier, subscription_end_date: months === 0 ? null : endDate.toISOString(), product_limit: limit || 50 } 
+                    : s
+            );
+            setStores(updatedStores);
+            setSelectedStore({ ...selectedStore, subscription_tier: tier, subscription_end_date: months === 0 ? null : endDate.toISOString(), product_limit: limit || 50 });
+            
+            alert(`Subscription updated to ${tier} for ${months} months`);
+        } catch (error) {
+            console.error('Error updating subscription:', error.message);
+        }
+    };
+
+    const handleStoreClick = (store) => {
+        setSelectedStore(store);
+        fetchStoreProducts(store.id);
+        setActiveTab('store-details');
+    };
+
+    const handleDeleteProduct = async (productId) => {
+        if (!window.confirm('Are you sure you want to delete this product?')) return;
+        try {
+            const { error } = await supabase
+                .from('products')
+                .delete()
+                .eq('id', productId);
+
+            if (error) throw error;
+            fetchStoreProducts(selectedStore.id);
+            fetchAdminData();
+        } catch (error) {
+            alert('Error deleting product: ' + error.message);
+        }
+    };
+
+    const handleProductSubmit = async (e) => {
+        e.preventDefault();
+        setUploading(true);
+        try {
+            let imageUrls = [...productForm.images];
+
+            // Upload new images if any
+            if (productImages.length > 0) {
+                for (const file of productImages) {
+                    const ext = file.name.split('.').pop();
+                    const fileName = `${Math.random()}.${ext}`;
+                    const filePath = `products/${selectedStore.id}/${fileName}`;
+
+                    const { error: uploadError } = await supabase.storage
+                        .from('store-gallery')
+                        .upload(filePath, file);
+
+                    if (uploadError) throw uploadError;
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('store-gallery')
+                        .getPublicUrl(filePath);
+                    
+                    imageUrls.push(publicUrl);
+                }
+            }
+
+            const productData = {
+                ...productForm,
+                images: imageUrls,
+                store_id: selectedStore.id,
+                owner_id: selectedStore.owner_id
+            };
+
+            if (editingProduct) {
+                const { error } = await supabase
+                    .from('products')
+                    .update(productData)
+                    .eq('id', editingProduct.id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase
+                    .from('products')
+                    .insert([productData]);
+                if (error) throw error;
+            }
+
+            setShowProductModal(false);
+            setEditingProduct(null);
+            setProductForm({
+                name: '',
+                description: '',
+                online_price: '',
+                market_price: '',
+                category: '',
+                stock_status: 'in_stock',
+                delivery_type: 'express',
+                images: []
+            });
+            setProductImages([]);
+            setProductPreviews([]);
+            fetchStoreProducts(selectedStore.id);
+            fetchAdminData();
+        } catch (error) {
+            alert('Error saving product: ' + error.message);
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -239,6 +496,41 @@ const AdminDashboard = ({ onLogout }) => {
                         <span>Overview</span>
                     </div>
                     <div 
+                        className={`nav-item ${activeTab === 'users' ? 'active' : ''}`}
+                        onClick={() => { setActiveTab('users'); setSelectedStore(null); }}
+                    >
+                        <Users size={20} />
+                        <span>Users</span>
+                    </div>
+                    <div 
+                        className={`nav-item ${activeTab === 'sellers' ? 'active' : ''}`}
+                        onClick={() => { setActiveTab('sellers'); setSelectedStore(null); }}
+                    >
+                        <ShieldCheck size={20} />
+                        <span>Sellers</span>
+                    </div>
+                    <div 
+                        className={`nav-item ${activeTab === 'subscriptions' ? 'active' : ''}`}
+                        onClick={() => { setActiveTab('subscriptions'); setSelectedStore(null); }}
+                    >
+                        <Settings size={20} />
+                        <span>Subscriptions</span>
+                    </div>
+                    <div 
+                        className={`nav-item ${activeTab === 'shops' ? 'active' : ''}`}
+                        onClick={() => { setActiveTab('shops'); setSelectedStore(null); }}
+                    >
+                        <Store size={20} />
+                        <span>Shops</span>
+                    </div>
+                    <div 
+                        className={`nav-item ${activeTab === 'all-products' ? 'active' : ''}`}
+                        onClick={() => { setActiveTab('all-products'); setSelectedStore(null); fetchAllProducts(); }}
+                    >
+                        <Package size={20} />
+                        <span>Products</span>
+                    </div>
+                    <div 
                         className={`nav-item ${activeTab === 'banners' ? 'active' : ''}`}
                         onClick={() => { setActiveTab('banners'); setSelectedStore(null); }}
                     >
@@ -259,15 +551,25 @@ const AdminDashboard = ({ onLogout }) => {
                             ? `Store Details: ${selectedStore.name}` 
                             : activeTab === 'overview' 
                                 ? 'Dashboard Overview' 
-                                : 'Banner Management'
+                                : activeTab === 'users'
+                                    ? 'User Management'
+                                        : activeTab === 'sellers'
+                                            ? 'Seller Accounts'
+                                            : activeTab === 'subscriptions'
+                                                ? 'Platform Control & Subscriptions'
+                                                : activeTab === 'all-products'
+                                                    ? 'Global Product Management'
+                                                    : activeTab === 'shops'
+                                                        ? 'Shop Management'
+                                                        : 'Banner Management'
                         }
                     </h1>
-                    {!selectedStore && activeTab === 'overview' && (
+                    {!selectedStore && (activeTab === 'overview' || activeTab === 'shops' || activeTab === 'all-products') && (
                         <div className="admin-search">
                             <Search size={18} />
                             <input
                                 type="text"
-                                placeholder="Search stores..."
+                                placeholder={activeTab === 'all-products' ? "Search products..." : "Search stores..."}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
@@ -301,11 +603,10 @@ const AdminDashboard = ({ onLogout }) => {
                                 <div className="stat-icon revenue"><IndianRupee size={24} /></div>
                                 <div className="stat-info">
                                     <p>Total Revenue</p>
-                                    <h3>₹{selectedStore.totalRevenue.toLocaleString()}</h3>
+                                    <h3>₹{(selectedStore.totalRevenue || 0).toLocaleString()}</h3>
                                 </div>
                             </div>
                         </div>
-
                         <div className="admin-section store-info-card">
                             <div className="section-header">
                                 <h2>Store Information</h2>
@@ -327,6 +628,92 @@ const AdminDashboard = ({ onLogout }) => {
                                     <label>Owner ID</label>
                                     <p className="id-text">{selectedStore.owner_id}</p>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div className="admin-section subscription-management-card">
+                            <div className="section-header">
+                                <div className="header-with-badge">
+                                    <h2>Subscription & Tier</h2>
+                                    <span className={`tier-badge ${selectedStore.subscription_tier || 'free'}`}>
+                                        {selectedStore.subscription_tier?.toUpperCase() || 'FREE'}
+                                    </span>
+                                </div>
+                                {selectedStore.subscription_end_date && (
+                                    <p className="expiry-text">Expires: {new Date(selectedStore.subscription_end_date).toLocaleDateString()}</p>
+                                )}
+                            </div>
+                            
+                            <div className="subscription-actions-grid">
+                                <div className="sub-action-group">
+                                    <h4>Upgrade Account Access</h4>
+                                    <div className="btn-group">
+                                        <button className="btn-sub" onClick={() => handleUpdateSubscription(selectedStore.id, 'premium', 1)}>1 Month</button>
+                                        <button className="btn-sub" onClick={() => handleUpdateSubscription(selectedStore.id, 'premium', 6)}>6 Months</button>
+                                        <button className="btn-sub" onClick={() => handleUpdateSubscription(selectedStore.id, 'premium', 12)}>12 Months</button>
+                                        <button className="btn-sub reset" onClick={() => handleUpdateSubscription(selectedStore.id, 'free', 0)}>Reset to Free</button>
+                                    </div>
+                                </div>
+                                <div className="sub-info-group">
+                                    <p className="text-muted text-sm">Update the store subscription tier to grant more product limits or special visibility features.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="admin-section store-products-card">
+                            <div className="section-header">
+                                <h2>Store Products</h2>
+                                <button className="btn-primary" onClick={() => { setEditingProduct(null); setShowProductModal(true); }}>
+                                    <Plus size={18} /> Add Product
+                                </button>
+                            </div>
+                            
+                            <div className="table-container">
+                                <table className="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Image</th>
+                                            <th>Product Name</th>
+                                            <th>Category</th>
+                                            <th>Price</th>
+                                            <th>Stock</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {storeProducts.length > 0 ? storeProducts.map(product => (
+                                            <tr key={product.id}>
+                                                <td>
+                                                    <img 
+                                                        src={product.images?.[0] || 'https://via.placeholder.com/50'} 
+                                                        alt={product.name} 
+                                                        className="table-thumbnail"
+                                                    />
+                                                </td>
+                                                <td className="font-medium">{product.name}</td>
+                                                <td>{product.category}</td>
+                                                <td>₹{product.online_price}</td>
+                                                <td>
+                                                    <span className={`status-badge ${product.stock_status === 'in_stock' ? 'active' : 'inactive'}`}>
+                                                        {product.stock_status === 'in_stock' ? 'In Stock' : 'Out of Stock'}
+                                                    </span>
+                                                </td>
+                                                <td className="actions-cell">
+                                                    <button className="btn-icon-sm edit" onClick={() => { setEditingProduct(product); setShowProductModal(true); }}>
+                                                        <Edit size={16} />
+                                                    </button>
+                                                    <button className="btn-icon-sm delete" onClick={() => handleDeleteProduct(product.id)}>
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )) : (
+                                            <tr>
+                                                <td colSpan="6" className="text-center py-8 text-muted">No products found for this store.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -365,14 +752,78 @@ const AdminDashboard = ({ onLogout }) => {
                                 <div className="stat-icon revenue"><IndianRupee size={24} /></div>
                                 <div className="stat-info">
                                     <p>Total Revenue</p>
-                                    <h3>₹{stats.totalRevenue.toLocaleString()}</h3>
+                                    <h3>₹{(stats.totalRevenue || 0).toLocaleString()}</h3>
                                 </div>
                             </div>
                         </div>
 
                         <section className="admin-section">
                             <div className="section-header">
-                                <h2>Store Performance Details</h2>
+                                <h2>Recent Store Performance</h2>
+                            </div>
+                            <div className="table-container">
+                                <table className="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Store Name</th>
+                                            <th>Location</th>
+                                            <th>Products</th>
+                                            <th>Revenue</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredStores.slice(0, 5).map(store => (
+                                            <tr key={store.id}>
+                                                <td className="font-medium clickable-name" onClick={() => handleStoreClick(store)}>
+                                                    {store.name}
+                                                </td>
+                                                <td>{store.city || 'N/A'}</td>
+                                                <td>{store.totalProducts}</td>
+                                                <td className="revenue-cell">₹{(store.totalRevenue || 0).toLocaleString()}</td>
+                                                <td>
+                                                    <span className={`status-badge ${store.is_active !== false ? 'active' : 'inactive'}`}>
+                                                        {store.is_active !== false ? 'Active' : 'Inactive'}
+                                                    </span>
+                                                </td>
+                                                <td className="actions-cell">
+                                                    <button className="btn-icon-sm view" onClick={() => handleStoreClick(store)} title="View Store & Products">
+                                                        <Eye size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                                <div className="text-center mt-4">
+                                    <button className="btn-secondary btn-sm" onClick={() => setActiveTab('shops')}>View All Shops</button>
+                                </div>
+                            </div>
+                        </section>
+                    </>
+                ) : activeTab === 'shops' ? (
+                    <div className="admin-shops-view">
+                        <div className="admin-stats-grid">
+                            <div className="stat-card">
+                                <div className="stat-icon stores"><Store size={24} /></div>
+                                <div className="stat-info">
+                                    <p>Total Shops</p>
+                                    <h3>{stats.totalStores}</h3>
+                                </div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-icon products"><Package size={24} /></div>
+                                <div className="stat-info">
+                                    <p>Active Shops</p>
+                                    <h3>{stats.activeStores}</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <section className="admin-section">
+                            <div className="section-header">
+                                <h2>All Registered Shops</h2>
                             </div>
                             <div className="table-container">
                                 <table className="admin-table">
@@ -384,20 +835,28 @@ const AdminDashboard = ({ onLogout }) => {
                                             <th>Orders</th>
                                             <th>Revenue</th>
                                             <th>Status</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {filteredStores.map(store => (
                                             <tr key={store.id}>
-                                                <td className="font-medium clickable-name" onClick={() => setSelectedStore(store)}>
+                                                <td className="font-medium clickable-name" onClick={() => handleStoreClick(store)}>
                                                     {store.name}
                                                 </td>
                                                 <td>{store.city || 'N/A'}</td>
                                                 <td>{store.totalProducts}</td>
                                                 <td>{store.totalOrders}</td>
-                                                <td className="revenue-cell">₹{store.totalRevenue.toLocaleString()}</td>
+                                                <td className="revenue-cell">₹{(store.totalRevenue || 0).toLocaleString()}</td>
                                                 <td>
-                                                    <span className="status-badge active">Active</span>
+                                                    <span className={`status-badge ${store.is_active !== false ? 'active' : 'inactive'}`}>
+                                                        {store.is_active !== false ? 'Active' : 'Inactive'}
+                                                    </span>
+                                                </td>
+                                                <td className="actions-cell">
+                                                    <button className="btn-icon-sm view" onClick={() => handleStoreClick(store)} title="View Store & Products">
+                                                        <Eye size={16} />
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -405,7 +864,477 @@ const AdminDashboard = ({ onLogout }) => {
                                 </table>
                             </div>
                         </section>
-                    </>
+                    </div>
+                ) : activeTab === 'all-products' ? (
+                    <div className="admin-products-view">
+                        <section className="admin-section">
+                            <div className="section-header">
+                                <h2>All Platform Products</h2>
+                                <p>Managing {allProducts.length} items from various shops.</p>
+                            </div>
+                            <div className="table-container">
+                                <table className="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Image</th>
+                                            <th>Product Name</th>
+                                            <th>Shop</th>
+                                            <th>Category</th>
+                                            <th>Price</th>
+                                            <th>Stock</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {allProducts.filter(p => 
+                                            p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                            p.stores?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+                                        ).map(product => (
+                                            <tr key={product.id}>
+                                                <td>
+                                                    <img 
+                                                        src={product.images?.[0] || 'https://via.placeholder.com/50'} 
+                                                        alt={product.name} 
+                                                        className="table-thumbnail"
+                                                    />
+                                                </td>
+                                                <td className="font-medium">{product.name}</td>
+                                                <td className="text-muted">{product.stores?.name}</td>
+                                                <td>{product.category}</td>
+                                                <td>₹{product.online_price}</td>
+                                                <td>
+                                                    <span className={`status-badge ${product.stock_status === 'in_stock' ? 'active' : 'inactive'}`}>
+                                                        {product.stock_status === 'in_stock' ? 'In Stock' : 'Out of Stock'}
+                                                    </span>
+                                                </td>
+                                                <td className="actions-cell">
+                                                    <button className="btn-icon-sm edit" onClick={() => { 
+                                                        setSelectedStore({ id: product.store_id, owner_id: product.owner_id });
+                                                        setEditingProduct(product); 
+                                                        setShowProductModal(true); 
+                                                    }}>
+                                                        <Edit size={16} />
+                                                    </button>
+                                                    <button className="btn-icon-sm delete" onClick={() => {
+                                                        const storeId = product.store_id;
+                                                        handleDeleteProduct(product.id).then(() => {
+                                                            fetchAllProducts();
+                                                        });
+                                                    }}>
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+                ) : activeTab === 'users' ? (
+                    <div className="admin-users-view">
+                        <div className="admin-stats-grid">
+                            <div className="stat-card">
+                                <div className="stat-icon users"><Users size={24} /></div>
+                                <div className="stat-info">
+                                    <p>Total Users</p>
+                                    <h3>{stats.totalUsers}</h3>
+                                </div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-icon stores"><ShieldCheck size={24} /></div>
+                                <div className="stat-info">
+                                    <p>Active Users</p>
+                                    <h3>{stats.activeUsers}</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <section className="admin-section">
+                            <div className="section-header">
+                                <h2>All Registered Users</h2>
+                                <div className="admin-search">
+                                    <Search size={18} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search by name or email..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="table-container">
+                                <table className="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>User Info</th>
+                                            <th>Role</th>
+                                            <th>Location</th>
+                                            <th>Joined Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {users.filter(u => 
+                                            u.username?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                            u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                                        ).map(user => (
+                                            <tr key={user.id}>
+                                                <td>
+                                                    <div className="user-info-cell">
+                                                        <span className="font-medium">{user.username}</span>
+                                                        <span className="text-muted text-xs">{user.email}</span>
+                                                    </div>
+                                                </td>
+                                                <td><span className={`role-badge ${user.role}`}>{user.role}</span></td>
+                                                <td>{user.city || 'N/A'}</td>
+                                                <td>{new Date(user.created_at).toLocaleDateString()}</td>
+                                                <td>
+                                                    <span className={`status-badge ${user.is_active !== false ? 'active' : 'inactive'}`}>
+                                                        {user.is_active !== false ? 'Active' : 'Deactivated'}
+                                                    </span>
+                                                </td>
+                                                <td className="actions-cell">
+                                                    <button 
+                                                        className={`btn-icon-sm ${user.is_active !== false ? 'pause' : 'resume'}`}
+                                                        onClick={() => handleUserStatusToggle(user.id, user.is_active !== false)}
+                                                        title={user.is_active !== false ? 'Deactivate' : 'Activate'}
+                                                    >
+                                                        {user.is_active !== false ? <XCircle size={16} /> : <CheckCircle size={16} />}
+                                                    </button>
+                                                    <button className="btn-icon-sm delete" onClick={() => deleteUser(user.id)}>
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+                ) : activeTab === 'sellers' ? (
+                    <div className="admin-sellers-view">
+                        <div className="admin-stats-grid">
+                            <div className="stat-card">
+                                <div className="stat-icon users"><ShieldCheck size={24} /></div>
+                                <div className="stat-info">
+                                    <p>Total Sellers</p>
+                                    <h3>{stats.totalSellers}</h3>
+                                </div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-icon stores"><CheckCircle size={24} /></div>
+                                <div className="stat-info">
+                                    <p>Active Sellers</p>
+                                    <h3>{stats.activeSellers}</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <section className="admin-section">
+                            <div className="section-header">
+                                <h2>Seller Accounts</h2>
+                                <div className="admin-search">
+                                    <Search size={18} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search sellers..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                            <div className="table-container">
+                                <table className="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Seller Info</th>
+                                            <th>Location</th>
+                                            <th>Stores</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {sellers.filter(s => 
+                                            s.username?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                            s.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                                        ).map(seller => (
+                                            <tr key={seller.id}>
+                                                <td>
+                                                    <div className="user-info-cell">
+                                                        <span className="font-medium">{seller.username}</span>
+                                                        <span className="text-muted text-xs">{seller.email}</span>
+                                                    </div>
+                                                </td>
+                                                <td>{seller.city || 'N/A'}</td>
+                                                <td>{stores.filter(st => st.owner_id === seller.id).length}</td>
+                                                <td>
+                                                    <span className={`status-badge ${seller.is_active !== false ? 'active' : 'inactive'}`}>
+                                                        {seller.is_active !== false ? 'Active' : 'Deactivated'}
+                                                    </span>
+                                                </td>
+                                                <td className="actions-cell">
+                                                    <button 
+                                                        className={`btn-icon-sm ${seller.is_active !== false ? 'pause' : 'resume'}`}
+                                                        onClick={() => handleUserStatusToggle(seller.id, seller.is_active !== false)}
+                                                    >
+                                                        {seller.is_active !== false ? <XCircle size={16} /> : <CheckCircle size={16} />}
+                                                    </button>
+                                                    <button className="btn-icon-sm delete" onClick={() => deleteUser(seller.id)}>
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+                ) : activeTab === 'subscriptions' ? (
+                    <div className="admin-subscriptions-view">
+                        <section className="admin-section subscription-gate">
+                            <div className="gate-header">
+                                <div className="gate-info">
+                                    <ShieldAlert size={32} className="text-warning" />
+                                    <div>
+                                        <h2>Platform Subscription Control</h2>
+                                        <p>Manage product limits and seller subscriptions. This section is locked for security.</p>
+                                    </div>
+                                </div>
+                                <div className="gate-toggle">
+                                    <span className="label-text">{isSubSectionEnabled ? 'Control Panel Unlocked' : 'Control Panel Locked'}</span>
+                                    <label className="switch">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={isSubSectionEnabled}
+                                            onChange={() => {
+                                                if (isSubSectionEnabled) {
+                                                    setIsSubSectionEnabled(false);
+                                                } else {
+                                                    setShowPasswordPopup(true);
+                                                }
+                                            }}
+                                        />
+                                        <span className="slider round"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {showPasswordPopup && (
+                                <div className="password-overlay">
+                                    <div className="password-card">
+                                        <h3>Admin Verification</h3>
+                                        <p>Enter password to unlock subscription controls.</p>
+                                        <input 
+                                            type="password" 
+                                            placeholder="Enter password" 
+                                            value={subPassword}
+                                            onChange={(e) => setSubPassword(e.target.value)}
+                                            onKeyPress={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    if (subPassword === 'roshan') {
+                                                        setIsSubSectionEnabled(true);
+                                                        setShowPasswordPopup(false);
+                                                        setSubPassword('');
+                                                    } else {
+                                                        alert('Incorrect password');
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                        <div className="password-actions">
+                                            <button className="btn-secondary" onClick={() => setShowPasswordPopup(false)}>Cancel</button>
+                                            <button className="btn-primary" onClick={() => {
+                                                if (subPassword === 'roshan') {
+                                                    setIsSubSectionEnabled(true);
+                                                    setShowPasswordPopup(false);
+                                                    setSubPassword('');
+                                                } else {
+                                                    alert('Incorrect password');
+                                                }
+                                            }}>Unlock</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {isSubSectionEnabled ? (
+                                <div className="subscription-controls-grid">
+                                    <div className="control-card seller-selection-card">
+                                        <div className="card-header">
+                                            <Users size={20} />
+                                            <h3>1. Select Seller to Upgrade</h3>
+                                        </div>
+                                        <div className="admin-search mb-4">
+                                            <Search size={18} />
+                                            <input
+                                                type="text"
+                                                placeholder="Search sellers by name or email..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="seller-mini-list">
+                                            {sellers.filter(s => 
+                                                s.username?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                                s.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                                            ).slice(0, 5).map(seller => (
+                                                <div 
+                                                    key={seller.id} 
+                                                    className={`seller-mini-item ${selectedSubSeller?.id === seller.id ? 'selected' : ''}`}
+                                                    onClick={() => setSelectedSubSeller(seller)}
+                                                >
+                                                    <div className="mini-info">
+                                                        <span className="name">{seller.username}</span>
+                                                        <span className="email">{seller.email}</span>
+                                                    </div>
+                                                    <div className="check-icon">
+                                                        {selectedSubSeller?.id === seller.id && <CheckCircle size={16} />}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {sellers.filter(s => 
+                                                s.username?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                                s.email?.toLowerCase().includes(searchTerm.toLowerCase())
+                                            ).length === 0 && (
+                                                <p className="text-center py-4 text-muted">No sellers found.</p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="control-card upgrade-action-card">
+                                        <div className="card-header">
+                                            <ShieldCheck size={20} />
+                                            <h3>2. Configure & Apply Upgrade</h3>
+                                        </div>
+                                        {selectedSubSeller ? (
+                                            <div className="upgrade-form">
+                                                <div className="selected-seller-badge">
+                                                    <span>Target: <strong>{selectedSubSeller.username}</strong></span>
+                                                </div>
+                                                
+                                                <div className="form-group">
+                                                    <label>Select Membership Tier</label>
+                                                    <div className="btn-group">
+                                                        <button 
+                                                            className={`btn-sub ${subTier === 'free' ? 'active' : ''}`}
+                                                            onClick={() => setSubTier('free')}
+                                                        >Free</button>
+                                                        <button 
+                                                            className={`btn-sub ${subTier === 'premium' ? 'active' : ''}`}
+                                                            onClick={() => setSubTier('premium')}
+                                                        >Premium</button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <label>Duration (Months)</label>
+                                                    <div className="btn-group">
+                                                        {[1, 6, 12].map(m => (
+                                                            <button 
+                                                                key={m}
+                                                                className={`btn-sub ${subMonths === m ? 'active' : ''}`}
+                                                                onClick={() => setSubMonths(m)}
+                                                            >{m} Month{m > 1 ? 's' : ''}</button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                <div className="form-group">
+                                                    <label>Product Listing Limit</label>
+                                                    <div className="limit-input-wrapper">
+                                                        <input 
+                                                            type="number" 
+                                                            className="limit-input-sm"
+                                                            value={subProductLimit}
+                                                            onChange={(e) => setSubProductLimit(e.target.value)}
+                                                        />
+                                                        <span className="text-muted text-xs ml-2">Items allowed</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="affected-stores">
+                                                    <h4>Affected Shops:</h4>
+                                                    <ul>
+                                                        {stores.filter(st => st.owner_id === selectedSubSeller.id).map(st => (
+                                                            <li key={st.id}>{st.name}</li>
+                                                        ))}
+                                                        {stores.filter(st => st.owner_id === selectedSubSeller.id).length === 0 && (
+                                                            <li className="text-muted">No shops linked to this seller.</li>
+                                                        )}
+                                                    </ul>
+                                                </div>
+
+                                                <button 
+                                                    className="btn-primary w-full mt-4"
+                                                    disabled={stores.filter(st => st.owner_id === selectedSubSeller.id).length === 0}
+                                                    onClick={async () => {
+                                                        const sellerStores = stores.filter(st => st.owner_id === selectedSubSeller.id);
+                                                        for (const store of sellerStores) {
+                                                            await handleUpdateSubscription(store.id, subTier, subMonths, subProductLimit);
+                                                        }
+                                                        alert(`Successfully updated subscription for ${selectedSubSeller.username}`);
+                                                        setSelectedSubSeller(null);
+                                                    }}
+                                                >
+                                                    Apply Upgrade to All Shops
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="empty-action-state">
+                                                <Users size={48} opacity={0.1} />
+                                                <p>Select a seller from the left to begin the upgrade process.</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="control-card limit-settings-card">
+                                        <div className="card-header">
+                                            <Package size={20} />
+                                            <h3>Platform Limits</h3>
+                                        </div>
+                                        <p className="text-muted">Define how many products sellers can list by default.</p>
+                                        <div className="limit-row mt-4">
+                                            <span>Default Free Limit:</span>
+                                            <input 
+                                                type="number" 
+                                                className="limit-input-sm"
+                                                value={globalProductLimit}
+                                                onChange={(e) => setGlobalProductLimit(e.target.value)}
+                                            />
+                                        </div>
+                                        <button 
+                                            className="btn-secondary w-full mt-2" 
+                                            onClick={async () => {
+                                                const freeStores = stores.filter(s => (s.subscription_tier || 'free') === 'free');
+                                                let updatedCount = 0;
+                                                for (const s of freeStores) {
+                                                    try {
+                                                        await supabase
+                                                            .from('stores')
+                                                            .update({ product_limit: globalProductLimit })
+                                                            .eq('id', s.id);
+                                                        updatedCount++;
+                                                    } catch(e) {}
+                                                }
+                                                fetchAdminData();
+                                                alert(`Updated product limit for ${updatedCount} free stores.`);
+                                            }}
+                                        >Apply to All Free Stores</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="locked-state">
+                                    <Lock size={48} opacity={0.3} />
+                                    <p>Subscription management is currently disabled. Toggle the switch above to enable access.</p>
+                                </div>
+                            )}
+                        </section>
+                    </div>
                 ) : (
                     <div className="admin-banners-view">
                         <section className="admin-section banner-upload-card">
@@ -536,6 +1465,135 @@ const AdminDashboard = ({ onLogout }) => {
                 )}
 
             </main>
+
+            {showProductModal && (
+                <div className="modal-overlay">
+                    <div className="modal-card product-modal">
+                        <div className="modal-header">
+                            <h2>{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
+                            <button className="close-btn" onClick={() => setShowProductModal(false)}><XCircle size={24} /></button>
+                        </div>
+                        <form onSubmit={handleProductSubmit} className="product-form">
+                            <div className="form-grid">
+                                <div className="form-group">
+                                    <label>Product Name</label>
+                                    <input 
+                                        type="text" 
+                                        required 
+                                        value={productForm.name}
+                                        onChange={(e) => setProductForm({...productForm, name: e.target.value})}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Category</label>
+                                    <input 
+                                        type="text" 
+                                        required 
+                                        value={productForm.category}
+                                        onChange={(e) => setProductForm({...productForm, category: e.target.value})}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Online Price (₹)</label>
+                                    <input 
+                                        type="number" 
+                                        required 
+                                        value={productForm.online_price}
+                                        onChange={(e) => setProductForm({...productForm, online_price: e.target.value})}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Market Price (₹)</label>
+                                    <input 
+                                        type="number" 
+                                        required 
+                                        value={productForm.market_price}
+                                        onChange={(e) => setProductForm({...productForm, market_price: e.target.value})}
+                                    />
+                                </div>
+                                <div className="form-group full-width">
+                                    <label>Description</label>
+                                    <textarea 
+                                        rows="3"
+                                        value={productForm.description}
+                                        onChange={(e) => setProductForm({...productForm, description: e.target.value})}
+                                    ></textarea>
+                                </div>
+                                <div className="form-group">
+                                    <label>Stock Status</label>
+                                    <select 
+                                        value={productForm.stock_status}
+                                        onChange={(e) => setProductForm({...productForm, stock_status: e.target.value})}
+                                    >
+                                        <option value="in_stock">In Stock</option>
+                                        <option value="out_of_stock">Out of Stock</option>
+                                    </select>
+                                </div>
+                                <div className="form-group">
+                                    <label>Delivery Type</label>
+                                    <select 
+                                        value={productForm.delivery_type}
+                                        onChange={(e) => setProductForm({...productForm, delivery_type: e.target.value})}
+                                    >
+                                        <option value="express">Express (Fast)</option>
+                                        <option value="standard">Standard</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="image-upload-section">
+                                <label>Product Gallery</label>
+                                <div className="image-previews">
+                                    {productPreviews.map((url, index) => (
+                                        <div key={index} className="preview-item">
+                                            <img src={url} alt="Preview" />
+                                            <button 
+                                                type="button" 
+                                                className="remove-img"
+                                                onClick={() => {
+                                                    const newPreviews = productPreviews.filter((_, i) => i !== index);
+                                                    setProductPreviews(newPreviews);
+                                                    if (index < productForm.images.length) {
+                                                        const newImages = productForm.images.filter((_, i) => i !== index);
+                                                        setProductForm({...productForm, images: newImages});
+                                                    } else {
+                                                        const newFileImages = productImages.filter((_, i) => i !== (index - productForm.images.length));
+                                                        setProductImages(newFileImages);
+                                                    }
+                                                }}
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <label className="add-image-btn">
+                                        <Plus size={24} />
+                                        <input 
+                                            type="file" 
+                                            multiple 
+                                            accept="image/*" 
+                                            hidden 
+                                            onChange={(e) => {
+                                                const files = Array.from(e.target.files);
+                                                setProductImages([...productImages, ...files]);
+                                                const newPreviews = files.map(file => URL.createObjectURL(file));
+                                                setProductPreviews([...productPreviews, ...newPreviews]);
+                                            }}
+                                        />
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="modal-actions">
+                                <button type="button" className="btn-secondary" onClick={() => setShowProductModal(false)}>Cancel</button>
+                                <button type="submit" className="btn-primary" disabled={uploading}>
+                                    {uploading ? 'Processing...' : (editingProduct ? 'Update Product' : 'Create Product')}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

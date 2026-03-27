@@ -115,7 +115,7 @@
     flex: 1;
 }
 
-.nav-item {
+.admin-dashboard-layout .nav-item {
     padding: 15px 25px;
     display: flex;
     align-items: center;
@@ -125,13 +125,13 @@
     color: #aaa;
 }
 
-.nav-item.active {
+.admin-dashboard-layout .nav-item.active {
     background: rgba(255, 77, 77, 0.1);
     color: #FF4D4D;
     border-left: 4px solid #FF4D4D;
 }
 
-.nav-item:hover:not(.active) {
+.admin-dashboard-layout .nav-item:hover:not(.active) {
     background: rgba(255, 255, 255, 0.05);
     color: #fff;
 }
@@ -204,7 +204,7 @@
     margin-bottom: 40px;
 }
 
-.stat-card {
+.admin-dashboard-layout .stat-card {
     background: white;
     padding: 24px;
     border-radius: 16px;
@@ -214,7 +214,7 @@
     gap: 20px;
 }
 
-.stat-icon {
+.admin-dashboard-layout .stat-icon {
     width: 60px;
     height: 60px;
     border-radius: 12px;
@@ -587,6 +587,7 @@
     font-size: 14px;
 }
 
+.btn-icon-sm.view { background: #f0f9ff; color: #0ea5e9; }
 .btn-icon-sm.pause { background: #fff1f2; color: #e11d48; }
 .btn-icon-sm.resume { background: #f0fdf4; color: #16a34a; }
 .btn-icon-sm.delete { background: #f8fafc; color: #94a3b8; }
@@ -609,3 +610,569 @@
     color: #64748b;
     font-weight: 500;
 }
+
+/* User & Seller Management Extensions */
+.user-info-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.text-xs { font-size: 11px; }
+.text-muted { color: #888; }
+
+.role-badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.role-badge.admin { background: #333; color: white; }
+.role-badge.seller { background: #fee2e2; color: #ef4444; }
+.role-badge.buyer { background: #e0f2fe; color: #0ea5e9; }
+
+.actions-cell {
+    display: flex;
+    gap: 8px;
+}
+
+/* Subscription Control UI */
+.subscription-gate {
+    position: relative;
+    padding: 40px !important;
+}
+
+.gate-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    padding-bottom: 30px;
+    border-bottom: 1px solid #eee;
+}
+
+.gate-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.gate-info h2 { font-size: 24px !important; }
+
+.text-warning { color: #f59e0b; }
+
+.gate-toggle {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.label-text {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Custom Switch Styling */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider { background-color: #FF4D4D; }
+input:checked + .slider:before { transform: translateX(26px); }
+
+/* Password Overlay */
+.password-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(5px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.password-card {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+    border: 1px solid #eee;
+}
+
+.password-card input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    margin: 20px 0;
+    text-align: center;
+    font-size: 18px;
+    letter-spacing: 5px;
+}
+
+.password-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.password-actions button { flex: 1; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+
+/* Control Grid */
+.subscription-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+}
+
+.control-card {
+    background: #f8fafc;
+    padding: 25px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+}
+
+.control-card .card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.control-card h3 { margin: 0; font-size: 18px; }
+
+.limit-inputs {
+    margin-top: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.limit-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: white;
+    border-radius: 10px;
+    border: 1px solid #edf2f7;
+}
+
+.limit-row input {
+    width: 80px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.btn-save-limit {
+    background: #333;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.sub-options-list {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sub-option {
+    padding: 12px 15px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.hint-text {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 15px;
+    font-style: italic;
+}
+
+.locked-state {
+    padding: 60px 0;
+    text-align: center;
+    color: #94a3b8;
+}
+
+/* Modal Styling */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-card {
+    background: white;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    padding: 25px 30px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-btn { background: none; border: none; cursor: pointer; color: #aaa; }
+
+.product-form { padding: 30px; }
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.full-width { grid-column: 1 / -1; }
+
+.form-group select, .form-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 15px;
+}
+
+.image-upload-section { margin-top: 30px; }
+
+.image-previews {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.preview-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #eee;
+}
+
+.preview-item img { width: 100%; height: 100%; object-fit: cover; }
+
+.remove-img {
+    position: absolute;
+    top: 4px; right: 4px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px; height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.add-image-btn {
+    aspect-ratio: 1;
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.add-image-btn:hover { border-color: #FF4D4D; color: #FF4D4D; }
+
+.modal-actions {
+    margin-top: 40px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+.modal-actions button { padding: 12px 30px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+
+/* Table Thumbnail */
+.table-thumbnail {
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+/* Store Subscription Management Section */
+.subscription-management-card {
+    margin-top: 20px;
+}
+
+.header-with-badge {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.tier-badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.tier-badge.free { background: #f1f5f9; color: #64748b; }
+.tier-badge.premium { background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; }
+
+.expiry-text {
+    margin: 5px 0 0;
+    font-size: 13px;
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.subscription-actions-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.sub-action-group h4 {
+    margin: 0 0 15px;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.btn-sub {
+    padding: 10px 18px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-sub:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #FF4D4D;
+}
+
+.btn-sub.reset {
+    color: #94a3b8;
+}
+
+.btn-sub.reset:hover {
+    color: #ef4444;
+    background: #fff1f2;
+    border-color: #fecaca;
+}
+
+.sub-info-group {
+    padding-left: 20px;
+    border-left: 2px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+}
+
+/* Clickable Table Cells */
+.clickable-name {
+    color: #FF4D4D;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.clickable-name:hover {
+    color: #e60000;
+    text-decoration: underline;
+}
+
+/* Subscription Refined Styles */
+.seller-mini-list {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.seller-mini-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid #f1f5f9;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.seller-mini-item:hover {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+.seller-mini-item.selected {
+    background: #fff1f2;
+    border-color: #FF4D4D;
+}
+
+.mini-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.mini-info .name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.mini-info .email {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+.check-icon {
+    color: #FF4D4D;
+}
+
+.upgrade-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.selected-seller-badge {
+    background: #f0fdf4;
+    color: #16a34a;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    border: 1px solid #dcfce7;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.btn-sub.active {
+    background: #FF4D4D;
+    color: white;
+    border-color: #FF4D4D;
+    box-shadow: 0 4px 12px rgba(255, 77, 77, 0.2);
+}
+
+.affected-stores {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.affected-stores h4 {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.affected-stores ul {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13px;
+    color: #1e293b;
+}
+
+.empty-action-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.empty-action-state p {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.limit-input-sm {
+    width: 60px;
+    padding: 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.w-full { width: 100%; }
+.mt-2 { margin-top: 8px; }
+.mt-4 { margin-top: 16px; }
+.mb-4 { margin-bottom: 16px; }
+
+.text-sm { font-size: 13px; line-height: 1.5; }

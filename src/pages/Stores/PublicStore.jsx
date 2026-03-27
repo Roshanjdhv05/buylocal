@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
     ShoppingCart, MapPin, Phone, Clock, ArrowLeft, Store,
     UserCheck, MessageSquare, Package, Star, CreditCard, ChevronRight,
-    Award, ShieldCheck, Globe, Instagram, Twitter, Facebook, X
+    Award, ShieldCheck, Globe, Instagram, Twitter, Facebook, X, Truck, Box
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
@@ -31,6 +31,7 @@ const PublicStore = () => {
     const [comment, setComment] = useState('');
     const [submittingReview, setSubmittingReview] = useState(false);
     const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
+    const [customCategories, setCustomCategories] = useState([]);
 
     useEffect(() => {
         fetchStoreProfile();
@@ -39,11 +40,27 @@ const PublicStore = () => {
     useEffect(() => {
         if (store?.id) {
             fetchReviews();
+            fetchCustomCategories();
             if (user) {
                 checkIfFollowing();
             }
         }
     }, [store?.id, user]);
+
+    const fetchCustomCategories = async () => {
+        if (!store?.id) return;
+        try {
+            const { data, error } = await supabase
+                .from('store_custom_categories')
+                .select('*')
+                .eq('store_id', store.id)
+                .order('display_order', { ascending: true });
+            
+            if (data) setCustomCategories(data);
+        } catch (err) {
+            console.error('Error fetching custom categories:', err.message);
+        }
+    };
 
 
     useEffect(() => {
@@ -197,143 +214,95 @@ const PublicStore = () => {
                 </div>
 
                 <div className="hero-content container">
-                    <div className="store-header-main">
-                        <div className="store-brand-box">
-                            <div className="store-logo-large">
-                                {store.profile_picture_url ? (
-                                    <img
-                                        src={store.profile_picture_url}
-                                        alt={store.name}
-                                        style={{ width: '100%', height: '100%', borderRadius: '18px', objectFit: 'cover' }}
-                                    />
-                                ) : store.banner_url ? (
-                                    <Store size={40} color="var(--primary)" />
-                                ) : (
-                                    store.name.charAt(0)
-                                )}
-                            </div>
-                            <div className="store-title-wrap">
-                                <h1>{store.name}</h1>
-                                <p className="store-tagline">{t('publicStore.tagline', 'Curated Luxury Fashion & Artistry')}</p>
+                    <div className="luxury-header-left">
+                        <div className="luxury-logo-side">
+                            {store.profile_picture_url ? (
+                                <img src={store.profile_picture_url} alt={store.name} />
+                            ) : (
+                                <Store size={40} />
+                            )}
+                        </div>
+                        
+                        <div className="luxury-info-side">
+                            <div className="luxury-origin">{store.origin || t('publicStore.curatedRituals', 'CURATED RITUALS')}</div>
+                            <h1 className="luxury-title-small">{store.name}</h1>
+                            <div className="luxury-rating-small">
+                                <Star size={14} fill="#8c5a3c" color="#8c5a3c" />
+                                <span className="rating-val">{averageRating}</span>
+                                <span className="reviews-count">({reviews.length || 0})</span>
                             </div>
                         </div>
+                    </div>
 
-                        <div className="hero-actions">
-                            <button className={`btn-follow ${isFollowing ? 'following' : ''}`} onClick={toggleFollow} disabled={followLoading}>
-                                {isFollowing ? <UserCheck size={18} /> : <UserCheck size={18} />}
-                                {isFollowing ? t('publicStore.following') : t('publicStore.follow')}
-                            </button>
-                            <button className="btn-contact-concierge" onClick={() => setIsReviewModalOpen(true)}>
-                                <Star size={18} /> {t('publicStore.review')}
-                            </button>
-                            {store.whatsapp && (
-                                <a href={`https://wa.me/${store.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="btn-contact-concierge" style={{ background: '#25D366' }}>
-                                    <MessageSquare size={18} /> WhatsApp
-                                </a>
-                            )}
-                            {store.instagram && (
-                                <a href={`https://instagram.com/${store.instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="btn-contact-concierge" style={{ background: 'linear-gradient(45deg, #f09433 0%,#e6683c 25%,#dc2743 50%,#cc2366 75%,#bc1888 100%)' }}>
-                                    <Instagram size={18} /> Instagram
-                                </a>
-                            )}
-                            {store.location_url && (
-                                <a href={store.location_url} target="_blank" rel="noopener noreferrer" className="btn-contact-concierge" style={{ background: '#4285F4' }}>
-                                    <MapPin size={18} /> Location
-                                </a>
-                            )}
-                        </div>
+                    <div className="luxury-action-scroll">
+                        <button className="btn-action-pill btn-instagram" onClick={() => {
+                            if (store.instagram_url) window.open(store.instagram_url, '_blank');
+                        }}>
+                             Instagram
+                        </button>
+                        <button className="btn-action-pill btn-whatsapp" onClick={() => {
+                            if (store.phone) window.open(`https://wa.me/${store.phone}`, '_blank');
+                        }}>
+                             WhatsApp
+                        </button>
+                        <button className={`btn-action-pill btn-follow ${isFollowing ? 'following' : ''}`} onClick={toggleFollow} disabled={followLoading}>
+                            {isFollowing ? t('publicStore.following', 'Following') : t('publicStore.follow', 'Follow')}
+                        </button>
+                        <button className="btn-action-pill btn-outline" onClick={() => {
+                            if (store.location_url) window.open(store.location_url, '_blank');
+                        }}>
+                            <MapPin size={16} /> {t('publicStore.location', 'Location')}
+                        </button>
+                        <button className="btn-action-pill btn-outline" onClick={() => {
+                            document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+                        }}>
+                            {t('publicStore.reviews', 'Reviews')}
+                        </button>
                     </div>
                 </div>
             </div>
 
-            <div className="stats-bar-container container">
-                <div className="stats-grid-refined">
-                    <div className="stat-item-luxury glass-card">
-                        <div className="stat-icon-wrap blue">
-                            <Package size={20} />
-                        </div>
-                        <div className="stat-texts">
-                            <label>{t('publicStore.stats.totalProducts')}</label>
-                            <p>{products.length || 5}+</p>
-                        </div>
+            {/* CUSTOM CATEGORY BOXES */}
+            {customCategories.length > 0 && (
+                <div className="category-boxes-wrap">
+                    <div className="category-boxes-scroll">
+                        {customCategories.map((cat, idx) => (
+                            <div 
+                                key={cat.id || idx} 
+                                className="category-box-card"
+                                onClick={() => navigate(`/${store.name}/category/${encodeURIComponent(cat.name)}`)}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                <div className="category-box-img-wrap">
+                                    <img src={cat.image_url} alt={cat.name} />
+                                    <div className="category-box-overlay"></div>
+                                    <span className="category-box-name">{cat.name.toUpperCase()}</span>
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                    <div className="stat-item-luxury glass-card">
-                        <div className="stat-icon-wrap gold">
-                            <Clock size={20} />
-                        </div>
-                        <div className="stat-texts">
-                            <label>{t('publicStore.stats.deliveryDays')}</label>
-                            <p>2 - 3 Days</p>
-                        </div>
+                </div>
+            )}
+
+            {/* STATS BAR - Pill Style Below Categories */}
+            <div className="stats-bar-luxury">
+                <div className="stats-row-luxury">
+                    <div className="stat-item-minimal">
+                        <Package size={14} />
+                        <span>{products.length || 500}+ {t('publicStore.stats.products', 'Products')}</span>
                     </div>
-                    <div className="stat-item-luxury glass-card">
-                        <div className="stat-icon-wrap green">
-                            <CreditCard size={20} />
-                        </div>
-                        <div className="stat-texts">
-                            <label>{t('publicStore.stats.cod')}</label>
-                            <p>{t('publicStore.stats.available')}</p>
-                        </div>
+                    <div className="stat-item-minimal">
+                        <Truck size={14} />
+                        <span>{t('publicStore.stats.freeDelivery', 'Free Delivery')}</span>
                     </div>
-                    <div className="stat-item-luxury glass-card">
-                        <div className="stat-icon-wrap purple">
-                            <Star size={20} />
-                        </div>
-                        <div className="stat-texts">
-                            <label>{t('publicStore.stats.rating')}</label>
-                            <p>{averageRating} Stars</p>
-                        </div>
+                    <div className="stat-item-minimal">
+                        <CreditCard size={14} />
+                        <span>{t('publicStore.stats.codAvailable', 'COD Available')}</span>
                     </div>
                 </div>
             </div>
 
-            <main className="container luxury-main">
-                {/* MULTIMEDIA GALLERY SLIDER (Replaces Featured Collections) */}
-                {store?.gallery_urls?.length > 0 && (
-                    <section className="luxury-section gallery-slider-section">
-                        <div className="section-header-luxury">
-                            <div>
-                                <h2>{t('publicStore.gallery')}</h2>
-                                <p className="sub-header">{t('publicStore.gallerySub')}</p>
-                            </div>
-                            <div className="scroll-controls">
-                                <button className="control-btn" onClick={() => {
-                                    const container = document.getElementById('gallery-slider');
-                                    container.scrollBy({ left: -400, behavior: 'smooth' });
-                                }}><ArrowLeft size={16} /></button>
-                                <button className="control-btn" onClick={() => {
-                                    const container = document.getElementById('gallery-slider');
-                                    container.scrollBy({ left: 400, behavior: 'smooth' });
-                                }}><ChevronRight size={16} /></button>
-                            </div>
-                        </div>
-
-                        <div className="multimedia-slider-wrap" id="gallery-slider">
-                            {store.gallery_urls.map((url, idx) => {
-                                const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) || url.includes('/video');
-                                return (
-                                    <div key={idx} className="multimedia-card glass-card">
-                                        {isVideo ? (
-                                            <video
-                                                src={url}
-                                                autoPlay
-                                                muted
-                                                loop
-                                                playsInline
-                                                className="slider-media"
-                                            />
-                                        ) : (
-                                            <img src={url} alt={`Gallery ${idx}`} className="slider-media" />
-                                        )}
-                                        <div className="media-overlay">
-                                            <label>{t('publicStore.gallery')} {idx + 1}</label>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </section>
-                )}
+            <main className="luxury-main">
 
                 {/* DYNAMIC SECTIONS / PRODUCTS */}
                 {Object.entries(products.reduce((acc, product) => {
@@ -348,18 +317,10 @@ const PublicStore = () => {
                 }).map(([sectionName, sectionProducts]) => (
                     <section key={sectionName} className="luxury-section" id={`section-${sectionName.replace(/\s+/g, '-').toLowerCase()}`}>
                         <div className="section-header-luxury">
-                            <div>
-                                <h2>{getLocalizedName(sectionName, i18n.language)}</h2>
-                                <p className="sub-header">{t('publicStore.curatedSelection')} {getLocalizedName(sectionName, i18n.language).toLowerCase()}</p>
-                            </div>
-                            <div className="scroll-controls">
-                                <button className="control-btn view-all-btn" onClick={() => navigate(`/${encodeURIComponent(store.name)}/section/${encodeURIComponent(sectionName)}`)}>
-                                    {t('home.seeAll')}
-                                </button>
-
-                                <button className="control-btn desktop-only"><ArrowLeft size={16} /></button>
-                                <button className="control-btn desktop-only"><ChevronRight size={16} /></button>
-                            </div>
+                            <h2>{sectionName}</h2>
+                            <button className="control-btn view-all-btn" onClick={() => navigate(`/${encodeURIComponent(store.name)}/section/${encodeURIComponent(sectionName)}`)}>
+                                {t('publicStore.viewAll', 'View All')}
+                            </button>
                         </div>
 
                         <div className="products-grid">
@@ -367,8 +328,6 @@ const PublicStore = () => {
                                 <ProductCard key={product.id} product={{ ...product, storeName: store.name }} />
                             ))}
                         </div>
-                        {/* Debug marker removed or localized optionally, user asked for whole website language change */}
-                        {/* <div className="debug-marker" style={{ fontSize: '0.6rem', color: '#eee', marginTop: '10px' }}>v1.1 (Section Grouping Active)</div> */}
                     </section>
                 ))}
 
@@ -381,78 +340,104 @@ const PublicStore = () => {
                     </section>
                 )}
 
-                {/* OUR LEGACY SECTION */}
-                <section className="legacy-section-wrap glass-card">
-                    <div className="legacy-content">
-                        <div className="legacy-text">
-                            <h2>{store.legacy_heading || 'Our Legacy'}</h2>
-                            <p>{store.legacy_description || `Founded in the heart of artistry, ${store.name} has been a beacon of luxury craftsmanship for over three decades. We bridge the gap between traditional artistry and modern sophistication, ensuring every piece in our marketplace meets the highest standards of quality and ethical production.`}</p>
+                {/* MULTIMEDIA GALLERY SLIDER - "The Boutique Experience" */}
+                {store?.gallery_urls?.length > 0 && (
+                    <section className="luxury-section gallery-slider-section">
+                        <div className="section-header-luxury">
+                            <h2>{t('publicStore.boutiqueExperience', 'The Boutique Experience')}</h2>
+                            <button className="control-btn view-all-btn" onClick={() => {
+                                const container = document.getElementById('gallery-slider');
+                                container.scrollBy({ left: 400, behavior: 'smooth' });
+                            }}>
+                                {t('publicStore.gallery', 'GALLERY')}
+                            </button>
+                        </div>
 
-                            <div className="legacy-stats">
-                                <div className="stat-item">
-                                    <span className="stat-num">12+</span>
-                                    <label>{t('publicStore.yearsOfHeritage')}</label>
+                        <div className="multimedia-slider-wrap" id="gallery-slider">
+                            {store.gallery_urls.map((url, idx) => {
+                                const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) || url.includes('/video');
+                                return (
+                                    <div key={idx} className="multimedia-card">
+                                        {isVideo ? (
+                                            <video src={url} autoPlay muted loop playsInline className="slider-media" />
+                                        ) : (
+                                            <img src={url} alt={`Gallery ${idx}`} className="slider-media" />
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+                )}
+
+                {/* OUR STORY SECTION */}
+                <section className="legacy-section-wrap">
+                    <div className="legacy-content">
+                        <h2>{t('publicStore.ourStory', 'Our Story')}</h2>
+                        <p>{store.legacy_description || `Founded in 1992, ${store.name} began as a small apothecary in the heart of Kyoto. Today, we are a global destination for curated beauty that respects the balance of nature and luxury...`}</p>
+
+                        <div className="legacy-stats">
+                            <div className="stat-item">
+                                <div className="stat-icon-wrap"><Award size={20} /></div>
+                                <div className="stat-text">
+                                    <strong>{t('publicStore.heritage', 'HERITAGE')}</strong>
+                                    <p>30 years of botanicals research and timeless tradition.</p>
                                 </div>
-                                <div className="stat-item border-l">
-                                    <span className="stat-num">5</span>
-                                    <label>{t('publicStore.globalBoutiques')}</label>
+                            </div>
+                            <div className="stat-item">
+                                <div className="stat-icon-wrap"><Globe size={20} /></div>
+                                <div className="stat-text">
+                                    <strong>{t('publicStore.globalBoutiques', 'GLOBAL BOUTIQUES')}</strong>
+                                    <p>Present in 34 cities, from Tokyo to Paris.</p>
                                 </div>
-                                <div className="stat-item border-l">
-                                    <span className="stat-num">450+</span>
-                                    <label>{t('publicStore.handPicked')}</label>
+                            </div>
+                            <div className="stat-item">
+                                <div className="stat-icon-wrap"><Package size={20} /></div>
+                                <div className="stat-text">
+                                    <strong>{t('publicStore.handPicked', 'HAND-PICKED')}</strong>
+                                    <p>Each formula is personally vetted for purity and efficacy.</p>
                                 </div>
                             </div>
                         </div>
-                        {store.legacy_image_url ? (
-                            <div className="legacy-visual" style={{ background: 'none' }}>
-                                <img src={store.legacy_image_url} alt="Legacy" className="legacy-img" />
-                            </div>
-                        ) : (
-                            <div className="legacy-visual">
-                                <div className="legacy-shape"></div>
-                            </div>
-                        )}
+                        
+                        <a href="#" className="read-more-story">{t('publicStore.readMore', 'READ MORE')} →</a>
                     </div>
                 </section>
 
-                {/* TESTIMONIALS */}
+                {/* TESTIMONIALS - "The Collective Voice" */}
                 <section className="luxury-section">
                     <div className="testimonials-wrap">
-                        <div className="testimonial-header">
-                            <h2>{t('publicStore.testimonials')}</h2>
-                            <p>What our community thinks about {store.name}</p>
-                        </div>
+                        <h2>{t('publicStore.collectiveVoice', 'The Collective Voice')}</h2>
 
                         <div className="testimonial-carousel">
-                            {reviews.length > 0 ? (
-                                <div className="testimonial-card-luxury slide-animation">
-                                    <div className="quote-icon"><MessageSquare size={24} /></div>
+                            {reviews.length > 0 ? reviews.map((rev, idx) => (
+                                <div key={idx} className="testimonial-card-luxury">
                                     <div className="stars-row">
                                         {[...Array(5)].map((_, i) => (
                                             <Star
                                                 key={i}
-                                                size={16}
-                                                fill={i < reviews[currentTestimonialIndex].rating ? "#facc15" : "none"}
-                                                color={i < reviews[currentTestimonialIndex].rating ? "#facc15" : "#ccc"}
+                                                size={14}
+                                                fill={i < rev.rating ? "#bc8a5f" : "none"}
+                                                color={i < rev.rating ? "#bc8a5f" : "#ccc"}
                                             />
                                         ))}
                                     </div>
-                                    <p className="t-text">"{reviews[currentTestimonialIndex].comment}"</p>
+                                    <p className="t-text">"{rev.comment}"</p>
                                     <div className="t-author">
                                         <div className="author-avatar">
-                                            {reviews[currentTestimonialIndex].user_avatar ? (
-                                                <img src={reviews[currentTestimonialIndex].user_avatar} alt="User" />
+                                            {rev.user_avatar ? (
+                                                <img src={rev.user_avatar} alt="User" />
                                             ) : (
-                                                reviews[currentTestimonialIndex].user_name?.charAt(0) || 'U'
+                                                rev.user_name?.charAt(0) || 'U'
                                             )}
                                         </div>
                                         <div className="author-info">
-                                            <strong>{reviews[currentTestimonialIndex].user_name}</strong>
+                                            <strong>{rev.user_name}</strong>
                                             <label>{t('publicStore.verifiedPurchase')}</label>
                                         </div>
                                     </div>
                                 </div>
-                            ) : (
+                            )) : (
                                 <div className="testimonial-card-luxury">
                                     <p className="t-text">"{t('publicStore.firstReview')}"</p>
                                 </div>
@@ -502,262 +487,300 @@ const PublicStore = () => {
             )}
 
             <style>{`
-                .luxury-store-wrapper { background: #fff; min-height: 100vh; padding-bottom: 8rem; color: #1a1a1a; font-family: 'Inter', sans-serif; }
-                
-                /* HERO */
-                .luxury-hero { position: relative; height: 65vh; display: flex; align-items: flex-end; overflow: hidden; }
-                .hero-banner-wrap { position: absolute; inset: 0; z-index: 1; }
-                .hero-banner-img { width: 100%; height: 100%; object-fit: cover; }
-                .hero-banner-placeholder { width: 100%; height: 100%; background: linear-gradient(135deg, #1a1a1a 0%, #333 100%); }
-                .hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.8) 100%); }
-                
-                .hero-content { position: relative; z-index: 10; padding-bottom: 4rem; color: white; }
-                .store-header-main { display: flex; justify-content: space-between; align-items: flex-end; }
-                .store-brand-box { display: flex; gap: 2rem; align-items: center; }
-                .store-logo-large { 
-                    width: 90px; height: 90px; background: white; border-radius: 18px; 
-                    display: flex; align-items: center; justify-content: center; 
-                    font-size: 2.2rem; font-weight: 800; color: #1a1a1a;
-                    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap');
+
+                .luxury-store-wrapper { 
+                    background: #fdfcfb; 
+                    min-height: 100vh; 
+                    padding-bottom: 8rem; 
+                    color: #2c241e; 
+                    font-family: 'Inter', sans-serif; 
+                    overflow-x: hidden;
                 }
-                .store-title-wrap h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 0.2rem; letter-spacing: -0.02em; }
-                .store-tagline { font-size: 1.1rem; opacity: 0.8; font-weight: 500; }
                 
-                .hero-actions { display: flex; gap: 1rem; }
-                .btn-follow { background: #2563eb; color: white; padding: 0.8rem 1.8rem; border-radius: 10px; font-weight: 700; display: flex; align-items: center; gap: 0.6rem; border: none; transition: 0.3s; }
-                .btn-follow.following { background: white; color: #2563eb; }
-                .btn-contact-concierge { background: rgba(255,255,255,0.1); color: white; padding: 0.8rem 1.8rem; border-radius: 10px; font-weight: 700; display: flex; align-items: center; gap: 0.6rem; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); transition: 0.3s; }
-                .btn-follow:hover { background: #1d4ed8; transform: translateY(-2px); }
-                .btn-follow.following:hover { background: #f8fafc; }
-                .btn-contact-concierge:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); }
+                h1, h2, h3, h4, .luxury-origin { font-family: 'Playfair Display', serif; }
 
-                /* STATS BAR */
-                .stats-bar-container { margin-top: -45px; position: relative; z-index: 20; }
-                .stats-grid-refined { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
-                .stat-item-luxury { padding: 1.5rem; display: flex; align-items: center; gap: 1.2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.8); }
-                .stat-icon-wrap { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; }
-                .stat-icon-wrap.blue { background: #eff6ff; color: #2563eb; }
-                .stat-icon-wrap.green { background: #f0fdf4; color: #16a34a; }
-                .stat-icon-wrap.gold { background: #fffbeb; color: #d97706; }
-                .stat-icon-wrap.purple { background: #faf5ff; color: #9333ea; }
-                .stat-texts label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; font-weight: 700; }
-                .stat-texts p { font-size: 1.2rem; font-weight: 800; color: #1e293b; margin-top: 0.1rem; }
-
-                /* MAIN CONTENT */
-                .luxury-main { padding-top: 5rem; }
-                .luxury-section { margin-bottom: 6rem; }
-                .section-header-luxury { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem; }
-                .section-header-luxury h2 { font-size: 2.2rem; font-weight: 800; color: #1a1a1a; margin-bottom: 0.5rem; }
-                .sub-header { color: #64748b; font-size: 1.1rem; font-weight: 500; }
-                
-                .scroll-controls { display: flex; gap: 0.8rem; }
-                .control-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid #e2e8f0; background: white; display: flex; align-items: center; justify-content: center; transition: 0.3s; color: #64748b; }
-                .control-btn:hover { background: #f8fafc; color: #1a1a1a; border-color: #cbd5e1; }
-
-                /* MULTIMEDIA SLIDER */
-                .gallery-slider-section { position: relative; }
-                .multimedia-slider-wrap { 
-                    display: flex; 
-                    gap: 1.5rem; 
-                    overflow-x: auto; 
-                    padding: 1rem 0 2rem;
-                    scroll-snap-type: x mandatory;
-                    scrollbar-width: none;
-                }
-                .multimedia-slider-wrap::-webkit-scrollbar { display: none; }
-                
-                .multimedia-card { 
-                    flex: 0 0 400px; 
-                    height: 500px; 
-                    border-radius: 24px; 
+                /* PHASE 3: LEFT-ALIGNED SWIPEABLE */
+                .luxury-hero { 
                     position: relative; 
-                    overflow: hidden; 
-                    scroll-snap-align: start;
-                    transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+                    width: 100%;
+                    height: 380px; 
+                    background: #fdfaf7; 
+                    display: flex;
+                    align-items: flex-end;
+                    justify-content: center;
+                    overflow: hidden;
                 }
-                .slider-media { 
+                .hero-banner-wrap { position: absolute; inset: 0; z-index: 1; }
+                .hero-banner-img { 
                     width: 100%; 
                     height: 100%; 
                     object-fit: cover; 
-                    transition: 0.6s;
                 }
-                .media-overlay { 
+                .hero-overlay { 
                     position: absolute; 
                     inset: 0; 
-                    background: linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%); 
+                    background: linear-gradient(to top, rgba(140, 90, 60, 0.4) 0%, rgba(140, 90, 60, 0.1) 100%); 
+                    z-index: 2; 
+                }
+                
+                .hero-content { 
+                    position: relative; 
+                    z-index: 10; 
+                    width: 100%;
+                    padding: 0 1.5rem 1.5rem;
+                }
+                
+                .luxury-header-left {
+                    display: flex;
+                    align-items: flex-end;
+                    gap: 1rem;
+                    color: white;
+                    margin-bottom: 1.5rem;
+                }
+                .luxury-logo-side {
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 50%;
+                    background: white;
+                    border: 2px solid white;
+                    padding: 2px;
+                    overflow: hidden;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                    flex-shrink: 0;
+                }
+                .luxury-logo-side img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+                
+                .luxury-info-side {
+                    flex: 1;
+                }
+                .luxury-origin { 
+                    font-size: 0.65rem; 
+                    letter-spacing: 0.2em; 
+                    color: rgba(255,255,255,0.9); 
+                    margin-bottom: 0.25rem;
+                    text-transform: uppercase;
+                    font-weight: 500;
+                }
+                .luxury-title-small { 
+                    font-size: 1.8rem; 
+                    margin: 0; 
+                    color: #fff; 
+                    font-weight: 700;
+                    font-family: 'Playfair Display', serif;
+                    line-height:1.1;
+                }
+                .luxury-rating-small { 
                     display: flex; 
-                    align-items: flex-end; 
-                    padding: 2rem;
-                    opacity: 0;
-                    transition: 0.3s;
+                    align-items: center; 
+                    gap: 0.4rem; 
+                    color: rgba(255,255,255,0.8); 
+                    font-size: 0.8rem; 
+                    margin-top: 0.25rem;
                 }
-                .media-overlay label { color: white; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; }
+                .luxury-rating-small .rating-val { font-weight: 700; color: #fff; }
                 
-                .multimedia-card:hover { transform: scale(1.02); }
-                .multimedia-card:hover .slider-media { transform: scale(1.05); }
-                .multimedia-card:hover .media-overlay { opacity: 1; }
-
-                /* PRODUCTS */
-                .products-grid {
-                    display: grid;
-                    grid-template-columns: repeat(7, 1fr);
-                    gap: 1.5rem;
+                .luxury-action-scroll { 
+                    display: flex; 
+                    gap: 0.75rem; 
+                    overflow-x: auto; 
+                    flex-wrap: nowrap;
+                    padding-bottom: 0.5rem;
+                    -webkit-overflow-scrolling: touch;
+                    scrollbar-width: none;
                 }
-
-                /* LEGACY */
-                .legacy-section-wrap { background: #f8fafc; border: none; padding: 0; overflow: hidden; margin-top: 4rem; margin-bottom: 6rem; }
-                .legacy-content { display: grid; grid-template-columns: 1.2fr 1fr; }
-                .legacy-text { padding: 5rem; }
-                .legacy-text h2 { font-size: 2.8rem; font-weight: 800; margin-bottom: 2rem; }
-                .legacy-text p { font-size: 1.2rem; color: #475569; line-height: 1.8; margin-bottom: 3.5rem; }
-                .legacy-stats { display: flex; gap: 4rem; }
-                .l-stat h3 { font-size: 2.5rem; font-weight: 800; color: #2563eb; margin-bottom: 0.5rem; }
-                .l-stat label { font-size: 0.95rem; font-weight: 700; color: #64748b; }
+                .luxury-action-scroll::-webkit-scrollbar { display: none; }
                 
-                .legacy-visual { background: #eff6ff; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-                .legacy-img { width: 100%; height: 100%; object-fit: cover; border-radius: 0 24px 24px 0; }
-                .legacy-shape { width: 70%; height: 70%; background: white; border-radius: 50% 50% 50% 0; box-shadow: 20px 20px 60px rgba(0,0,0,0.05); }
-
-                /* TESTIMONIALS */
-                .testimonials-wrap { background: #2563eb; color: white; border-radius: 32px; padding: 5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 86c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm66 3c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm-46-73c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm0 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM58 80c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm9-70c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zM31 50c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm19-21c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm27 0c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2zm-27 48c0 1.105-.895 2-2 2s-2-.895-2-2 .895-2 2-2 2 .895 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E"); }
-                .testimonial-card-luxury { position: relative; }
-                .quote-icon { margin-bottom: 1.5rem; opacity: 0.5; }
-                .stars-row { display: flex; gap: 0.3rem; margin-bottom: 1.5rem; }
-                .t-text { font-size: 1.6rem; font-weight: 500; line-height: 1.6; margin-bottom: 2.5rem; font-style: italic; }
-                .t-author { display: flex; align-items: center; gap: 1rem; }
-                .author-avatar { width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-weight: 800; border: 2px solid white; }
-                .author-info strong { display: block; font-size: 1.1rem; }
-                .author-info label { font-size: 0.85rem; opacity: 0.7; }
-
-                /* MODAL */
-                .review-modal-overlay {
-                    position: fixed;
-                    inset: 0;
-                    background: rgba(0,0,0,0.6);
-                    backdrop-filter: blur(5px);
-                    z-index: 9999;
+                .btn-action-pill {
+                    flex-shrink: 0;
+                    height: 42px;
+                    padding: 0 1.25rem;
+                    border-radius: 21px;
+                    font-size: 0.85rem;
+                    font-weight: 700;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    padding: 1.5rem;
-                }
-                .review-modal-content {
-                    width: 100%;
-                    max-width: 500px;
-                    padding: 3rem;
-                    position: relative;
-                    animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-                }
-                .modal-close {
-                    position: absolute;
-                    top: 1.5rem;
-                    right: 1.5rem;
-                    background: none;
-                    border: none;
-                    color: #64748b;
-                    cursor: pointer;
-                }
-                .rating-input {
-                    display: flex;
-                    justify-content: center;
                     gap: 0.5rem;
-                    margin: 2rem 0;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    border: none;
                 }
-                .star-btn { background: none; border: none; cursor: pointer; color: #e2e8f0; transition: 0.2s; }
-                .star-btn.active { color: #facc15; transform: scale(1.1); }
+                .btn-instagram { background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); color: white; }
+                .btn-whatsapp { background: #25D366; color: white; }
+                .btn-follow { background: #8c5a3c; color: white; }
+                .btn-follow.following { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; }
+                .btn-outline { background: rgba(255,255,255,0.15); color: white; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.3); }
+                .btn-outline svg { color: white; }
+
+                /* Reset category spacing */
+                .category-boxes-wrap { 
+                    margin-top: 2rem; 
+                    margin-bottom: 2rem; 
+                }
+                .category-boxes-scroll { 
+                    display: flex; 
+                    gap: 0.75rem; 
+                    overflow-x: auto; 
+                    padding: 0 1rem 1rem;
+                    scrollbar-width: none;
+                    -webkit-overflow-scrolling: touch;
+                }
+                .category-boxes-scroll::-webkit-scrollbar { display: none; }
                 
-                .review-modal-content textarea {
-                    width: 100%;
-                    height: 120px;
-                    padding: 1rem;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 12px;
-                    margin-bottom: 1rem;
-                    font-family: inherit;
-                    resize: none;
+                .category-box-card { flex: 0 0 100px; }
+                .category-box-img-wrap { 
+                    width: 100px; 
+                    height: 135px; 
+                    border-radius: 12px; 
+                    overflow: hidden; 
+                    position: relative; 
+                    background: #eee;
+                }
+                .category-box-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+                .category-box-overlay { 
+                    position: absolute; inset: 0; 
+                    background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.5) 100%); 
+                }
+                .category-box-name { 
+                    position: absolute; 
+                    bottom: 0.5rem; 
+                    left: 0; right: 0; 
+                    text-align: center; 
+                    color: white; 
+                    font-weight: 600; 
+                    font-size: 0.6rem; 
+                    letter-spacing: 0.1em; 
                 }
 
-                @keyframes modalIn {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
+                /* STATS BAR - Pill Style */
+                .stats-bar-luxury { margin-bottom: 2rem; }
+                .stats-row-luxury { 
+                    display: flex; 
+                    gap: 0.6rem; 
+                    overflow-x: auto; 
+                    padding: 0 1rem;
+                    scrollbar-width: none;
                 }
-
-                .slide-animation {
-                    animation: slideFade 0.5s ease-out;
+                .stats-row-luxury::-webkit-scrollbar { display: none; }
+                .stat-item-minimal { 
+                    display: flex; 
+                    align-items: center; 
+                    gap: 0.4rem; 
+                    color: #8b8b8b; 
+                    font-size: 0.7rem; 
+                    font-weight: 600; 
+                    background: #f8f8f8;
+                    padding: 0.6rem 0.9rem;
+                    border-radius: 8px;
+                    white-space: nowrap;
                 }
+                .stat-item-minimal svg { color: #bc8a5f; }
 
-                @keyframes slideFade {
-                    from { opacity: 0; transform: translateX(20px); }
-                    to { opacity: 1; transform: translateX(0); }
+                /* SECTION HEADERS */
+                .luxury-section { margin-bottom: 3rem; }
+                .section-header-luxury { 
+                    display: flex; 
+                    justify-content: space-between; 
+                    align-items: baseline; 
+                    margin-bottom: 1.25rem; 
+                    padding: 0 1rem;
                 }
+                .section-header-luxury h2 { font-size: 1.4rem; color: #2c241e; margin: 0; font-weight: 600; }
+                .control-btn.view-all-btn { color: #bc8a5f; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; border: none; background: none; }
 
-                /* RESPONSIVE */
-                @media (max-width: 1200px) {
-                    .stats-grid-refined { grid-template-columns: repeat(4, 1fr); }
-                    .legacy-content { grid-template-columns: 1fr; }
-                    .legacy-visual { height: 350px; }
-                    .legacy-img { border-radius: 0 0 24px 24px; }
-                    .testimonials-wrap { grid-template-columns: 1fr; }
+                /* PRODUCTS GRID */
+                .products-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 1rem;
+                    padding: 0 1rem;
                 }
-
-                @media (max-width: 768px) {
-                    .store-header-main { flex-direction: column; align-items: flex-start; gap: 2rem; }
-                    .store-title-wrap h1 { font-size: 2.5rem; }
-                    .hero-actions { 
-                        display: flex !important;
-                        flex-direction: row !important;
-                        flex-wrap: nowrap !important;
-                        overflow-x: auto !important;
-                        width: 100vw !important;
-                        margin-left: -1rem !important;
-                        padding: 0.5rem 1rem 1rem !important;
-                        -webkit-overflow-scrolling: touch;
-                        scrollbar-width: none;
-                        -ms-overflow-style: none;
-                    }
-                    .hero-actions::-webkit-scrollbar { display: none; }
-                    .hero-actions > * { 
-                        flex: 0 0 auto !important;
-                        white-space: nowrap !important;
-                    }
-                    .multimedia-card { flex: 0 0 280px; height: 350px; }
-                    .stats-grid-refined { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
-                    .stat-item-luxury { flex-direction: column; align-items: flex-start; padding: 1rem; gap: 0.5rem; }
-                    .stat-icon-wrap { margin-bottom: 0.2rem; }
-                    .luxury-hero { height: 75vh; }
-                    .legacy-text { padding: 2rem; }
-                    .legacy-stats { flex-wrap: wrap; gap: 2rem; }
-                    .testimonials-wrap { padding: 2rem; }
-                    .t-text { font-size: 1.2rem; }
-
-                    /* Mobile Product Grid (3 Columns) */
+                @media (min-width: 1024px) {
                     .products-grid {
-                        display: grid;
-                        grid-template-columns: repeat(3, 1fr);
-                        gap: 0.5rem;
-                        padding-bottom: 1rem;
-                        width: 100%;
-                        margin-left: 0;
+                        grid-template-columns: repeat(4, 1fr);
+                        gap: 2rem;
+                        padding: 0;
+                    }
+                    .luxury-section, .section-header-luxury, .stats-bar-luxury, .testimonials-wrap h2 {
+                        max-width: 1200px;
+                        margin-left: auto;
+                        margin-right: auto;
                         padding-left: 0;
                         padding-right: 0;
-                        overflow-x: visible;
                     }
-                    
-                    /* Force Product Card Width on Mobile */
-                    .products-grid > * {
-                        min-width: 0;
-                        flex: 1;
-                    }
+                }
 
-                    .view-all-btn {
-                        width: auto;
-                        padding: 0 1rem;
-                        border-radius: 20px;
-                        font-size: 0.9rem;
-                        font-weight: 600;
+                /* GALLERY */
+                .multimedia-slider-wrap {
+                    display: flex;
+                    gap: 1rem;
+                    overflow-x: auto;
+                    padding: 0 1rem 1.5rem;
+                    scrollbar-width: none;
+                }
+                .multimedia-slider-wrap::-webkit-scrollbar { display: none; }
+                .multimedia-card {
+                    flex: 0 0 280px;
+                    height: 180px;
+                    border-radius: 16px;
+                    overflow: hidden;
+                    position: relative;
+                }
+                .slider-media { width: 100%; height: 100%; object-fit: cover; }
+
+                /* STORY SECTION */
+                .legacy-section-wrap { background: #fff; border-radius: 24px; padding: 2rem 1.5rem; margin: 2rem 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+                .legacy-content h2 { font-size: 1.6rem; color: #2c241e; margin-bottom: 1rem; }
+                .legacy-text p { font-size: 0.85rem; color: #8b8b8b; line-height: 1.6; margin-bottom: 1.5rem; }
+                .legacy-stats { display: flex; flex-direction: column; gap: 1rem; }
+                .stat-item { display: flex; align-items: start; gap: 1rem; }
+                .stat-item .stat-icon-wrap { width: 40px; height: 40px; background: #fef8f4; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #bc8a5f; flex-shrink: 0; }
+                .stat-text strong { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: #2c241e; }
+                .stat-text p { font-size: 0.75rem; color: #8b8b8b; margin: 0; line-height: 1.4; }
+                .read-more-story { color: #bc8a5f; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; margin-top: 1.5rem; display: block; text-decoration: none; }
+                @media (min-width: 1024px) {
+                    .legacy-section-wrap { 
+                        max-width: 1200px; 
+                        margin: 4rem auto; 
+                        padding: 4rem;
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 4rem;
                     }
+                    .legacy-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; margin-top: 2rem; }
+                }
+
+                /* TESTIMONIALS */
+                .testimonials-wrap h2 { font-size: 1.6rem; padding: 0 1rem; margin-bottom: 1.5rem; }
+                .testimonial-carousel { display: flex; gap: 1rem; overflow-x: auto; padding: 0 1rem 2rem; scrollbar-width: none; }
+                .testimonial-card-luxury { 
+                    flex: 0 0 280px;
+                    background: #fff; 
+                    padding: 1.5rem; 
+                    border-radius: 16px; 
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+                }
+                .stars-row { display: flex; gap: 0.2rem; margin-bottom: 0.75rem; }
+                .t-text { font-size: 0.9rem; font-style: italic; color: #2c241e; margin-bottom: 1rem; font-family: 'Playfair Display', serif; }
+                .t-author { display: flex; align-items: center; gap: 0.75rem; }
+                .author-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; background: #eee; }
+                .author-avatar img { width: 100%; height: 100%; object-fit: cover; }
+                .author-info strong { display: block; font-size: 0.8rem; color: #2c241e; }
+                .author-info label { font-size: 0.65rem; color: #8b8b8b; }
+
+                @media (max-width: 768px) {
                     .desktop-only { display: none; }
                 }
+
+                /* MODAL */
+                .review-modal-overlay {
+                    position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+                }
+                .review-modal-content {
+                    width: 100%; max-width: 450px; padding: 2.5rem; position: relative; background: #fff; border-radius: 24px;
+                }
+                .modal-close { position: absolute; top: 1.25rem; right: 1.25rem; background: none; border: none; color: #64748b; }
             `}</style>
         </div>
     );

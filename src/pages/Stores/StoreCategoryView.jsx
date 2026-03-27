@@ -1,23 +1,22 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
-import { ArrowLeft, Store, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Store, Package, SlidersHorizontal, X } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
-import { getLocalizedName } from '../../utils/productTranslations';
 
-const StoreSection = () => {
-    const { t, i18n } = useTranslation();
-    const { storeName, sectionName } = useParams();
+const StoreCategoryView = () => {
+    const { t } = useTranslation();
+    const { storeName, categoryName } = useParams();
+    const navigate = useNavigate();
 
     const [store, setStore] = useState(null);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const decodedSectionName = decodeURIComponent(sectionName);
-    const sectionRefs = useRef({});
+    const decodedCategoryName = decodeURIComponent(categoryName);
 
     // Filter states
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -30,7 +29,7 @@ const StoreSection = () => {
     const [activeFilterCount, setActiveFilterCount] = useState(0);
 
     useEffect(() => {
-        const fetchData = async () => {
+        const fetchCategoryData = async () => {
             try {
                 const { data: storeData, error: storeError } = await supabase
                     .from('stores')
@@ -45,21 +44,22 @@ const StoreSection = () => {
                     const { data: productsData, error: productsError } = await supabase
                         .from('products')
                         .select('*')
-                        .eq('store_id', storeData.id);
+                        .eq('store_id', storeData.id)
+                        .eq('category', decodedCategoryName);
 
                     if (productsError) throw productsError;
                     setProducts(productsData || []);
                 }
 
             } catch (error) {
-                console.error('Error fetching section data:', error.message);
+                console.error('Error fetching category products:', error.message);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchData();
-    }, [storeName]);
+        fetchCategoryData();
+    }, [storeName, decodedCategoryName]);
 
     // Open filter drawer
     const openFilter = () => {
@@ -98,16 +98,10 @@ const StoreSection = () => {
     };
 
     if (loading) return <LoadingSpinner fullPage />;
-    if (!store) return <div className="error-container">{t('publicStore.notFound') || 'Store not found'}</div>;
-
-    // Filter products by section
-    let sectionProducts = products.filter(product => {
-        const sec = product.section?.trim() || t('publicStore.generalCollection', 'General Collection');
-        return sec === decodedSectionName;
-    });
+    if (!store) return <div className="error-container">Store not found</div>;
 
     // Apply price filter
-    let filteredProducts = [...sectionProducts];
+    let filteredProducts = [...products];
     if (minPrice) {
         filteredProducts = filteredProducts.filter(p => (p.online_price || p.price || 0) >= Number(minPrice));
     }
@@ -123,36 +117,39 @@ const StoreSection = () => {
     }
 
     return (
-        <div className="store-section-page">
+        <div className="store-category-page">
             <Navbar />
-
-            <div className="container" style={{ marginTop: '80px', paddingBottom: '4rem' }}>
-                <div className="section-header-simple" style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <Link to={`/${encodeURIComponent(store.name)}`} className="back-btn" style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        width: '40px', height: '40px', borderRadius: '50%',
-                        background: '#f1f5f9', color: '#64748b', transition: '0.2s'
+            
+            <div className="container" style={{ marginTop: '100px', paddingBottom: '4rem' }}>
+                {/* Header Section */}
+                <div className="category-view-header" style={{ marginBottom: '2.5rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                    <button onClick={() => navigate(-1)} className="back-btn-minimal" style={{
+                        width: '44px', height: '44px', borderRadius: '50%', background: '#fff', border: '1.5px solid #f1f5f9',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', transition: '0.2s', cursor: 'pointer',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
                     }}>
                         <ArrowLeft size={20} />
-                    </Link>
+                    </button>
                     <div style={{ flex: 1 }}>
-                        <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: '#1e293b', lineHeight: '1.2' }}>{store.name}</h1>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#64748b', fontSize: '0.9rem', fontWeight: '500' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#8c5a3c', fontSize: '0.75rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
                             <Store size={14} />
-                            <span>{getLocalizedName(decodedSectionName, i18n.language)}</span>
-                            <span>•</span>
-                            <span>{sectionProducts.length} {t('storeSection.itemsCount')}</span>
+                            <span>{store.name}</span>
+                        </div>
+                        <h1 style={{ fontSize: '2.2rem', fontWeight: '800', color: '#1e293b', margin: 0, fontFamily: "'Playfair Display', serif" }}>
+                            {decodedCategoryName}
+                        </h1>
+                        <div style={{ fontSize: '0.9rem', color: '#94a3b8', marginTop: '4px' }}>
+                            {filteredProducts.length} {filteredProducts.length === 1 ? 'Product' : 'Products'} found
                         </div>
                     </div>
                 </div>
 
-                {sectionProducts.length > 0 && (
-                    <div className="store-section-block" style={{ marginBottom: '3rem' }}>
-                        {/* Section Title + Filter Button */}
+                {products.length > 0 ? (
+                    <>
+                        {/* Filter Row */}
                         <div className="ss-title-row">
                             <div className="ss-title-left">
-                                <h2>{getLocalizedName(decodedSectionName, i18n.language)}</h2>
-                                <span className="ss-item-count">{filteredProducts.length} {t('storeSection.itemsCount', 'items').toLowerCase()}</span>
+                                <span className="ss-item-count">{filteredProducts.length} of {products.length} products</span>
                             </div>
                             <button className="ss-filter-btn" onClick={openFilter}>
                                 <SlidersHorizontal size={16} />
@@ -181,13 +178,13 @@ const StoreSection = () => {
                             </div>
                         )}
 
-                        <div className="products-grid-section">
+                        <div className="category-products-grid">
                             {filteredProducts.map(product => (
                                 <ProductCard key={product.id} product={{ ...product, storeName: store.name }} />
                             ))}
                         </div>
 
-                        {filteredProducts.length === 0 && sectionProducts.length > 0 && (
+                        {filteredProducts.length === 0 && products.length > 0 && (
                             <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8' }}>
                                 <p>No products match the selected filters.</p>
                                 <button onClick={() => { setSortOrder('none'); setMinPrice(''); setMaxPrice(''); setActiveFilterCount(0); }}
@@ -196,12 +193,15 @@ const StoreSection = () => {
                                 </button>
                             </div>
                         )}
-                    </div>
-                )}
-
-                {sectionProducts.length === 0 && (
-                    <div className="empty-state" style={{ textAlign: 'center', padding: '4rem 0', color: '#94a3b8' }}>
-                        <p>{t('storeSection.noProducts')}</p>
+                    </>
+                ) : (
+                    <div className="empty-category-state" style={{ textAlign: 'center', padding: '5rem 1rem', color: '#64748b', background: '#f8fafc', borderRadius: '24px', border: '2px dashed #e2e8f0' }}>
+                        <Package size={48} color="#cbd5e1" style={{ marginBottom: '1.5rem' }} />
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#475569', marginBottom: '0.5rem' }}>No products found</h3>
+                        <p>There are no products currently listed in the "{decodedCategoryName}" category.</p>
+                        <button onClick={() => navigate(-1)} style={{ marginTop: '1.5rem', background: '#8c5a3c', color: 'white', border: 'none', padding: '0.75rem 2rem', borderRadius: '12px', fontWeight: '700', cursor: 'pointer' }}>
+                            Go Back
+                        </button>
                     </div>
                 )}
             </div>
@@ -294,25 +294,32 @@ const StoreSection = () => {
             )}
 
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@400;700;800&display=swap');
 
-                .store-section-page {
+                .store-category-page {
                     font-family: 'Inter', sans-serif;
                     background: #fdfcfb;
                     min-height: 100vh;
                 }
 
-                .products-grid-section {
+                .category-products-grid {
                     display: grid;
-                    grid-template-columns: repeat(7, 1fr);
-                    gap: 1.5rem;
+                    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+                    gap: 1rem;
                 }
 
+                @media (min-width: 1024px) {
+                    .category-products-grid {
+                        grid-template-columns: repeat(6, 1fr) !important;
+                        gap: 1.5rem !important;
+                    }
+                }
                 @media (max-width: 768px) {
-                    .products-grid-section {
+                    .category-products-grid {
                         grid-template-columns: repeat(2, 1fr) !important;
                         gap: 0.75rem !important;
                     }
+                    .category-view-header h1 { font-size: 1.8rem !important; }
                 }
 
                 /* TITLE ROW */
@@ -637,4 +644,4 @@ const StoreSection = () => {
     );
 };
 
-export default StoreSection;
+export default StoreCategoryView;

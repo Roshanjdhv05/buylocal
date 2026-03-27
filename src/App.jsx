@@ -19,6 +19,7 @@ import Stores from './pages/Stores/Stores';
 import PublicStore from './pages/Stores/PublicStore';
 import TrendingProducts from './pages/Products/TrendingProducts';
 import StoreSection from './pages/Stores/StoreSection';
+import StoreCategoryView from './pages/Stores/StoreCategoryView';
 import ProductDetails from './pages/Product/ProductDetails';
 import FollowedStores from './pages/Stores/FollowedStores';
 import Profile from './pages/Profile/Profile';
@@ -26,6 +27,7 @@ import Wishlist from './pages/Wishlist/Wishlist';
 import OrderDetails from './pages/Orders/OrderDetails';
 import AdminLogin from './pages/Admin/AdminLogin';
 import AdminDashboard from './pages/Admin/AdminDashboard';
+import Subscription from './pages/Seller/Subscription';
 import LocationOnboarding from './components/LocationOnboarding';
 import Toast from './components/Toast';
 import LoadingSpinner from './components/LoadingSpinner/LoadingSpinner';
@@ -176,6 +178,12 @@ const AppContent = () => {
                     </ProtectedRoute>
                 } />
 
+                <Route path="/seller/subscription" element={
+                    <ProtectedRoute role="seller">
+                        <Subscription />
+                    </ProtectedRoute>
+                } />
+
                 {/* Admin Routes */}
                 <Route path="/admin" element={
                     <AdminRouteHandler />
@@ -184,6 +192,7 @@ const AppContent = () => {
 
                 <Route path="/:storeName" element={<PublicStore />} />
                 <Route path="/:storeName/section/:sectionName" element={<StoreSection />} />
+                <Route path="/:storeName/category/:categoryName" element={<StoreCategoryView />} />
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>

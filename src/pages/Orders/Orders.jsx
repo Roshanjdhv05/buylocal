@@ -89,6 +89,17 @@ const Orders = () => {
         return t(`orders.${status}`) || status;
     };
 
+    const getStatusIcon = (status) => {
+        switch (status) {
+            case 'pending': return <Clock size={16} />;
+            case 'accepted': return <CheckCircle size={16} />;
+            case 'dispatched': return <Truck size={16} />;
+            case 'delivered': return <Package size={16} />;
+            case 'cancelled': return <X size={16} />;
+            default: return <ShoppingBag size={16} />;
+        }
+    };
+
 
     if (loading) return <LoadingSpinner fullPage />;
 
@@ -165,18 +176,18 @@ const Orders = () => {
                         </Link>
                     </header>
 
-                    <div className="orders-tabs">
+                    <div className="orders-tabs-mobile">
                         <button
-                            className={`tab-btn ${activeTab === 'active' ? 'active' : ''}`}
+                            className={`tab-btn-mobile ${activeTab === 'active' ? 'active' : ''}`}
                             onClick={() => setActiveTab('active')}
                         >
-                            {t('orders.active')}
+                            Active Orders
                         </button>
                         <button
-                            className={`tab-btn ${activeTab === 'past' ? 'active' : ''}`}
+                            className={`tab-btn-mobile ${activeTab === 'past' ? 'active' : ''}`}
                             onClick={() => setActiveTab('past')}
                         >
-                            {t('orders.past')}
+                            Past Orders
                         </button>
                     </div>
 
@@ -193,62 +204,59 @@ const Orders = () => {
                                     ? ['pending', 'accepted', 'dispatched'].includes(order.status)
                                     : order.status === 'delivered'
                             ).map(order => (
-                                <div key={order.id} className="order-card glass-card" onClick={() => {
+                                <div key={order.id} className="order-card-mobile glass-card" onClick={() => {
                                     navigate(`/orders/${order.id}`);
                                 }}>
-                                    <div className="order-header">
-                                        <div className="order-main-info">
-                                            <h3>{t('orders.orderNumber')}{order.display_id || order.id.slice(0, 8).toUpperCase()}</h3>
-                                            <h3>{t('orders.store')}: {order.stores?.name}</h3>
-                                            <span className="order-date">{new Date(order.created_at).toLocaleDateString()}</span>
+                                    <div className="order-card-inner">
+                                        <div className="order-header-top">
+                                            <span className="order-id-text">ORDER #{order.display_id || order.id.slice(0, 8).toUpperCase()}</span>
+                                            <div className={`status-pill ${order.status}`}>
+                                                <div className="status-dot"></div>
+                                                <span>{order.status === 'pending' ? 'PENDING' : order.status === 'accepted' ? 'IN PROGRESS' : order.status === 'dispatched' ? 'DISPATCHED' : order.status === 'delivered' ? 'DELIVERED' : order.status.toUpperCase()}</span>
+                                            </div>
                                         </div>
-                                        <div className={`status-badge ${order.status}`}>
-                                            {getStatusIcon(order.status)}
-                                            <span>{order.status}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="order-body">
-                                        <div className="order-items">
+                                        <h3 className="order-store-name">{order.stores?.name}</h3>
+                                        
+                                        <div className="order-items-wrapper">
                                             {order.items.map((item, i) => (
-                                                <div
-                                                    key={i}
-                                                    className="order-item-row"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/orders/${order.id}`);
-                                                    }}
-                                                >
-                                                    <div className="item-thumb">
+                                                <div key={i} className="order-item-mobile">
+                                                    <div className="item-image-wrapper">
                                                         <img
-                                                            src={(Array.isArray(item.images) ? item.images[0] : item.image) || 'https://via.placeholder.com/60'}
+                                                            src={(Array.isArray(item.images) ? item.images[0] : item.image) || 'https://via.placeholder.com/80'}
                                                             alt={item.name}
                                                         />
                                                     </div>
-                                                    <div className="item-details">
-                                                        <span className="item-name">{getLocalizedName(item.name, i18n.language)} x {item.quantity}</span>
-                                                        <span className="item-price">₹{item.online_price * item.quantity}</span>
+                                                    <div className="item-info-mobile">
+                                                        <h4>{getLocalizedName(item.name, i18n.language)}</h4>
+                                                        <p className="item-meta-mobile">Qty: {item.quantity} • {order.delivery_type === 'Self-pick' ? 'Self-pickup' : `Home Delivery`}</p>
+                                                        <div className="item-price-mobile">₹{item.online_price}</div>
                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
 
-                                        <div className="order-footer">
-                                            <div className="order-meta-info">
-                                                <div className="shipping-info">
-                                                    <p><MapPin size={14} /> {order.delivery_type === 'Self-pick' ? <strong>{order.shipping_address}</strong> : order.shipping_address}</p>
+                                        <div className="order-divider"></div>
+
+                                        <div className="order-summary-mobile">
+                                            <div className="payment-method-mobile">
+                                                <div className="payment-icon">
+                                                    {order.payment_method === 'COD' ? <span style={{fontWeight:'bold', fontSize:'0.75rem'}}>₹</span> : '💳'}
                                                 </div>
-                                                <div className="order-badges">
-                                                    <span className="meta-badge">{order.payment_method || 'COD'}</span>
-                                                    <span className={`meta-badge ${order.delivery_type === 'Self-pick' ? 'self-pick' : ''}`}>
-                                                        {order.delivery_type || 'Delivery'}
-                                                    </span>
-                                                </div>
+                                                <span>{order.payment_method === 'COD' ? 'COD' : 'Online Payment'}</span>
                                             </div>
-                                            <div className="order-total">
-                                                <span>{t('orders.totalAmount')}</span>
+                                            <div className="total-amount-mobile">
+                                                <span>Total Amount</span>
                                                 <strong>₹{order.total_amount}</strong>
                                             </div>
+                                        </div>
+
+                                        <div className="order-actions-mobile">
+                                            {activeTab === 'active' ? (
+                                                <button className="btn-action primary" onClick={(e) => { e.stopPropagation(); navigate(`/orders/${order.id}`); }}>Track Order</button>
+                                            ) : (
+                                                <button className="btn-action primary-light" onClick={(e) => { e.stopPropagation(); navigate(`/${encodeURIComponent(order.stores?.name)}`); }}>Reorder</button>
+                                            )}
+                                            <button className="btn-action secondary" onClick={(e) => { e.stopPropagation(); navigate(`/orders/${order.id}`); }}>Details</button>
                                         </div>
                                     </div>
                                 </div>
@@ -403,120 +411,253 @@ const Orders = () => {
         }
         .support-links a:hover { color: var(--primary); border-color: var(--primary); transform: translateX(5px); }
 
-        /* Filled State Cards (Keeping Original Structure but adding modern touch) */
-        .orders-list { display: flex; flex-direction: column; gap: 1.5rem; }
-        .order-card { padding: 0; overflow: hidden; background: white; }
-        .order-header { 
-          padding: 1.5rem; 
-          background: #f8fafc; 
-          display: flex; 
-          justify-content: space-between; 
-          align-items: center;
-          border-bottom: 1px solid #f1f5f9;
+        /* Mobile Redesign Orders Specific Styles */
+        .orders-page { 
+            background: #fdfcff; /* Soft pale purple/white tint based on image */
+            min-height: 100vh;
+            padding-bottom: 5rem; 
         }
-        .order-main-info h3 { font-size: 1.1rem; font-weight: 750; }
-        .order-date { font-size: 0.85rem; color: #64748b; }
 
-        .status-badge { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 99px; font-weight: 750; text-transform: uppercase; font-size: 0.7rem; }
-        
-        .order-body { padding: 1.5rem; }
-        .order-items { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
-        
-        .order-item-row {
+        .orders-tabs-mobile {
+            display: flex;
+            background: #f5edfc;
+            padding: 0.35rem;
+            border-radius: 99px;
+            margin-bottom: 1.5rem;
+            width: 100%;
+            gap: 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .tab-btn-mobile {
+            flex: 1;
+            padding: 0.85rem;
+            border: none;
+            background: transparent;
+            color: #8c71a3;
+            font-weight: 700;
+            border-radius: 99px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-size: 0.95rem;
+        }
+
+        .tab-btn-mobile.active {
+            background: #6D28D9;
+            color: white;
+            box-shadow: 0 4px 10px rgba(109, 40, 217, 0.25);
+        }
+
+        .orders-list { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 1.25rem; 
+        }
+
+        .order-card-mobile {
+            background: white;
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.03);
+            border: 1px solid rgba(255,255,255,0.5);
+            transition: var(--transition);
+        }
+
+        .order-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .order-id-text {
+            color: #a78bfa;
+            font-weight: 800;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pill {
             display: flex;
             align-items: center;
-            gap: 1rem;
-            padding: 0.75rem;
-            border-radius: 12px;
-            transition: var(--transition);
-            text-decoration: none;
-            color: inherit;
+            gap: 0.4rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 99px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
         }
-        .order-item-row:hover {
-            background: #f1f5f9;
-            transform: translateX(5px);
+        
+        .status-pill .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
         }
-        .item-thumb {
-            width: 60px;
-            height: 60px;
-            border-radius: 8px;
+
+        .status-pill.pending, .status-pill.accepted {
+            background: #ede9fe;
+            color: #6d28d9;
+        }
+        .status-pill.pending .status-dot, .status-pill.accepted .status-dot {
+            background: #6d28d9;
+        }
+
+        .status-pill.dispatched {
+            background: #ffedd5;
+            color: #ea580c;
+        }
+        .status-pill.dispatched .status-dot {
+            background: #ea580c;
+        }
+
+        .status-pill.delivered {
+            background: #ecfdf5;
+            color: #059669;
+        }
+        .status-pill.delivered .status-dot {
+            background: #059669;
+        }
+
+        .status-pill.cancelled {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .status-pill.cancelled .status-dot {
+            background: #dc2626;
+        }
+
+        .order-store-name {
+            font-size: 1.25rem;
+            font-weight: 850;
+            color: #1e293b;
+            margin-bottom: 1.25rem;
+        }
+
+        .order-item-mobile {
+            display: flex;
+            gap: 1.25rem;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .item-image-wrapper {
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
             overflow: hidden;
             flex-shrink: 0;
             background: #f8fafc;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
-        .item-thumb img {
+
+        .item-image-wrapper img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        .item-details {
-            flex: 1;
+
+        .item-info-mobile h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #334155;
+            margin-bottom: 0.25rem;
+        }
+
+        .item-meta-mobile {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-price-mobile {
+            font-size: 1.1rem;
+            font-weight: 850;
+            color: #6d28d9;
+        }
+
+        .order-divider {
+            height: 1px;
+            background: #f1f5f9;
+            margin: 1.25rem 0;
+            width: 100%;
+        }
+
+        .order-summary-mobile {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 1.5rem;
         }
-        .item-name {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: #334155;
-        }
-        .item-price {
-            font-weight: 700;
-            color: var(--text-main);
-        }
-        
-        .order-footer { 
-          display: flex; 
-          justify-content: space-between; 
-          align-items: flex-end; 
-          padding-top: 1.5rem; 
-          border-top: 1px dashed #e2e8f0;
-        }
-        .order-meta-info { display: flex; flex-direction: column; gap: 0.75rem; }
-        .order-badges { display: flex; gap: 0.5rem; }
-        .meta-badge {
-            background: #f1f5f9;
-            color: #475569;
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 0.25rem 0.6rem;
-            border-radius: 6px;
-            text-transform: uppercase;
-        }
-        .meta-badge.self-pick {
-            background: #eff6ff;
-            color: var(--primary);
-            border: 1px solid rgba(37, 99, 235, 0.2);
-        }
-        .shipping-info p { font-size: 0.85rem; color: #64748b; display: flex; gap: 0.5rem; }
-        .order-total strong { font-size: 1.35rem; font-weight: 850; color: var(--primary); }
-        .order-total { display: flex; align-items: center; gap: 1rem; }
 
-        /* Categorization Tabs */
-        .orders-tabs {
+        .payment-method-mobile {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .payment-icon {
+            background: #f1f5f9;
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #475569;
+        }
+
+        .total-amount-mobile {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .total-amount-mobile span {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-bottom: 0.15rem;
+        }
+
+        .total-amount-mobile strong {
+            font-size: 1.25rem;
+            font-weight: 850;
+            color: #1e293b;
+        }
+
+        .order-actions-mobile {
             display: flex;
             gap: 1rem;
-            margin-bottom: 2rem;
-            background: #f1f5f9;
-            padding: 0.5rem;
-            border-radius: 12px;
-            width: fit-content;
         }
-        .tab-btn {
-            padding: 0.75rem 1.5rem;
+
+        .btn-action {
+            flex: 1;
+            padding: 0.85rem;
+            border-radius: 12px;
+            font-weight: 750;
+            font-size: 0.95rem;
             border: none;
-            background: none;
-            border-radius: 8px;
-            font-weight: 700;
-            color: #64748b;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .tab-btn.active {
-            background: white;
-            color: #0f172a;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+
+        .btn-action.primary {
+            background: #8b5cf6;
+            color: white;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
         }
+
+        .btn-action.primary-light {
+            background: #f3e8ff;
+            color: #6d28d9;
+        }
+
+        .btn-action.secondary {
+            background: #f5edfc;
+            color: #8c71a3;
+        }
+
         .no-orders-msg {
             padding: 3rem;
             text-align: center;

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Velocity Commerce - Dispatched Orders</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-fixed-dim": "#96ccff",
+              "inverse-primary": "#cfbdff",
+              "on-surface": "#1c1b1f",
+              "inverse-surface": "#313034",
+              "on-tertiary": "#ffffff",
+              "surface-variant": "#e5e1e7",
+              "surface": "#fdf8fd",
+              "primary-fixed": "#e8ddff",
+              "outline": "#7a7488",
+              "tertiary-fixed": "#ffdcc6",
+              "on-secondary-fixed-variant": "#004a75",
+              "error-container": "#ffdad6",
+              "surface-dim": "#ddd9de",
+              "on-error": "#ffffff",
+              "on-background": "#1c1b1f",
+              "on-tertiary-fixed-variant": "#723600",
+              "on-secondary-fixed": "#001d32",
+              "tertiary-fixed-dim": "#ffb786",
+              "error": "#ba1a1a",
+              "tertiary-container": "#854100",
+              "primary": "#4800b2",
+              "on-primary-fixed": "#22005d",
+              "on-surface-variant": "#494456",
+              "surface-container-lowest": "#ffffff",
+              "secondary": "#00639a",
+              "surface-container": "#f1ecf2",
+              "secondary-fixed": "#cee5ff",
+              "on-primary-container": "#d0beff",
+              "primary-fixed-dim": "#cfbdff",
+              "tertiary": "#632e00",
+              "surface-container-low": "#f7f2f8",
+              "surface-bright": "#fdf8fd",
+              "primary-container": "#6200ee",
+              "on-primary-fixed-variant": "#5300cd",
+              "secondary-container": "#51b2fe",
+              "on-primary": "#ffffff",
+              "background": "#fdf8fd",
+              "on-secondary-container": "#00436a",
+              "on-error-container": "#93000a",
+              "surface-container-high": "#ebe7ec",
+              "outline-variant": "#cbc3d9",
+              "inverse-on-surface": "#f4eff5",
+              "surface-tint": "#6d23f9",
+              "on-tertiary-container": "#ffb98a",
+              "surface-container-highest": "#e5e1e7",
+              "on-tertiary-fixed": "#311300",
+              "on-secondary": "#ffffff"
+            },
+            fontFamily: {
+              "headline": ["Manrope"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "1rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .tonal-transition { transition: background-color 0.3s ease; }
+      .tap-highlight-transparent { -webkit-tap-highlight-color: transparent; }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Top Navigation Shell -->
+<header class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md shadow-[0_4px_24px_rgba(28,27,31,0.06)] h-16 flex items-center justify-between px-5">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface hover:bg-violet-50 p-2 rounded-full transition-colors" data-icon="menu">menu</button>
+<span class="font-headline font-extrabold text-xl text-violet-800 tracking-tight">Velocity Commerce</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex items-center gap-6 mr-6">
+<a class="text-violet-800 font-bold font-headline text-lg tracking-tight" href="#">Orders</a>
+<a class="text-slate-500 font-medium font-headline text-lg tracking-tight hover:bg-violet-50 transition-colors px-2 py-1 rounded-lg" href="#">History</a>
+<a class="text-slate-500 font-medium font-headline text-lg tracking-tight hover:bg-violet-50 transition-colors px-2 py-1 rounded-lg" href="#">Inventory</a>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
+<img alt="Merchant Profile" data-alt="close-up portrait of a professional female store manager in a minimalist office setting with soft natural light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDG5M7v42gw-3KEfgcCKFgSIRRLZSff_E0db9a6rt58no7eWDISeYEn9YI54MoAyGFSenq9Uxr4QcAscf0-NsKsigzbtjRCK-XpV65s0ddjPIlGak4KXCWUJaMF2eTb1fGSC1NBDCORlZJ7P1a0xUbTkD4K5b4TaNFX-DxVvvxbl-jUjHdDd1F7aSR-GR1gaWO8efba_x4kq2PtXu45Jo4hbPHi_QAmZdQbXaxxBp6fMkl-_P5ae908rpvhJ9DhZeKaw2hFkPPkKxFh"/>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 px-5 max-w-5xl mx-auto">
+<!-- Sticky Header Section -->
+<div class="sticky top-16 z-40 bg-surface/95 backdrop-blur-sm -mx-5 px-5 py-4 mb-6">
+<div class="flex flex-col gap-4">
+<div class="flex items-end justify-between">
+<h1 class="font-headline font-extrabold text-3xl text-on-surface tracking-tight">Manage Orders</h1>
+<div class="flex items-center gap-2 bg-tertiary-fixed px-4 py-1.5 rounded-full">
+<span class="text-on-tertiary-fixed-variant font-label text-xs font-bold uppercase tracking-wider">Dispatched: 28</span>
+</div>
+</div>
+<!-- Horizontal Status Tabs -->
+<nav class="flex gap-2 overflow-x-auto no-scrollbar py-1">
+<button class="px-5 py-2.5 rounded-full font-label text-sm font-semibold whitespace-nowrap bg-surface-container-high text-on-surface-variant hover:bg-surface-variant transition-all">New</button>
+<button class="px-5 py-2.5 rounded-full font-label text-sm font-semibold whitespace-nowrap bg-surface-container-high text-on-surface-variant hover:bg-surface-variant transition-all">Accepted</button>
+<button class="px-5 py-2.5 rounded-full font-label text-sm font-semibold whitespace-nowrap bg-primary text-on-primary shadow-[0_4px_12px_rgba(72,0,178,0.2)]">Dispatched</button>
+<button class="px-5 py-2.5 rounded-full font-label text-sm font-semibold whitespace-nowrap bg-surface-container-high text-on-surface-variant hover:bg-surface-variant transition-all">Delivered</button>
+<button class="px-5 py-2.5 rounded-full font-label text-sm font-semibold whitespace-nowrap bg-surface-container-high text-on-surface-variant hover:bg-surface-variant transition-all">Cancelled</button>
+</nav>
+</div>
+</div>
+<!-- Asymmetric Bento-style Grid for Active Orders -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+<!-- Target Card: Elena Rodriguez -->
+<div class="bg-surface-container-lowest rounded-lg p-6 shadow-[0_4px_24px_rgba(28,27,31,0.04)] border border-transparent hover:border-primary-fixed-dim transition-all group">
+<div class="flex justify-between items-start mb-6">
+<div>
+<span class="font-label text-xs font-bold text-outline uppercase tracking-widest block mb-1">Order ID</span>
+<h2 class="font-headline font-bold text-xl text-on-surface">#ORD-9842</h2>
+</div>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant font-label text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">DISPATCHED</span>
+</div>
+<div class="space-y-4 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="person">person</span>
+</div>
+<div>
+<span class="text-xs text-outline font-medium block">Customer</span>
+<span class="font-semibold text-on-surface">Elena Rodriguez</span>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center overflow-hidden">
+<img alt="Audio Pro X1" data-alt="professional studio headphones on a minimalist wooden desk with soft cinematic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDU4f3cYxUTqPKgJ-PPPp0plsc7llKt374JNGEwtMKP30n152DbthqP-opeZ9TFWzaxUgYaso_29vmJOj-urlFTNzNN1SSVehe3Vw5jCcyoaJSy-uo-nxOKqTNkXIwSQLSkwfYq01tgqIKITalQjxYNfbFJwaQCCLxo3shP0fTfQw3GNW0FRTuUUn48RDgpk367x89yXHYuoq8tfsm_KZj7yHy2UAJaQKBDSLJSVXkBDVUS06v8-8JZiFH9JziKPZdWSbWhiUP04xt"/>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<div>
+<span class="text-xs text-outline font-medium block">Item</span>
+<span class="font-semibold text-on-surface">Audio Pro X1</span>
+</div>
+<span class="font-headline font-extrabold text-lg text-primary">$85.00</span>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full py-4 bg-gradient-to-r from-primary to-primary-container text-white font-headline font-bold rounded-xl shadow-[0_8px_20px_rgba(72,0,178,0.25)] hover:shadow-[0_12px_24px_rgba(72,0,178,0.35)] active:scale-[0.98] transition-all">
+                    Mark as Delivered
+                </button>
+</div>
+<!-- Contextual Map/Tracking Card -->
+<div class="bg-surface-container-low rounded-lg overflow-hidden relative min-h-[400px] flex flex-col">
+<div class="p-6 pb-0 z-10 relative">
+<span class="font-label text-xs font-bold text-outline uppercase tracking-widest block mb-1">Live Tracking</span>
+<h3 class="font-headline font-bold text-lg text-on-surface">In Transit to Miami</h3>
+</div>
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover grayscale contrast-125 opacity-30" data-alt="stylized minimalist topographic map of a metropolitan city area with sleek dark lines and purple accents" data-location="Miami" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXlO0J_3JlOHT1TkVqYSc1QqyPq2-S7jX45q-dBdBPcRyt_iC98FXm8x57J0jKeiIBXPaDZtnxEv0BefCEMJ94sRg-6KVdL_78ymV6XDSTMIOcW_YTjMxjKZRoyC1tcTi_U3RLRmtiXl2Rfh5iwqNCwHNvIIIknGoEUwZlVODLJWE0WpGa2jb3PnEP0l0t5HI8u5pLS1hdc2cwY0fHdx-J9UcKakWJP1e05PDY21YWh2h4Qi5BJaNYqw_bGDYgqqBhzQEI_c_GWC6T"/>
+</div>
+<div class="mt-auto p-6 z-10 bg-white/40 backdrop-blur-md">
+<div class="flex items-center justify-between mb-4">
+<div class="flex -space-x-3">
+<div class="w-10 h-10 rounded-full border-2 border-white bg-secondary-fixed flex items-center justify-center font-bold text-xs">TR</div>
+<div class="w-10 h-10 rounded-full border-2 border-white bg-primary-fixed flex items-center justify-center font-bold text-xs">FD</div>
+</div>
+<span class="text-sm font-medium text-on-surface-variant">Estimated Arrival: 2:45 PM</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[72%]"></div>
+</div>
+</div>
+</div>
+<!-- Additional Order Placeholder 1 -->
+<div class="bg-surface-container-lowest rounded-lg p-6 shadow-[0_4px_24px_rgba(28,27,31,0.04)] border border-transparent">
+<div class="flex justify-between items-start mb-6">
+<div>
+<span class="font-label text-xs font-bold text-outline uppercase tracking-widest block mb-1">Order ID</span>
+<h2 class="font-headline font-bold text-xl text-on-surface">#ORD-9751</h2>
+</div>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant font-label text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">DISPATCHED</span>
+</div>
+<div class="space-y-4 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="person">person</span>
+</div>
+<span class="font-semibold text-on-surface">Marcus Chen</span>
+</div>
+<div class="flex justify-between items-center bg-surface-container-low p-4 rounded-xl">
+<span class="text-sm font-medium">Smart Watch S3</span>
+<span class="font-bold text-primary">$199.00</span>
+</div>
+</div>
+<button class="w-full py-3 bg-white text-primary border-2 border-primary-fixed font-headline font-bold rounded-xl hover:bg-primary-fixed/20 transition-all">
+                    View Details
+                </button>
+</div>
+<!-- Additional Order Placeholder 2 -->
+<div class="bg-surface-container-lowest rounded-lg p-6 shadow-[0_4px_24px_rgba(28,27,31,0.04)] border border-transparent">
+<div class="flex justify-between items-start mb-6">
+<div>
+<span class="font-label text-xs font-bold text-outline uppercase tracking-widest block mb-1">Order ID</span>
+<h2 class="font-headline font-bold text-xl text-on-surface">#ORD-9803</h2>
+</div>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant font-label text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">DISPATCHED</span>
+</div>
+<div class="space-y-4 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary" data-icon="person">person</span>
+</div>
+<span class="font-semibold text-on-surface">Sarah Jenkins</span>
+</div>
+<div class="flex justify-between items-center bg-surface-container-low p-4 rounded-xl">
+<span class="text-sm font-medium">Luxe Leather Tote</span>
+<span class="font-bold text-primary">$120.00</span>
+</div>
+</div>
+<button class="w-full py-3 bg-white text-primary border-2 border-primary-fixed font-headline font-bold rounded-xl hover:bg-primary-fixed/20 transition-all">
+                    View Details
+                </button>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.04)] rounded-t-2xl">
+<a class="flex flex-col items-center justify-center text-violet-700 bg-violet-50 rounded-xl px-3 py-1 tap-highlight-transparent transition-transform duration-200" href="#">
+<span class="material-symbols-outlined mb-0.5" data-icon="package_2" style="font-variation-settings: 'FILL' 1;">package_2</span>
+<span class="font-inter text-[11px] font-semibold uppercase tracking-wider">Orders</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 px-3 py-1 tap-highlight-transparent transition-transform duration-200" href="#">
+<span class="material-symbols-outlined mb-0.5" data-icon="history">history</span>
+<span class="font-inter text-[11px] font-semibold uppercase tracking-wider">History</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 px-3 py-1 tap-highlight-transparent transition-transform duration-200" href="#">
+<span class="material-symbols-outlined mb-0.5" data-icon="inventory_2">inventory_2</span>
+<span class="font-inter text-[11px] font-semibold uppercase tracking-wider">Inventory</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 px-3 py-1 tap-highlight-transparent transition-transform duration-200" href="#">
+<span class="material-symbols-outlined mb-0.5" data-icon="payments">payments</span>
+<span class="font-inter text-[11px] font-semibold uppercase tracking-wider">Payouts</span>
+</a>
+<a class="flex flex-col items-center justify-center text-slate-400 px-3 py-1 tap-highlight-transparent transition-transform duration-200" href="#">
+<span class="material-symbols-outlined mb-0.5" data-icon="settings">settings</span>
+<span class="font-inter text-[11px] font-semibold uppercase tracking-wider">Settings</span>
+</a>
+</nav>
+</body></html>

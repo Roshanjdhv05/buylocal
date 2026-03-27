@@ -151,307 +151,224 @@ const ProductCard = ({ product }) => {
 
   return (
     <div
-      className="product-card"
+      className={`luxury-product-card ${(product.stock_quantity !== null && product.stock_quantity !== undefined && product.stock_quantity <= 0) ? 'out-of-stock-card' : ''}`}
       onClick={handleProductClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="card-badges">
-        <div className="badge-category">{product.category || 'Product'}</div>
+      <div className="luxury-card-image-wrap">
+        <img src={images[currentImageIndex]} alt={product.name} className="luxury-product-img" />
+        
+        {/* Badges */}
+        <div className="luxury-badges-top">
+          {product.is_new && <div className="luxury-badge new-badge">NEW</div>}
+          {(product.stock_quantity !== null && product.stock_quantity !== undefined && product.stock_quantity <= 0) && (
+            <div className="luxury-badge out-of-stock-badge">OUT OF STOCK</div>
+          )}
+        </div>
+
         <button
-          className={`badge-wishlist ${isLiked ? 'liked' : ''}`}
+          className={`luxury-wishlist-btn ${isLiked ? 'liked' : ''}`}
           onClick={handleToggleWishlist}
           disabled={wishlistLoading}
         >
-          <Heart size={16} fill={isLiked ? "currentColor" : "none"} />
+          <Heart size={18} fill={isLiked ? "currentColor" : "none"} strokeWidth={1.5} />
         </button>
-      </div>
-
-      <div className="product-image">
-        <img src={images[currentImageIndex]} alt={product.name} />
 
         {images.length > 1 && isHovered && (
-          <>
-            <button className="slider-btn prev" onClick={prevImage}><ChevronLeft size={16} /></button>
-            <button className="slider-btn next" onClick={nextImage}><ChevronRight size={16} /></button>
-            <div className="slider-dots">
-              {images.map((_, idx) => (
-                <span key={idx} className={`dot ${idx === currentImageIndex ? 'active' : ''}`}></span>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="product-content">
-        <div className="store-info">
-          <Store size={12} className="store-icon" />
-          <span className="store-name">{product.storeName || 'Local Store'}</span>
-          {rating.count > 0 && (
-            <span className="rating-badge-card">
-              <Star size={10} fill="currentColor" /> {rating.avg}
-            </span>
-          )}
-          {product.distance && product.distance !== Infinity && (
-            <span className="store-dist">• {product.distance.toFixed(1)}{t('product.kmAway')}</span>
-          )}
-        </div>
-
-        <h3 className="product-title">{getLocalizedName(product.name, i18n.language)}</h3>
-
-        {product.tags && product.tags.length > 0 && (
-          <div className="product-tags-list" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', margin: '4px 0' }}>
-            {product.tags.slice(0, 2).map((tag, i) => (
-              <span key={i} style={{ fontSize: '0.6rem', color: 'var(--primary)', fontWeight: '700', opacity: 0.8 }}>
-                #{tag}
-              </span>
-            ))}
-            {product.tags.length > 2 && <span style={{ fontSize: '0.6rem', color: '#94a3b8' }}>+{product.tags.length - 2}</span>}
+          <div className="luxury-img-controls">
+            <button className="img-nav-btn" onClick={prevImage}><ChevronLeft size={16} /></button>
+            <button className="img-nav-btn" onClick={nextImage}><ChevronRight size={16} /></button>
           </div>
         )}
-
-        <div className="price-row">
-          <span className="current-price">₹{product.online_price || product.price}</span>
-          {product.mrp && <span className="original-price">₹{product.mrp}</span>}
-        </div>
-
-        <button className="btn-add-cart" onClick={handleAddToCart}>
-          <ShoppingCart size={16} /> {t('product.addToCart')}
-        </button>
       </div>
 
-      <style>{`
-        .product-card {
+      <div className="luxury-product-info">
+        <div className="luxury-product-header">
+          <h3 className="luxury-product-name">{getLocalizedName(product.name, i18n.language)}</h3>
+          <p className="luxury-product-subtitle">{product.subtitle || product.category || 'Curated Piece'}</p>
+        </div>
+
+        <div className="luxury-price-row">
+          <span className="luxury-current-price">₹{product.online_price || product.price}</span>
+          {product.mrp && product.mrp > (product.online_price || product.price) && (
+            <span className="luxury-old-price">₹{product.mrp}</span>
+          )}
+        </div>
+        
+        <div className="luxury-card-footer">
+          <div className="luxury-card-store">
+            <Store size={10} />
+            <span>{product.storeName || 'Boutique'}</span>
+          </div>
+          {rating.count > 0 && (
+            <div className="luxury-card-rating">
+              <Star size={10} fill="#facc15" color="#facc15" />
+              <span>{rating.avg}</span>
+            </div>
+          )}
+        </div>
+      </div>      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+        .luxury-product-card {
           position: relative;
-          background: white;
-          border-radius: 12px;
-          overflow: hidden;
-          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+          background: transparent;
           display: flex;
           flex-direction: column;
-          border: 1px solid #f1f5f9;
-          height: 100%;
-        }
-        .product-card:hover {
-          transform: translateY(-8px);
-          box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-          border-color: var(--primary);
-        }
-
-        .card-badges {
-            position: absolute;
-            top: 0.75rem;
-            left: 0.75rem;
-            right: 0.75rem;
-            display: flex;
-            justify-content: space-between;
-            z-index: 10;
-        }
-        .badge-category {
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(8px);
-            padding: 0.3rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.65rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: var(--text-main);
-            letter-spacing: 0.5px;
-            box-shadow: var(--shadow-sm);
-        }
-        .badge-wishlist {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid var(--border);
-            color: var(--text-muted);
-            transition: var(--transition);
-            box-shadow: var(--shadow-sm);
-        }
-        .badge-wishlist:hover { color: var(--secondary); border-color: var(--secondary); transform: scale(1.1); }
-        .badge-wishlist.liked {
-            background: #fef2f2;
-            color: #ef4444;
-            border-color: #fecaca;
-        }
-
-        .product-image {
-          width: 100%;
-          aspect-ratio: 1;
-          background: #f8fafc;
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          border-radius: 12px;
           overflow: hidden;
+          width: 100%;
         }
+
+        .luxury-card-image-wrap {
+          position: relative;
+          aspect-ratio: 1;
+          overflow: hidden;
+          background: #fdfcfb;
+          border-radius: 12px;
+          margin-bottom: 0.5rem;
+          border: 1px solid #f1f1f1;
+        }
+
         @media (min-width: 1024px) {
-            .product-image {
-                aspect-ratio: 0.85;
+            .luxury-card-image-wrap {
+                aspect-ratio: 0.9;
             }
         }
-        .product-image img {
+
+        .luxury-product-img {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          transition: transform 0.6s ease;
         }
-        .product-card:hover .product-image img { transform: scale(1.1); }
+        .luxury-product-card:hover .luxury-product-img { transform: scale(1.05); }
 
-        /* Slider Controls */
-        .slider-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid var(--border);
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 5;
-            color: var(--text-main);
-            box-shadow: var(--shadow-sm);
-        }
-        .slider-btn.prev { left: 8px; }
-        .slider-btn.next { right: 8px; }
-        .slider-dots {
-            position: absolute;
-            bottom: 12px;
-            left: 0; right: 0;
-            display: flex;
-            justify-content: center;
-            gap: 4px;
-            z-index: 5;
-        }
-        .dot {
-            width: 5px; height: 5px;
-            background: rgba(255,255,255,0.5);
-            border-radius: 50%;
-            transition: 0.3s;
-        }
-        .dot.active { background: white; width: 12px; border-radius: 10px; }
-
-        .product-content {
-          padding: 0.5rem;
+        .luxury-badges-top {
+          position: absolute;
+          top: 8px;
+          left: 8px;
           display: flex;
           flex-direction: column;
-          gap: 0.15rem;
-          flex-grow: 1;
+          gap: 4px;
+          z-index: 2;
+        }
+        .luxury-badge {
+          font-size: 0.55rem;
+          font-weight: 700;
+          padding: 3px 6px;
+          border-radius: 4px;
+          letter-spacing: 0.05em;
+        }
+        .new-badge { background: #7d4e33; color: white; }
+        .out-of-stock-badge { background: #ef4444; color: white; }
+
+        .luxury-wishlist-btn {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          background: white;
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #7d4e33;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+          cursor: pointer;
+          z-index: 5;
+          transition: all 0.2s ease;
+        }
+        .luxury-wishlist-btn.liked { background: #fef2f2; color: #ef4444; }
+        
+        .luxury-img-controls {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0 8px;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+        .luxury-card-image-wrap:hover .luxury-img-controls { opacity: 1; }
+        .img-nav-btn {
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.8);
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #7d4e33;
+          cursor: pointer;
         }
 
-        .store-info {
-            display: flex;
-            align-items: center;
-            gap: 0.35rem;
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            margin-bottom: 0.2rem;
+        .luxury-product-info {
+          padding: 0 2px;
         }
-        @media (min-width: 1024px) {
-            .store-info {
-                font-size: 0.6rem;
-                margin-bottom: 0.1rem;
-            }
-            .store-icon { width: 10px; height: 10px; }
-        }
-        .store-icon { color: var(--primary); opacity: 0.8; }
-        .store-dist { opacity: 0.7; }
-
-        .product-title {
-          font-size: 0.8rem;
+        .luxury-product-name {
+          font-family: 'Playfair Display', serif;
+          font-size: 0.85rem;
+          color: #2c241e;
+          margin: 0;
           font-weight: 600;
-          color: var(--text-main);
-          white-space: nowrap;
+          line-height: 1.2;
+          display: -webkit-box;
+          -webkit-line-clamp: 1;
+          -webkit-box-orient: vertical;
           overflow: hidden;
-          text-overflow: ellipsis;
-          margin-bottom: 0.05rem;
+        }
+        .luxury-product-subtitle {
+          font-size: 0.6rem;
+          color: #8b8b8b;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin: 1px 0 4px 0;
+        }
+        .luxury-price-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-bottom: 4px;
+        }
+        .luxury-current-price {
+          font-weight: 700;
+          color: #7d4e33;
+          font-size: 0.85rem;
+        }
+        .luxury-old-price {
+          font-size: 0.7rem;
+          color: #bcbcbc;
+          text-decoration: line-through;
         }
 
-        .price-row {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
+        .luxury-card-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          opacity: 0.8;
+          margin-top: 4px;
         }
-        @media (min-width: 1024px) {
-            .price-row {
-                margin-bottom: 0.5rem;
-                gap: 0.5rem;
-            }
-        }
-        .current-price {
-            font-size: 0.9rem;
-            font-weight: 800;
-            color: var(--text-main);
-        }
-        .original-price {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-            text-decoration: line-through;
-        }
-
-        .btn-add-cart {
-            width: 100%;
-            background: #0f172a;
-            color: white;
-            border: none;
-            padding: 0.5rem;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 0.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-            transition: all 0.3s ease;
-            margin-top: auto;
-        }
-        @media (min-width: 1024px) {
-            .btn-add-cart {
-                padding: 0.35rem;
-                font-size: 0.65rem;
-            }
-        }
-        .btn-add-cart:hover {
-            background: var(--primary);
-            transform: scale(1.02);
-            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
-        }
-
-        .rating-badge-card {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            background: #fffbeb;
-            color: #d97706;
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 0.7rem;
-            font-weight: 800;
-            border: 1px solid #fde68a;
-            margin-left: auto;
+        .luxury-card-store, .luxury-card-rating {
+          display: flex;
+          align-items: center;
+          gap: 3px;
+          font-size: 0.6rem;
+          color: #8b8b8b;
         }
 
         @media (max-width: 640px) {
-            .product-card { border-radius: 8px; }
-            .product-content { padding: 0.4rem; }
-            .product-title { font-size: 0.75rem; }
-            .current-price { font-size: 0.85rem; }
-            .store-info { font-size: 0.6rem; }
-            .badge-category { font-size: 0.55rem; padding: 0.15rem 0.4rem; }
-            .btn-add-cart { padding: 0.4rem; font-size: 0.7rem; border-radius: 6px; }
-            .badge-wishlist { width: 24px; height: 24px; }
-            .badge-wishlist svg { width: 12px; height: 12px; }
+            .luxury-product-name { font-size: 0.8rem; }
+            .luxury-current-price { font-size: 0.8rem; }
+            .luxury-card-image-wrap { border-radius: 8px; }
         }
-
       `}</style>
     </div>
   );

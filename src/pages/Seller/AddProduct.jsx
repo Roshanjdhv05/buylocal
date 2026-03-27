@@ -17,7 +17,9 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
         deliveryCharges: '0',
         images: [],
         section: '',
-        tags: []
+        tags: [],
+        stock: '0',
+        trackStock: false
     });
 
     const [step, setStep] = useState(1);
@@ -39,7 +41,9 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                 deliveryCharges: initialData.delivery_charges || '0',
                 images: initialData.images || [],
                 section: initialData.section || '',
-                tags: initialData.tags || []
+                tags: initialData.tags || [],
+                stock: initialData.stock_quantity || '0',
+                trackStock: initialData.stock_quantity !== null && initialData.stock_quantity !== undefined
             });
         }
     }, [initialData]);
@@ -245,6 +249,36 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                     ))}
                                 </div>
                             </div>
+
+                            <div className="toggle-group-mobile" style={{ marginBottom: '1.5rem', border: '1px solid #e2e8f0', padding: '1rem', borderRadius: '12px', background: '#f8fafc' }}>
+                                <div className="toggle-info">
+                                    <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700' }}>Track Inventory / Stock</h4>
+                                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>Toggle on to manage available quantity</p>
+                                </div>
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.trackStock}
+                                        onChange={e => setFormData({ ...formData, trackStock: e.target.checked, stock: e.target.checked ? (formData.stock === '0' ? '10' : formData.stock) : '0' })}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                            </div>
+
+                            {formData.trackStock && (
+                                <div className="form-group-mobile animate-in">
+                                    <label>Stock Quantity</label>
+                                    <input
+                                        type="number"
+                                        placeholder="e.g. 100"
+                                        value={formData.stock}
+                                        onChange={e => setFormData({ ...formData, stock: e.target.value })}
+                                    />
+                                    <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                                        How many units are available for sale?
+                                    </p>
+                                </div>
+                            )}
 
                             {/* Tags Section */}
                             <div className="form-group-mobile">
@@ -528,7 +562,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '1rem' }}>
                                 <div>
                                     <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '800' }}>Inventory</div>
-                                    <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>{formData.sizes.length || 1} Variations</div>
+                                    <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>{formData.stock || 0} Units in Stock</div>
                                 </div>
                                 <div>
                                     <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '800' }}>Shipping</div>

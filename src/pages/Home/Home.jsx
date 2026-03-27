@@ -336,11 +336,33 @@ const Home = () => {
             <header className="hero-section">
                 {campaigns.length > 0 ? (
                     <div className="banner-carousel">
-                        <div 
+                        <motion.div 
                             className="banner-track"
+                            drag="x"
+                            dragConstraints={{ left: 0, right: 0 }}
+                            dragElastic={0.2}
+                            onDragEnd={(e, { offset, velocity }) => {
+                                const swipe = offset.x;
+                                const threshold = 50;
+                                if (swipe < -threshold) {
+                                    handleNext();
+                                } else if (swipe > threshold) {
+                                    handlePrev();
+                                }
+                            }}
+                            animate={{ 
+                                x: `-${currentBannerIndex * 100}%` 
+                            }}
+                            transition={{ 
+                                x: { type: "spring", stiffness: 300, damping: 30 },
+                                opacity: { duration: 0.2 }
+                            }}
                             style={{ 
-                                transform: `translateX(-${currentBannerIndex * 100}%)`,
-                                transition: 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                                display: 'flex',
+                                height: '100%',
+                                width: '100%',
+                                willChange: 'transform',
+                                cursor: 'grab'
                             }}
                         >
                             {campaigns.map((campaign, index) => (
@@ -358,7 +380,7 @@ const Home = () => {
                                     {!campaign.store_id && (
                                         <div className="container hero-container" style={{ position: 'relative', zIndex: 2, pointerEvents: 'none' }}>
                                             <div className="hero-content">
-                                                <span className="hero-badge">LIMITED OFFER</span>
+                                                <span className="hero-badge">{t('home.heroLabel')}</span>
                                                 <h1>{t('home.heroTitle').split('<br />').map((text, i) => <React.Fragment key={i}>{text}{i === 0 && <br />}</React.Fragment>)}</h1>
                                                 <p>{t('home.heroSubtitle')}</p>
                                                 <Link to="/stores" className="btn-hero" style={{ pointerEvents: 'auto' }}>{t('home.shopNow')}</Link>
@@ -367,7 +389,7 @@ const Home = () => {
                                     )}
                                 </div>
                             ))}
-                        </div>
+                        </motion.div>
                         
                         {campaigns.length > 1 && (
                             <>
@@ -403,7 +425,7 @@ const Home = () => {
                     <div className="default-hero">
                         <div className="container hero-container">
                             <div className="hero-content">
-                                <span className="hero-badge">LIMITED OFFER</span>
+                                <span className="hero-badge">{t('home.heroLabel')}</span>
                                 <h1>{t('home.heroTitle').split('<br />').map((text, i) => <React.Fragment key={i}>{text}{i === 0 && <br />}</React.Fragment>)}</h1>
                                 <p>{t('home.heroSubtitle')}</p>
                                 <Link to="/stores" className="btn-hero">{t('home.shopNow')}</Link>
@@ -605,11 +627,23 @@ const Home = () => {
             overflow: hidden;
             background: #f1f5f9;
         }
+        @media (max-width: 768px) {
+            .hero-section {
+                height: 600px; /* Taller on mobile as per image */
+                background: #f1f5f9;
+                padding: 10px; /* Space around the "card" design */
+            }
+        }
         .banner-carousel {
             height: 100%;
             width: 100%;
             position: relative;
             overflow: hidden;
+        }
+        @media (max-width: 768px) {
+            .banner-carousel {
+                border-radius: 24px; /* Rounded corners like in the image */
+            }
         }
         .banner-track {
             display: flex;
@@ -631,7 +665,12 @@ const Home = () => {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.4);
+            background: linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0.1)); /* Gradient overlay like in image */
+        }
+        @media (max-width: 768px) {
+            .banner-slide:not(.is-seller)::before {
+                background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.2));
+            }
         }
         .default-hero {
             background-image: url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
@@ -640,14 +679,32 @@ const Home = () => {
             height: 100%;
             width: 100%;
             display: flex;
-            align-items: center;
+            align-items: flex-end; /* Move content down like in image */
+            padding-bottom: 4rem;
             position: relative;
+        }
+        @media (min-width: 769px) {
+            .default-hero {
+                align-items: center;
+                padding-bottom: 0;
+            }
+        }
+        @media (max-width: 768px) {
+            .default-hero {
+                border-radius: 24px; /* Rounded corners for the card */
+                overflow: hidden;
+            }
         }
         .default-hero::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.4);
+            background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 60%); /* Darker towards bottom */
+        }
+        @media (min-width: 769px) {
+             .default-hero::before {
+                background: rgba(0,0,0,0.4);
+             }
         }
         .carousel-indicators {
             position: absolute;
@@ -707,8 +764,13 @@ const Home = () => {
             width: 24px;
             border-radius: 4px;
         }
-        .hero-container { position: relative; z-index: 1; }
+        .hero-container { position: relative; z-index: 1; width: 100%; }
         .hero-content { max-width: 600px; color: white; }
+        @media (max-width: 768px) {
+            .hero-content {
+                padding: 0 1.5rem;
+            }
+        }
         .hero-badge {
             background: var(--primary);
             color: white;
@@ -721,6 +783,15 @@ const Home = () => {
             display: inline-block;
             margin-bottom: 1rem;
         }
+        @media (max-width: 768px) {
+            .hero-badge {
+                background: transparent;
+                padding: 0;
+                color: rgba(255,255,255,0.8);
+                font-size: 0.85rem;
+                margin-bottom: 0.5rem;
+            }
+        }
         .hero-content h1 {
             font-size: 3.5rem;
             font-weight: 800;
@@ -728,11 +799,22 @@ const Home = () => {
             margin-bottom: 1rem;
             text-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
+        @media (max-width: 768px) {
+            .hero-content h1 {
+                font-size: 2.85rem;
+                margin-bottom: 2rem;
+            }
+        }
         .hero-content p {
             font-size: 1.25rem;
             margin-bottom: 2rem;
             opacity: 0.9;
             max-width: 480px;
+        }
+        @media (max-width: 768px) {
+            .hero-content p {
+                display: none; /* Matches the image which focuses on title and label */
+            }
         }
         .btn-hero {
             background: white;
@@ -743,6 +825,16 @@ const Home = () => {
             transition: var(--transition);
             display: inline-block;
         }
+        @media (max-width: 768px) {
+            .btn-hero {
+                background: #003d3d; /* Dark teal background as per image */
+                color: white;
+                border-radius: 12px;
+                padding: 0.85rem 2.5rem;
+                font-size: 1rem;
+            }
+        }
+        .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .btn-hero:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
 
         /* Category Navigation (Minimal Style) */
