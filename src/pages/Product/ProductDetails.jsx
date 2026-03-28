@@ -26,6 +26,10 @@ const ProductDetails = () => {
     const { addToCart, cartCount } = useCart();
     const { user } = useAuth();
 
+    const fromStoreCategory = location.state?.fromStoreCategory;
+    const fromStoreName = location.state?.storeName;
+    const fromCategoryName = location.state?.categoryName;
+
     // Data fetching via custom hook
     const { product, store, loading, error } = useProduct(productId);
 
@@ -182,7 +186,7 @@ const ProductDetails = () => {
     const images = getImages();
     const avgRating = reviews.length > 0
         ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
-        : '4.8'; // Defaulting as seen in image
+        : '0'; // Removed '4.8' fake default
     
     // Derived values
     const discount = product && product.mrp ? Math.round(((product.mrp - (product.online_price || product.price)) / product.mrp) * 100) : 0;
@@ -192,13 +196,21 @@ const ProductDetails = () => {
         <div className="pro-details-luxury">
             <div className="container">
                 {/* BREADCRUMBS */}
-                <nav className="breadcrumb-nav">
-                    <Link to="/">{t('nav.home')}</Link>
-                    <span className="breadcrumb-divider">/</span>
-                    <Link to={`/category/${product.category}`}>{product.category}</Link>
-                    <span className="breadcrumb-divider">/</span>
-                    <span className="active">{product.name}</span>
-                </nav>
+                {fromStoreCategory ? (
+                    <nav className="breadcrumb-nav" style={{ padding: '1rem 0', margin: 0 }}>
+                        <button onClick={() => navigate(-1)} style={{ background: 'none', border: 'none', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', color: '#64748b', fontWeight: '600', padding: 0 }}>
+                            <ArrowLeft size={16} color="#64748b" /> Back to {fromCategoryName} in {fromStoreName}
+                        </button>
+                    </nav>
+                ) : (
+                    <nav className="breadcrumb-nav">
+                        <Link to="/">{t('nav.home')}</Link>
+                        <span className="breadcrumb-divider">/</span>
+                        <Link to={`/category/${product.category}`}>{product.category}</Link>
+                        <span className="breadcrumb-divider">/</span>
+                        <span className="active">{product.name}</span>
+                    </nav>
+                )}
 
                 <main className="product-main-layout">
                     {/* COLUMN 1: VERTICAL THUMBNAILS */}
@@ -253,7 +265,7 @@ const ProductDetails = () => {
                                     <Star key={i} size={16} fill={i < Math.round(Number(avgRating)) ? "#7c3aed" : "none"} color="#7c3aed" />
                                 ))}
                             </div>
-                            <span className="rating-text">{avgRating} ({reviews.length} reviews)</span>
+                            <span className="rating-text">{avgRating > 0 ? `${avgRating} (${reviews.length} reviews)` : 'No reviews yet'}</span>
                             <span className="breadcrumb-divider">|</span>
                             <Link to={`/${encodeURIComponent(store?.name)}`} className="sold-by-badge">Sold by {store?.name || 'Local Store'}</Link>
                         </div>
@@ -335,7 +347,7 @@ const ProductDetails = () => {
                             {activeTab === 'description' && (
                                 <div className="description-hero">
                                     <h2>Engineering Meets Local Excellence</h2>
-                                    <p>{getLocalizedName(product.description, i18n.language) || "This premium product is crafted with the highest standards, ensuring every detail reflects the commitment to quality of our local artisans."}</p>
+                                    <p>{getLocalizedName(product.description, i18n.language) || "No description provided by the seller."}</p>
                                     
                                     <div className="feature-cards-row">
                                         <div className="feature-card">
@@ -435,18 +447,19 @@ const ProductDetails = () => {
                                     </Link>
                                 </div>
 
-                                <div className="store-stats-luxury">
+                                <div className="store-stats-luxury" style={{ display: 'none' }}>
+                                    {/* Stats hidden until dynamic tracking is implemented */}
                                     <div className="stat-luxury-row">
                                         <span className="stat-lux-label">Rating</span>
-                                        <span className="stat-lux-value">4.9 / 5.0</span>
+                                        <span className="stat-lux-value">{store?.avg_rating || 'N/A'}</span>
                                     </div>
                                     <div className="stat-luxury-row">
                                         <span className="stat-lux-label">Followers</span>
-                                        <span className="stat-lux-value">1.2K</span>
+                                        <span className="stat-lux-value">{store?.follower_count || '0'}</span>
                                     </div>
                                     <div className="stat-luxury-row">
                                         <span className="stat-lux-label">Dispatch</span>
-                                        <span className="stat-lux-value green">Within 12h</span>
+                                        <span className="stat-lux-value green">Ready</span>
                                     </div>
                                 </div>
 

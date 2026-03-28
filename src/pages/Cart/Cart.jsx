@@ -236,7 +236,7 @@ const Cart = () => {
         .item-details { flex: 1; }
         .item-details h3 { font-size: 1.125rem; margin-bottom: 0.25rem; color: var(--text-main); }
         .item-store { font-size: 0.875rem; color: var(--text-muted); }
-        .item-price { font-weight: 700; color: var(--primary); margin-top: 0.25rem; }
+        .item-price { font-weight: 700; color: #000000; margin-top: 0.25rem; }
 
         .item-controls { display: flex; align-items: center; gap: 1.5rem; }
         .quantity-toggle { display: flex; align-items: center; background: #f1f5f9; border-radius: 99px; padding: 0.25rem; }

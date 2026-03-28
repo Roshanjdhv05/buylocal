@@ -21,7 +21,7 @@ const Toast = ({ message, type = 'info', duration = 3000, onManualClose }) => {
         success: <CheckCircle size={18} color="#22c55e" />,
         error: <AlertCircle size={18} color="#ef4444" />,
         info: <Info size={18} color="#3b82f6" />,
-        loading: <LoadingSpinner size={24} />
+        loading: <LoadingSpinner size="36px" inline={true} />
     };
 
     return (

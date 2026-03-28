@@ -32,7 +32,8 @@ import {
     Watch,
     Printer,
     Battery,
-    Activity
+    Activity,
+    Package
 } from 'lucide-react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -82,86 +83,56 @@ const Categories = () => {
 
 
 
-    const categoriesList = [
-        { 
-            id: 'fashion', 
-            name: 'Fashion', 
-            icon: <Shirt size={24} />,
-            subcategories: [
-                { name: 'Men', color: '#f5f3ff', icon: '👕' },
-                { name: 'Women', color: '#fdf2f8', icon: '👗' },
-                { name: 'Kids', color: '#fffbeb', icon: '👶' },
-                { name: 'Accessories', color: '#f0fdf4', icon: '👜' },
-            ]
-        },
-        { 
-            id: 'beauty', 
-            name: 'Beauty', 
-            icon: <Palette size={24} />,
-            subcategories: [
-                { name: 'Skincare', color: '#fef2f2', icon: '🧴' },
-                { name: 'Makeup', color: '#fdf2f8', icon: '💄' },
-                { name: 'Haircare', color: '#f5f3ff', icon: '💇' },
-                { name: 'Fragrance', color: '#fff7ed', icon: '✨' },
-            ]
-        },
-        { 
-            id: 'electronics', 
-            name: 'Electronics', 
-            icon: <Monitor size={24} />,
-            subcategories: [
-                { name: 'Laptops', color: '#f5f3ff', icon: '💻' },
-                { name: 'Televisions', color: '#fffbeb', icon: '📺' },
-                { name: 'Hair Dryers', color: '#fdf2f8', icon: '💨' },
-                { name: 'Headphones', color: '#f5f3ff', icon: '🎧' },
-                { name: 'Tablets', color: '#fff1f2', icon: '📱' },
-                { name: 'Mobile Covers', color: '#f0fdf4', icon: '🤳' },
-                { name: 'Printers', color: '#f5f3ff', icon: '🖨️' },
-                { name: 'Healthcare', color: '#fff7ed', icon: '⚕️' },
-                { name: 'Batteries', color: '#f5f3ff', icon: '🔋' },
-                { name: 'Watches', color: '#f0fdf4', icon: '⌚' },
-            ]
-        },
-        { 
-            id: 'jewellery', 
-            name: 'Jewellery', 
-            icon: <Gem size={24} />,
-            subcategories: [
-                { name: 'Rings', color: '#fffbeb', icon: '💍' },
-                { name: 'Necklaces', color: '#fef2f2', icon: '📿' },
-                { name: 'Earrings', color: '#f5f3ff', icon: '💎' },
-            ]
-        },
-        { 
-            id: 'footwear', 
-            name: 'Footwear', 
-            icon: <Footprints size={24} />,
-            subcategories: [
-                { name: 'Sneakers', color: '#f0fdf4', icon: '👟' },
-                { name: 'Formal', color: '#f8fafc', icon: '👞' },
-                { name: 'Sandals', color: '#fff7ed', icon: '👡' },
-            ]
-        },
-        { 
-            id: 'toys', 
-            name: 'Toys', 
-            icon: <Gamepad2 size={24} />,
-            subcategories: [
-                { name: 'Action Figures', color: '#fff1f2', icon: '🧸' },
-                { name: 'Puzzles', color: '#f5f3ff', icon: '🧩' },
-                { name: 'Dolls', color: '#fdf2f8', icon: '🪆' },
-            ]
-        },
-        { 
-            id: 'furniture', 
-            name: 'Furniture', 
-            icon: <Armchair size={24} />,
-            subcategories: [
-                { name: 'Chairs', color: '#f8fafc', icon: '🪑' },
-                { name: 'Tables', color: '#fffbeb', icon: '🛋️' },
-            ]
-        },
-    ];
+    const [dbCategories, setDbCategories] = useState([]);
+
+    useEffect(() => {
+        const fetchDbCategories = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('categories')
+                    .select('*')
+                    .order('name', { ascending: true });
+                if (error) throw error;
+                
+                // Group subcategories under parents
+                const parents = data.filter(c => !c.parent_id);
+                const structured = parents.map(p => ({
+                    ...p,
+                    subcategories: data.filter(c => c.parent_id === p.id)
+                }));
+                setDbCategories(structured);
+                if (structured.length > 0 && !categoryName) {
+                    setActiveCategory(structured[0].name);
+                }
+            } catch (err) {
+                console.error('Error fetching categories:', err);
+            }
+        };
+        fetchDbCategories();
+    }, []);
+
+    // Helper to get icon component or emoji
+    const getCategoryIcon = (iconName, size = 24) => {
+        if (!iconName) return <Package size={size} />;
+        // If it's an emoji (single character roughly)
+        if (iconName.length < 3) return <span style={{ fontSize: `${size}px` }}>{iconName}</span>;
+        
+        // Map common lucide names if needed, or just default to Package
+        const iconMap = {
+            'Shirt': <Shirt size={size} />,
+            'Palette': <Palette size={size} />,
+            'Monitor': <Monitor size={size} />,
+            'Gem': <Gem size={size} />,
+            'Footprints': <Footprints size={size} />,
+            'Gamepad2': <Gamepad2 size={size} />,
+            'Armchair': <Armchair size={size} />,
+            'ShoppingBag': <ShoppingBag size={size} />,
+            'Wind': <Wind size={size} />,
+            'Activity': <Activity size={size} />,
+            'Package': <Package size={size} />
+        };
+        return iconMap[iconName] || <span>{iconName}</span>;
+    };
 
     useEffect(() => {
         const fetchAvailableTags = async () => {
@@ -212,32 +183,35 @@ const Categories = () => {
                         <div className="sidebar-section">
                             <h3 className="sidebar-title">CATEGORIES</h3>
                             <ul className="category-tree">
-                                {categoriesList.map(cat => (
+                                {dbCategories.map(cat => (
                                     <li key={cat.id} className="category-item">
                                         <div 
                                             className={`category-header ${activeCategory === cat.name ? 'active' : ''}`}
                                             onClick={() => {
                                                 setActiveCategory(cat.name);
-                                                if (cat.subcategories) toggleExpand(cat.name);
+                                                if (cat.subcategories?.length > 0) toggleExpand(cat.name);
                                             }}
                                         >
-                                            <span>{cat.name}</span>
-                                            {cat.subcategories && (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                {getCategoryIcon(cat.icon, 18)}
+                                                <span>{cat.name}</span>
+                                            </div>
+                                            {cat.subcategories?.length > 0 && (
                                                 expandedCats[cat.name] ? <ChevronDown size={16} /> : <ChevronRight size={16} />
                                             )}
                                         </div>
-                                        {cat.subcategories && expandedCats[cat.name] && (
+                                        {cat.subcategories?.length > 0 && expandedCats[cat.name] && (
                                             <ul className="subcategory-list">
                                                 {cat.subcategories.map(sub => {
-                                                    const isAvailable = availableTags.has((typeof sub === 'string' ? sub : sub.name).toLowerCase().trim());
+                                                    const isAvailable = availableTags.has(sub.name.toLowerCase().trim());
                                                     return (
                                                         <li 
-                                                            key={typeof sub === 'string' ? sub : sub.name} 
+                                                            key={sub.id} 
                                                             className="subcategory-item"
-                                                            onClick={() => navigate(`/?search=${encodeURIComponent(typeof sub === 'string' ? sub : sub.name)}`)}
+                                                            onClick={() => navigate(`/?search=${encodeURIComponent(sub.name)}`)}
                                                             style={{ position: 'relative' }}
                                                         >
-                                                            {typeof sub === 'string' ? sub : sub.name}
+                                                            {sub.name}
                                                             {!isAvailable && <span className="availability-tag" style={{
                                                                 fontSize: '10px',
                                                                 color: '#ef4444',
@@ -305,14 +279,14 @@ const Categories = () => {
                     <div className="mobile-category-layout">
                         {/* Mobile Sidebar */}
                         <aside className="mobile-sidebar">
-                            {categoriesList.map(cat => (
+                            {dbCategories.map(cat => (
                                 <div 
                                     key={cat.id} 
                                     className={`mobile-nav-item ${activeCategory === cat.name ? 'active' : ''}`}
                                     onClick={() => setActiveCategory(cat.name)}
                                 >
                                     <div className="mobile-nav-icon">
-                                        {cat.icon}
+                                        {getCategoryIcon(cat.icon, 24)}
                                     </div>
                                     <span className="mobile-nav-text">{cat.name}</span>
                                 </div>
@@ -321,16 +295,16 @@ const Categories = () => {
 
                         {/* Mobile Content Area */}
                         <main className="mobile-content">
-                            <div className="subcategory-grid">
-                                {categoriesList.find(c => c.name === activeCategory)?.subcategories?.map((sub, index) => {
+                             <div className="subcategory-grid">
+                                {dbCategories.find(c => c.name === activeCategory)?.subcategories?.map((sub, index) => {
                                     const isAvailable = availableTags.has(sub.name.toLowerCase().trim());
                                     return (
                                         <div key={index} className="subcategory-card-wrapper" onClick={() => {
                                             navigate(`/?search=${encodeURIComponent(sub.name)}`);
                                         }}>
-                                            <div className="subcategory-card" style={{ backgroundColor: sub.color, opacity: isAvailable ? 1 : 0.6 }}>
+                                            <div className="subcategory-card" style={{ backgroundColor: '#f8fafc', opacity: isAvailable ? 1 : 0.6 }}>
                                                 <div className="subcategory-icon">
-                                                    {sub.icon}
+                                                    {getCategoryIcon(sub.icon, 32)}
                                                 </div>
                                                 {!isAvailable && (
                                                     <div className="availability-overlay" style={{

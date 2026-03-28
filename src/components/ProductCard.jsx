@@ -340,7 +340,7 @@ const ProductCard = ({ product }) => {
         }
         .luxury-current-price {
           font-weight: 700;
-          color: #7d4e33;
+          color: #000000;
           font-size: 0.85rem;
         }
         .luxury-old-price {

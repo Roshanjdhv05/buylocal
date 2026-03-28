@@ -91,7 +91,7 @@ const OrderDetails = () => {
         </div>
     );
 
-    const displayOrderId = order.display_id || order.id.slice(0, 8).toUpperCase();
+    const displayOrderId = "#ORD-" + order.id.slice(0, 6).toUpperCase();
 
     return (
         <div className="order-details-page">

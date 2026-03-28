@@ -97,8 +97,13 @@ const AppContent = () => {
     const { toast, setToast } = useLocation();
     const routeLocation = useRouteLocation();
     const [isPageChanging, setIsPageChanging] = useState(false);
+    const isFirstMount = React.useRef(true);
 
     useEffect(() => {
+        if (isFirstMount.current) {
+            isFirstMount.current = false;
+            return;
+        }
         setIsPageChanging(true);
         const timer = setTimeout(() => {
             setIsPageChanging(false);

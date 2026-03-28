@@ -581,6 +581,13 @@ button:disabled {
     margin-bottom: 1.5rem;
 }
 
+@media (max-width: 768px) {
+    .form-row-pro-responsive {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
 /* Order Management Redesign */
 .orders-page-header {
     display: flex;
@@ -1626,6 +1633,14 @@ button:disabled {
     overflow: hidden;
     position: relative;
     transition: 0.2s;
+}
+
+@media (max-width: 640px) {
+    .campaign-upload-zone-pro {
+        aspect-ratio: auto;
+        min-height: 150px;
+        height: auto !important;
+    }
 }
 
 .campaign-upload-zone-pro:hover {
@@ -3777,5 +3792,22 @@ input:checked+.slider:before {
 
     .btn-so-completed {
         grid-column: span 1;
+    }
+}
+
+/* Mobile Status Dot Fix */
+@media (max-width: 768px) {
+    .status-dot .status-text {
+        display: none;
+    }
+    
+    .status-dot {
+        padding: 0.25rem !important; /* Keep it minimal */
+        background: transparent !important;
+    }
+    
+    .status-dot .dot {
+        width: 10px;
+        height: 10px;
     }
 }

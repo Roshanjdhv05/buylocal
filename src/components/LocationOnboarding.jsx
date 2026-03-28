@@ -142,7 +142,7 @@ const LocationOnboarding = () => {
                         onClick={handleDetect}
                         disabled={status === 'detecting' || status === 'saving'}
                     >
-                        {status === 'detecting' ? <LoadingSpinner size={24} /> : <Navigation size={18} />}
+                        {status === 'detecting' ? <LoadingSpinner size={24} inline={true} /> : <Navigation size={18} />}
                         {status === 'success' ? 'Location Detected!' : 'Detect My Location'}
                     </button>
 

@@ -998,6 +998,7 @@ const SellerDashboard = () => {
                         uploading={uploading}
                         sections={sections}
                         initialData={editingProduct}
+                        customCategories={customCategories}
                     />
                 ) : (
                     <>
@@ -1067,7 +1068,7 @@ const SellerDashboard = () => {
                                     <div className="stat-card-new">
                                         <div className="stat-header">
                                             <span className="stat-title">Total Revenue</span>
-                                            <div className="stat-icon-wrapper bg-green"><DollarSign size={18} /></div>
+                                            <div className="stat-icon-wrapper bg-green"><TrendingUp size={18} /></div>
                                         </div>
                                         <span className="stat-value">₹{orders.reduce((acc, o) => acc + (o.status === 'delivered' ? o.total_amount : 0), 0).toLocaleString()}</span>
                                         <span className="stat-trend trend-up"><TrendingUp size={12} /> +14.2% vs prev period</span>
@@ -1107,7 +1108,7 @@ const SellerDashboard = () => {
                                                     {orders.slice(0, 5).map(order => (
                                                         <tr key={order.id}>
                                                             <td className="order-id-cell" data-label="Order ID">
-                                                                #{order.display_id || order.id.slice(0, 8).toUpperCase()}
+                                                                #ORD-{order.id.substring(0, 6).toUpperCase()}
                                                                 <span className="order-date-span">{new Date(order.created_at).toLocaleString()}</span>
                                                             </td>
                                                             <td data-label="Items">
@@ -1343,7 +1344,7 @@ const SellerDashboard = () => {
                                                                 </span>
                                                             )}
                                                               <span className={`status-dot ${(product.stock_quantity !== null && (product.stock_quantity || 0) <= 0) ? 'out-of-stock' : ''}`}>
-                                                                <span className="dot"></span> {(product.stock_quantity === null || (product.stock_quantity || 0) > 0) ? 'Active' : 'Out of Stock'}
+                                                                <span className="dot"></span> <span className="status-text">{(product.stock_quantity === null || (product.stock_quantity || 0) > 0) ? 'Active' : 'Out of Stock'}</span>
                                                             </span>
                                                         </div>
                                                         <h3 className="pro-card-name" title={product.name}>{product.name}</h3>

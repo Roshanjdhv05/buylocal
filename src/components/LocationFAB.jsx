@@ -58,7 +58,7 @@ const LocationFAB = () => {
                             onClick={handleDetect}
                             disabled={loading}
                         >
-                            {loading ? <LoadingSpinner size={24} /> : <Navigation size={18} />}
+                            {loading ? <LoadingSpinner size={24} inline={true} /> : <Navigation size={18} />}
                             {loading ? 'Detecting...' : 'Update My Location'}
                         </button>
                     </div>

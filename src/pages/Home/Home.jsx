@@ -7,7 +7,7 @@ import { calculateDistance } from '../../utils/distance';
 import ProductCard from '../../components/ProductCard';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import { MapPin, ArrowRight, ChevronRight, Store, ChevronLeft, ArrowLeft } from 'lucide-react';
+import { MapPin, ArrowRight, ChevronRight, Store, ChevronLeft, ArrowLeft, Package } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getRecentlyViewed } from '../../utils/recentlyViewed';
 import { useTranslation } from 'react-i18next';
@@ -31,11 +31,16 @@ const Home = () => {
     const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    const [dbCategories, setDbCategories] = useState([]);
 
-    const [showSplash, setShowSplash] = useState(true);
+    const [showSplash, setShowSplash] = useState(() => {
+        // Only show splash screen once per session
+        return !sessionStorage.getItem('splashShown');
+    });
 
     const handleSplashComplete = () => {
         setShowSplash(false);
+        sessionStorage.setItem('splashShown', 'true');
     };
 
     useEffect(() => {
@@ -88,16 +93,23 @@ const Home = () => {
                 const { data: reviewsData, error: reviewsError } = await withTimeout(supabase.from('product_reviews').select('*'), 30000, 'Home Fetch Reviews');
                 if (reviewsError) console.error('Home: Fetch reviews error:', reviewsError);
                 
-                const { data: campaignsData } = await supabase
-                    .from('banner_campaigns')
-                    .select('*, stores(name)')
-                    .eq('is_active', true)
-                    .or(`end_date.is.null,end_date.gt.${new Date().toISOString()}`);
+                    const { data: campaignsData } = await supabase
+                        .from('banner_campaigns')
+                        .select('*, stores(name)')
+                        .eq('is_active', true)
+                        .or(`end_date.is.null,end_date.gt.${new Date().toISOString()}`);
 
-                if (mounted) {
-                    setStores(storesData || []);
-                    setProducts(productsData || []);
-                    setReviews(reviewsData || []);
+                    const { data: categoriesData } = await supabase
+                        .from('categories')
+                        .select('*')
+                        .is('parent_id', null)
+                        .order('name');
+
+                    if (mounted) {
+                        setStores(storesData || []);
+                        setProducts(productsData || []);
+                        setReviews(reviewsData || []);
+                        setDbCategories(categoriesData || []);
                     
                     const sortedCampaigns = (campaignsData || []).sort((a, b) => {
                         if (!a.store_id && b.store_id) return -1;
@@ -161,7 +173,25 @@ const Home = () => {
 
     // Search Logic
     const searchResults = searchQuery ? enrichedProducts.filter(p => {
-        const query = searchQuery.toLowerCase();
+        const query = searchQuery.toLowerCase().trim();
+        
+        // 1. Check for exact category or name match (Strongest)
+        if (p.category?.toLowerCase() === query || p.name?.toLowerCase() === query) return true;
+
+        // 2. Check for tag match (Strongest)
+        if (p.tags?.some(tag => tag.toLowerCase() === query)) return true;
+
+        // 3. Handle 'men' vs 'women' specific substring issue
+        if (query === 'men') {
+            const regex = /\bmen\b/i;
+            return (
+                regex.test(p.name || '') ||
+                regex.test(p.description || '') ||
+                (p.category?.toLowerCase().includes('men') && !p.category?.toLowerCase().includes('women'))
+            );
+        }
+
+        // 4. Default broad search
         return (
             p.name?.toLowerCase().includes(query) ||
             p.description?.toLowerCase().includes(query) ||
@@ -435,21 +465,19 @@ const Home = () => {
                 )}
             </header>
 
-            {/* Category Navigation (Minimal Style) */}
+            {/* Category Navigation (Static List) */}
             <div className="container category-nav-container">
                 <div className="category-minimal-grid">
                     {categories.map(cat => (
                         <Link
                             key={cat.name}
-                            to={`/category/${cat.name}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            to={`/?search=${encodeURIComponent(cat.name)}`}
                             className="category-icon-item"
                         >
                             <div className="category-base">
                                 {cat.svg}
                             </div>
-                            <span className="category-label">{t(`home.${cat.name.toLowerCase()}`)}</span>
+                            <span className="category-label">{cat.name}</span>
                         </Link>
                     ))}
                 </div>

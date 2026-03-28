@@ -40,6 +40,8 @@ const AdminDashboard = ({ onLogout }) => {
     const [mobileBanner, setMobileBanner] = useState(null);
     const [desktopPreview, setDesktopPreview] = useState(null);
     const [mobilePreview, setMobilePreview] = useState(null);
+    const [categories, setCategories] = useState([]);
+    const [newCategory, setNewCategory] = useState({ name: '', icon: '', parent_id: null });
 
     // Subscription Control State
     const [isSubSectionEnabled, setIsSubSectionEnabled] = useState(false);
@@ -66,7 +68,21 @@ const AdminDashboard = ({ onLogout }) => {
     useEffect(() => {
         fetchAdminData();
         fetchBanners();
+        fetchCategories();
     }, []);
+
+    const fetchCategories = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('categories')
+                .select('*')
+                .order('name', { ascending: true });
+            if (error) throw error;
+            setCategories(data || []);
+        } catch (error) {
+            console.error('Error fetching categories:', error.message);
+        }
+    };
 
     useEffect(() => {
         if (editingProduct) {
@@ -529,6 +545,13 @@ const AdminDashboard = ({ onLogout }) => {
                     >
                         <Package size={20} />
                         <span>Products</span>
+                    </div>
+                    <div 
+                        className={`nav-item ${activeTab === 'categories' ? 'active' : ''}`}
+                        onClick={() => { setActiveTab('categories'); setSelectedStore(null); }}
+                    >
+                        <ShieldCheck size={20} />
+                        <span>Categories</span>
                     </div>
                     <div 
                         className={`nav-item ${activeTab === 'banners' ? 'active' : ''}`}
@@ -1335,6 +1358,86 @@ const AdminDashboard = ({ onLogout }) => {
                             )}
                         </section>
                     </div>
+                ) : activeTab === 'categories' ? (
+                    <div className="admin-categories-view">
+                        <section className="admin-section">
+                            <div className="section-header">
+                                <h2>Category Management</h2>
+                                <p>Manage platform-wide categories and subcategories.</p>
+                            </div>
+                            
+                            <div className="add-category-form-card">
+                                <h3>Add New Category</h3>
+                                <div className="category-inputs-row">
+                                    <input 
+                                        type="text" 
+                                        placeholder="Category Name (e.g. Anime)" 
+                                        value={newCategory.name}
+                                        onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                                    />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Icon (e.g. 🧸)" 
+                                        value={newCategory.icon}
+                                        onChange={(e) => setNewCategory({ ...newCategory, icon: e.target.value })}
+                                    />
+                                    <select 
+                                        value={newCategory.parent_id || ''}
+                                        onChange={(e) => setNewCategory({ ...newCategory, parent_id: e.target.value ? parseInt(e.target.value) : null })}
+                                    >
+                                        <option value="">Top Level Category</option>
+                                        {categories.filter(c => !c.parent_id).map(c => (
+                                            <option key={c.id} value={c.id}>Under {c.name}</option>
+                                        ))}
+                                    </select>
+                                    <button className="btn-primary" onClick={async () => {
+                                        if (!newCategory.name) return alert('Name is required');
+                                        try {
+                                            const { error } = await supabase.from('categories').insert([newCategory]);
+                                            if (error) throw error;
+                                            setNewCategory({ name: '', icon: '', parent_id: null });
+                                            fetchCategories();
+                                            alert('Category added successfully');
+                                        } catch (e) { alert(e.message); }
+                                    }}>Add</button>
+                                </div>
+                            </div>
+
+                            <div className="table-container mt-6">
+                                <table className="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Icon</th>
+                                            <th>Name</th>
+                                            <th>Type</th>
+                                            <th>Parent</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {categories.map(cat => (
+                                            <tr key={cat.id}>
+                                                <td style={{ fontSize: '1.5rem' }}>{cat.icon || '📦'}</td>
+                                                <td className="font-bold">{cat.name}</td>
+                                                <td>{cat.parent_id ? 'Subcategory' : 'Main Category'}</td>
+                                                <td>{categories.find(c => c.id === cat.parent_id)?.name || '-'}</td>
+                                                <td className="actions-cell">
+                                                    <button className="btn-icon-sm delete" onClick={async () => {
+                                                        if (!window.confirm('Delete this category and its subcategories?')) return;
+                                                        try {
+                                                            const { error } = await supabase.from('categories').delete().eq('id', cat.id);
+                                                            if (error) throw error;
+                                                            fetchCategories();
+                                                        } catch (e) { alert(e.message); }
+                                                    }}>🗑</button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
                 ) : (
                     <div className="admin-banners-view">
                         <section className="admin-section banner-upload-card">
@@ -1463,7 +1566,6 @@ const AdminDashboard = ({ onLogout }) => {
                         </section>
                     </div>
                 )}
-
             </main>
 
             {showProductModal && (
@@ -1486,12 +1588,18 @@ const AdminDashboard = ({ onLogout }) => {
                                 </div>
                                 <div className="form-group">
                                     <label>Category</label>
-                                    <input 
-                                        type="text" 
+                                    <select 
                                         required 
                                         value={productForm.category}
                                         onChange={(e) => setProductForm({...productForm, category: e.target.value})}
-                                    />
+                                    >
+                                        <option value="">Select Category</option>
+                                        {categories.map(cat => (
+                                            <option key={cat.id} value={cat.name}>
+                                                {cat.parent_id ? '└ ' : ''}{cat.name}
+                                            </option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className="form-group">
                                     <label>Online Price (₹)</label>

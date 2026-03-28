@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Save, Eye, Upload, Check, Info, Plus, CloudUpload, X, Tag, ChevronRight } from 'lucide-react';
+import { supabase } from '../../services/supabase';
+import './DashboardStyles.css';
 
-import './DashboardStyles.css'; // Re-use dashboard styles + new specific styles
-
-const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = null }) => {
+const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = null, customCategories = [] }) => {
     const [formData, setFormData] = useState({
         name: '',
         category: '',
@@ -177,12 +177,19 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
 
                             <div className="form-group-mobile">
                                 <label>Category</label>
-                                <input
-                                    type="text"
-                                    placeholder="Select Category or type new..."
+                                <select
+                                    className="filter-dropdown-btn"
                                     value={formData.category}
                                     onChange={e => setFormData({ ...formData, category: e.target.value })}
-                                />
+                                    style={{ width: '100%', height: '48px', padding: '0 16px', borderRadius: '12px', background: '#fcfdfe', border: '1.5px solid #e2e8f0' }}
+                                >
+                                    <option value="">Select a Category</option>
+                                    {customCategories.map(cat => (
+                                        <option key={cat.id} value={cat.name}>
+                                            {cat.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="form-group-mobile">
@@ -412,13 +419,13 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
 
                         <div className="add-product-card">
                             <div className="form-group-mobile">
-                                <label>Online Price ($)</label>
+                                <label>Online Price (₹)</label>
                                 <div style={{ position: 'relative' }}>
-                                    <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: '700', color: '#64748b' }}>$</span>
+                                    <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: '700', color: '#000000' }}>₹</span>
                                     <input
                                         type="number"
                                         className="price-input"
-                                        style={{ paddingLeft: '2.5rem' }}
+                                        style={{ paddingLeft: '2.5rem', color: '#000000', fontWeight: '700' }}
                                         value={formData.onlinePrice}
                                         onChange={e => setFormData({ ...formData, onlinePrice: e.target.value })}
                                     />
@@ -426,7 +433,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                             </div>
 
                             <div className="form-group-mobile">
-                                <label>Offline Price (₹)</label>
+                                <label>MRP / Market Price (₹)</label>
                                 <div style={{ position: 'relative' }}>
                                     <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: '700', color: '#64748b' }}>₹</span>
                                     <input
@@ -476,7 +483,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                             <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>Credited within 3-5 days</span>
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
-                                            <strong>₹{(online * 83).toFixed(2)}</strong>
+                                            <strong style={{ color: '#000000' }}>₹{netEarnings.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
                                             <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>PER UNIT</div>
                                         </div>
                                     </div>
@@ -555,7 +562,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                 <div style={{ flex: 1 }}>
                                     <h5 style={{ fontSize: '0.9rem', fontWeight: '800', marginBottom: '2px' }}>{formData.name || 'Untitled Product'}</h5>
                                     <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: '4px' }}>Category: {formData.category || 'Not Set'}</div>
-                                    <div style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--primary)' }}>${formData.onlinePrice || '0'}</div>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: '800', color: '#000000' }}>₹{formData.onlinePrice || '0'}</div>
                                 </div>
                             </div>
 

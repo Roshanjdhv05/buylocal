@@ -193,7 +193,7 @@ const PublicStore = () => {
 
     const averageRating = reviews.length > 0
         ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
-        : '5.0';
+        : '0'; // Removed '5.0' fake default
 
     if (loading) return <LoadingSpinner fullPage />;
     if (!store) return <div className="error-container">{t('publicStore.notFound')}</div>;
@@ -224,7 +224,7 @@ const PublicStore = () => {
                         </div>
                         
                         <div className="luxury-info-side">
-                            <div className="luxury-origin">{store.origin || t('publicStore.curatedRituals', 'CURATED RITUALS')}</div>
+                            <div className="luxury-origin">{store.origin || ''}</div>
                             <h1 className="luxury-title-small">{store.name}</h1>
                             <div className="luxury-rating-small">
                                 <Star size={14} fill="#8c5a3c" color="#8c5a3c" />
@@ -289,7 +289,7 @@ const PublicStore = () => {
                 <div className="stats-row-luxury">
                     <div className="stat-item-minimal">
                         <Package size={14} />
-                        <span>{products.length || 500}+ {t('publicStore.stats.products', 'Products')}</span>
+                        <span>{products.length} {t('publicStore.stats.products', 'Products')}</span>
                     </div>
                     <div className="stat-item-minimal">
                         <Truck size={14} />
@@ -323,7 +323,7 @@ const PublicStore = () => {
                             </button>
                         </div>
 
-                        <div className="products-grid">
+                        <div className={sectionName === t('publicStore.generalCollection', 'General Collection') ? "products-slider-wrap" : "products-grid"}>
                             {sectionProducts.map(product => (
                                 <ProductCard key={product.id} product={{ ...product, storeName: store.name }} />
                             ))}
@@ -370,39 +370,26 @@ const PublicStore = () => {
                     </section>
                 )}
 
-                {/* OUR STORY SECTION */}
+                {/* OUR STORY SECTION - Render only if exists */}
+                {store.legacy_description && (
                 <section className="legacy-section-wrap">
                     <div className="legacy-content">
                         <h2>{t('publicStore.ourStory', 'Our Story')}</h2>
-                        <p>{store.legacy_description || `Founded in 1992, ${store.name} began as a small apothecary in the heart of Kyoto. Today, we are a global destination for curated beauty that respects the balance of nature and luxury...`}</p>
+                        <p>{store.legacy_description}</p>
 
-                        <div className="legacy-stats">
+                        <div className="legacy-stats" style={{ display: 'none' }}>
+                            {/* Stats hidden until dynamic tracking is implemented */}
                             <div className="stat-item">
                                 <div className="stat-icon-wrap"><Award size={20} /></div>
                                 <div className="stat-text">
                                     <strong>{t('publicStore.heritage', 'HERITAGE')}</strong>
-                                    <p>30 years of botanicals research and timeless tradition.</p>
-                                </div>
-                            </div>
-                            <div className="stat-item">
-                                <div className="stat-icon-wrap"><Globe size={20} /></div>
-                                <div className="stat-text">
-                                    <strong>{t('publicStore.globalBoutiques', 'GLOBAL BOUTIQUES')}</strong>
-                                    <p>Present in 34 cities, from Tokyo to Paris.</p>
-                                </div>
-                            </div>
-                            <div className="stat-item">
-                                <div className="stat-icon-wrap"><Package size={20} /></div>
-                                <div className="stat-text">
-                                    <strong>{t('publicStore.handPicked', 'HAND-PICKED')}</strong>
-                                    <p>Each formula is personally vetted for purity and efficacy.</p>
+                                    <p>Authentic local tradition.</p>
                                 </div>
                             </div>
                         </div>
-                        
-                        <a href="#" className="read-more-story">{t('publicStore.readMore', 'READ MORE')} →</a>
                     </div>
                 </section>
+                )}
 
                 {/* TESTIMONIALS - "The Collective Voice" */}
                 <section className="luxury-section">
@@ -711,15 +698,18 @@ const PublicStore = () => {
                     }
                 }
 
-                /* GALLERY */
-                .multimedia-slider-wrap {
+                /* GALLERY & SLIDERS */
+                .multimedia-slider-wrap, .products-slider-wrap {
                     display: flex;
                     gap: 1rem;
                     overflow-x: auto;
                     padding: 0 1rem 1.5rem;
                     scrollbar-width: none;
+                    -webkit-overflow-scrolling: touch;
                 }
-                .multimedia-slider-wrap::-webkit-scrollbar { display: none; }
+                .multimedia-slider-wrap::-webkit-scrollbar, 
+                .products-slider-wrap::-webkit-scrollbar { display: none; }
+
                 .multimedia-card {
                     flex: 0 0 280px;
                     height: 180px;
@@ -728,6 +718,22 @@ const PublicStore = () => {
                     position: relative;
                 }
                 .slider-media { width: 100%; height: 100%; object-fit: cover; }
+
+                /* General Collection Slider specific */
+                .products-slider-wrap .luxury-product-card {
+                    flex: 0 0 180px;
+                    margin: 0;
+                }
+                
+                @media (min-width: 1024px) {
+                    .products-slider-wrap {
+                        padding: 0;
+                        gap: 2rem;
+                    }
+                    .products-slider-wrap .luxury-product-card {
+                        flex: 0 0 280px;
+                    }
+                }
 
                 /* STORY SECTION */
                 .legacy-section-wrap { background: #fff; border-radius: 24px; padding: 2rem 1.5rem; margin: 2rem 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
