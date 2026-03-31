@@ -1017,7 +1017,7 @@ const Home = () => {
         .stores-horizontal-scroll::-webkit-scrollbar { display: none; }
         
         .store-premium-card {
-            flex: 0 0 160px;
+            flex: 0 0 190px;
             background: white;
             border-radius: 16px;
             overflow: hidden;
@@ -1035,7 +1035,7 @@ const Home = () => {
         }
         .store-card-image {
             width: 100%;
-            height: 100px;
+            height: 110px;
             overflow: hidden;
             position: relative;
         }
@@ -1053,13 +1053,13 @@ const Home = () => {
             font-weight: 700;
         }
         .store-card-content {
-            padding: 0.75rem;
+            padding: 0.85rem;
             display: flex;
             flex-direction: column;
             gap: 0.25rem;
         }
         .store-premium-card h4 { 
-            font-size: 0.85rem; 
+            font-size: 0.9rem; 
             font-weight: 700; 
             color: #1e293b; 
             margin: 0;
@@ -1068,7 +1068,7 @@ const Home = () => {
             text-overflow: ellipsis;
         }
         .store-category { 
-            font-size: 0.7rem; 
+            font-size: 0.75rem; 
             color: #64748b;
             margin-bottom: 0.5rem;
         }
@@ -1079,7 +1079,7 @@ const Home = () => {
             gap: 4px;
             background: #f8fafc;
             color: #4f46e5;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             font-weight: 700;
             padding: 6px;
             border-radius: 8px;
