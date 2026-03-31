@@ -91,7 +91,7 @@ const OrderDetails = () => {
         </div>
     );
 
-    const displayOrderId = "#ORD-" + order.id.slice(0, 6).toUpperCase();
+    const displayOrderId = order.display_id ? `#${order.display_id}` : "#ORD-" + order.id.slice(0, 6).toUpperCase();
 
     return (
         <div className="order-details-page">
@@ -153,6 +153,7 @@ const OrderDetails = () => {
                                         </div>
                                         <div className="item-info-main">
                                             <h4>{getLocalizedName(item.name, i18n.language)}</h4>
+                                            <p className="item-prd-id" style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '4px' }}>ID: #PRD-{item.id?.slice(0, 6).toUpperCase() || 'N/A'}</p>
                                             <p className="item-qty-price">{t('orderDetails.quantity')}: {item.quantity} × ₹{item.online_price || item.price}</p>
                                         </div>
                                         <div className="item-subtotal">

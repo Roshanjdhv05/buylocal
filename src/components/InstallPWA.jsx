@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
 
 const InstallPWA = () => {
     const [supportsPWA, setSupportsPWA] = useState(false);
@@ -31,95 +32,102 @@ const InstallPWA = () => {
     return (
         <div className="install-banner">
             <div className="install-content">
-                <img src="/favicon.png" alt="ByLocal" className="install-icon" />
-                <div className="install-text">
-                    <span className="install-title">Install ByLocal</span>
-                    <span className="install-desc">Add to home screen for faster access.</span>
+                <div className="install-left">
+                    <img src="/favicon.png" alt="ByLocal" className="install-icon" />
+                    <div className="install-text">
+                        <span className="install-title">Install ByLocal</span>
+                        <span className="install-subtitle">Your Neighborhood Shop</span>
+                    </div>
                 </div>
-                <div className="install-actions">
-                    <button className="btn-text" onClick={() => setSupportsPWA(false)}>Not now</button>
-                    <button className="btn-primary-sm" onClick={onClick}>Install</button>
-                </div>
+                <button className="btn-install-main" onClick={onClick}>Install</button>
+                <button className="btn-dismiss-x" onClick={() => setSupportsPWA(false)} aria-label="Close">
+                    <X size={16} />
+                </button>
             </div>
             <style>{`
                 .install-banner {
                     position: fixed;
-                    top: 20px;
+                    top: 10px;
                     left: 50%;
                     transform: translateX(-50%);
-                    width: 90%;
-                    max-width: 400px;
+                    width: 94%;
+                    max-width: 480px;
                     background: white;
-                    padding: 1.5rem;
-                    border-radius: 16px;
-                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+                    padding: 10px 16px;
+                    border-radius: 20px;
+                    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
                     z-index: 9999;
-                    border: 1px solid var(--border);
-                    animation: popupAppear 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                    border: 1px solid rgba(0,0,0,0.05);
+                    animation: bannerSlideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1);
                 }
                 .install-content {
                     display: flex;
-                    flex-direction: column;
-                    gap: 1rem;
                     align-items: center;
-                    text-align: center;
+                    justify-content: space-between;
+                    position: relative;
+                }
+                .install-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
                 }
                 .install-icon {
-                    width: 64px;
-                    height: 64px;
-                    object-fit: contain;
+                    width: 48px;
+                    height: 48px;
+                    object-fit: cover;
                     border-radius: 12px;
-                    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                    background: #f8fafc;
                 }
                 .install-text {
                     display: flex;
                     flex-direction: column;
-                    gap: 0.25rem;
                 }
                 .install-title {
-                    font-size: 1.1rem;
+                    font-size: 0.95rem;
                     font-weight: 700;
-                    color: var(--text-main);
+                    color: var(--text-main, #1e293b);
+                    line-height: 1.2;
                 }
-                .install-desc {
-                    font-size: 0.9rem;
-                    color: var(--text-muted);
+                .install-subtitle {
+                    font-size: 0.75rem;
+                    color: var(--text-muted, #64748b);
+                    line-height: 1.2;
                 }
-                .install-actions {
-                    display: flex;
-                    gap: 1rem;
-                    width: 100%;
-                    justify-content: center;
-                }
-                .btn-text {
+                .btn-install-main {
                     background: none;
-                    color: var(--text-muted);
-                    font-weight: 600;
+                    color: var(--accent-blue, #3b82f6);
+                    font-weight: 700;
                     font-size: 0.9rem;
-                    padding: 0.5rem 1rem;
+                    padding: 10px 14px;
+                    border: none;
+                    cursor: pointer;
+                    margin-left: auto;
+                    margin-right: 15px;
                 }
-                .btn-text:hover {
-                    color: var(--text-main);
-                }
-                .btn-primary-sm {
-                    background: var(--grad-main);
+                .btn-dismiss-x {
+                    position: absolute;
+                    top: -12px;
+                    right: -12px;
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    background: #1e293b;
                     color: white;
-                    padding: 0.6rem 1.5rem;
-                    border-radius: 99px;
-                    font-weight: 600;
-                    font-size: 0.9rem;
-                    box-shadow: var(--shadow-sm);
-                    flex: 1;
-                    max-width: 150px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: 2px solid white;
+                    cursor: pointer;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
                 }
-                @keyframes popupAppear {
+                @keyframes bannerSlideDown {
                     from { 
                         opacity: 0;
-                        transform: translate(-50%, -20px) scale(0.95);
+                        transform: translate(-50%, -40px);
                     }
                     to { 
                         opacity: 1;
-                        transform: translate(-50%, 0) scale(1);
+                        transform: translate(-50%, 0);
                     }
                 }
             `}</style>

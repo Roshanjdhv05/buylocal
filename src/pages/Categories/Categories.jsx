@@ -88,18 +88,26 @@ const Categories = () => {
     useEffect(() => {
         const fetchDbCategories = async () => {
             try {
-                const { data, error } = await supabase
-                    .from('categories')
+                // Fetch Sections
+                const { data: sectionsData, error: sectionsError } = await supabase
+                    .from('category_sections')
                     .select('*')
-                    .order('name', { ascending: true });
-                if (error) throw error;
+                    .order('name');
+                if (sectionsError) throw sectionsError;
+
+                // Fetch All Subsections
+                const { data: subData, error: subError } = await supabase
+                    .from('category_subsections')
+                    .select('*')
+                    .order('name');
+                if (subError) throw subError;
                 
-                // Group subcategories under parents
-                const parents = data.filter(c => !c.parent_id);
-                const structured = parents.map(p => ({
-                    ...p,
-                    subcategories: data.filter(c => c.parent_id === p.id)
+                // Group subsections under sections
+                const structured = (sectionsData || []).map(section => ({
+                    ...section,
+                    subcategories: (subData || []).filter(sub => sub.section_id === section.id)
                 }));
+
                 setDbCategories(structured);
                 if (structured.length > 0 && !categoryName) {
                     setActiveCategory(structured[0].name);
@@ -111,11 +119,19 @@ const Categories = () => {
         fetchDbCategories();
     }, []);
 
+
     // Helper to get icon component or emoji
-    const getCategoryIcon = (iconName, size = 24) => {
-        if (!iconName) return <Package size={size} />;
-        // If it's an emoji (single character roughly)
-        if (iconName.length < 3) return <span style={{ fontSize: `${size}px` }}>{iconName}</span>;
+    const getCategoryIcon = (iconNameOrUrl, size = 24, isImageUrl = false) => {
+        if (isImageUrl && iconNameOrUrl) {
+            return (
+                <div className="cat-img-mini" style={{ width: size, height: size }}>
+                    <img src={iconNameOrUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                </div>
+            );
+        }
+        if (!iconNameOrUrl) return <Package size={size} />;
+        // If it's an emoji (single character roughly) or a URL starting with http
+        if (iconNameOrUrl.length < 3) return <span style={{ fontSize: `${size}px` }}>{iconNameOrUrl}</span>;
         
         // Map common lucide names if needed, or just default to Package
         const iconMap = {
@@ -131,7 +147,7 @@ const Categories = () => {
             'Activity': <Activity size={size} />,
             'Package': <Package size={size} />
         };
-        return iconMap[iconName] || <span>{iconName}</span>;
+        return iconMap[iconNameOrUrl] || <span>{iconNameOrUrl}</span>;
     };
 
     useEffect(() => {
@@ -193,7 +209,7 @@ const Categories = () => {
                                             }}
                                         >
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                {getCategoryIcon(cat.icon, 18)}
+                                                {getCategoryIcon(cat.image_url || cat.icon, 18, !!cat.image_url)}
                                                 <span>{cat.name}</span>
                                             </div>
                                             {cat.subcategories?.length > 0 && (
@@ -286,7 +302,7 @@ const Categories = () => {
                                     onClick={() => setActiveCategory(cat.name)}
                                 >
                                     <div className="mobile-nav-icon">
-                                        {getCategoryIcon(cat.icon, 24)}
+                                        {getCategoryIcon(cat.image_url || cat.icon, 24, !!cat.image_url)}
                                     </div>
                                     <span className="mobile-nav-text">{cat.name}</span>
                                 </div>
@@ -304,7 +320,7 @@ const Categories = () => {
                                         }}>
                                             <div className="subcategory-card" style={{ backgroundColor: '#f8fafc', opacity: isAvailable ? 1 : 0.6 }}>
                                                 <div className="subcategory-icon">
-                                                    {getCategoryIcon(sub.icon, 32)}
+                                                    {getCategoryIcon(sub.image_url || sub.icon, 48, !!sub.image_url)}
                                                 </div>
                                                 {!isAvailable && (
                                                     <div className="availability-overlay" style={{
@@ -752,11 +768,32 @@ const Categories = () => {
                         text-align: center;
                     }
                     
-                    .no-subcategories {
-                        grid-column: 1 / -1;
-                        padding: 4rem 1rem;
                         text-align: center;
                         color: #94a3b8;
+                    }
+
+                    .cat-img-mini {
+                        overflow: hidden;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border-radius: 4px;
+                        background: #f1f5f9;
+                    }
+
+                    .subcategory-icon {
+                        width: 100%;
+                        height: 100%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        overflow: hidden;
+                        border-radius: 12px;
+                    }
+                    .subcategory-icon img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
                     }
                 }
             `}</style>

@@ -55,6 +55,7 @@ const SellerDashboard = () => {
         continuous: false
     });
     const [campaignPreview, setCampaignPreview] = useState(null);
+    const [campaignMobilePreview, setCampaignMobilePreview] = useState(null);
     const [customCategories, setCustomCategories] = useState([]);
     const [isAddingCategory, setIsAddingCategory] = useState(false);
     const [newCategory, setNewCategory] = useState({ name: '', image: null });
@@ -1108,7 +1109,7 @@ const SellerDashboard = () => {
                                                     {orders.slice(0, 5).map(order => (
                                                         <tr key={order.id}>
                                                             <td className="order-id-cell" data-label="Order ID">
-                                                                #ORD-{order.id.substring(0, 6).toUpperCase()}
+                                                                {order.display_id ? `#${order.display_id}` : `#ORD-${order.id.substring(0, 6).toUpperCase()}`}
                                                                 <span className="order-date-span">{new Date(order.created_at).toLocaleString()}</span>
                                                             </td>
                                                             <td data-label="Items">
@@ -1465,7 +1466,7 @@ const SellerDashboard = () => {
                                                         <div className="so-header-row">
                                                             <div className="so-header-left">
                                                                 <div className="so-id-row">
-                                                                    <span className="so-id">#ORD-{order.id?.substring(0,6).toUpperCase()}</span>
+                                                                    <span className="so-id">{order.display_id ? `#${order.display_id}` : `#ORD-${order.id?.substring(0,6).toUpperCase()}`}</span>
                                                                     <span className={`so-badge so-badge-${order.status || 'new'}`}>{order.status === 'pending' ? 'NEW' : order.status}</span>
                                                                 </div>
                                                                 <div className="so-time-row">
@@ -1496,7 +1497,7 @@ const SellerDashboard = () => {
                                                                      </div>
                                                                     <div className="so-item-details">
                                                                         <p className="so-item-name">{item.name}</p>
-                                                                        <p className="so-item-meta">Qty: {item.quantity}{item.size ? ` • Size: ${item.size}` : ''}</p>
+                                                                        <p className="so-item-meta">ID: #PRD-{item.id?.slice(0, 6).toUpperCase() || 'N/A'} • Qty: {item.quantity}{item.size ? ` • Size: ${item.size}` : ''}</p>
                                                                     </div>
                                                                     <div className="so-item-price" style={{ display: 'none' }}>
                                                                         ₹{Number(item.online_price || item.price || 0) * (item.quantity || 1)}

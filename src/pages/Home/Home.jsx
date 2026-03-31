@@ -32,6 +32,7 @@ const Home = () => {
     const [isPaused, setIsPaused] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [dbCategories, setDbCategories] = useState([]);
+    const [homeCategories, setHomeCategories] = useState([]);
 
     const [showSplash, setShowSplash] = useState(() => {
         // Only show splash screen once per session
@@ -99,17 +100,34 @@ const Home = () => {
                         .eq('is_active', true)
                         .or(`end_date.is.null,end_date.gt.${new Date().toISOString()}`);
 
-                    const { data: categoriesData } = await supabase
-                        .from('categories')
+                    const { data: sectionsData } = await supabase
+                        .from('category_sections')
                         .select('*')
-                        .is('parent_id', null)
                         .order('name');
+                    
+                    const { data: subData } = await supabase
+                        .from('category_subsections')
+                        .select('*')
+                        .order('name');
+
+                    const { data: homeCatsData } = await supabase
+                        .from('home_page_categories')
+                        .select('*')
+                        .order('id');
+
+                    const structuredCats = (sectionsData || []).map(s => ({
+                        ...s,
+                        subsections: (subData || []).filter(sub => sub.section_id === s.id)
+                    }));
+
 
                     if (mounted) {
                         setStores(storesData || []);
                         setProducts(productsData || []);
                         setReviews(reviewsData || []);
-                        setDbCategories(categoriesData || []);
+                        setDbCategories(structuredCats || []);
+                        setHomeCategories(homeCatsData || []);
+
                     
                     const sortedCampaigns = (campaignsData || []).sort((a, b) => {
                         if (!a.store_id && b.store_id) return -1;
@@ -175,8 +193,16 @@ const Home = () => {
     const searchResults = searchQuery ? enrichedProducts.filter(p => {
         const query = searchQuery.toLowerCase().trim();
         
-        // 1. Check for exact category or name match (Strongest)
-        if (p.category?.toLowerCase() === query || p.name?.toLowerCase() === query) return true;
+        // Find if query is a section name
+        const matchedSection = dbCategories.find(s => s.name.toLowerCase() === query);
+        const subsectionsOfSection = matchedSection ? (matchedSection.subsections || []) : [];
+        const subsectionNames = subsectionsOfSection.map(sub => sub.name.toLowerCase());
+
+        // 1. Check for section/subsection match
+        if (p.category?.toLowerCase() === query || subsectionNames.includes(p.category?.toLowerCase())) return true;
+        
+        // 2. Check for exact name match
+        if (p.name?.toLowerCase() === query) return true;
 
         // 2. Check for tag match (Strongest)
         if (p.tags?.some(tag => tag.toLowerCase() === query)) return true;
@@ -465,23 +491,33 @@ const Home = () => {
                 )}
             </header>
 
-            {/* Category Navigation (Static List) */}
+            {/* Category Navigation (Dynamic from Database Sections) */}
             <div className="container category-nav-container">
                 <div className="category-minimal-grid">
-                    {categories.map(cat => (
+                    {homeCategories.map(cat => (
                         <Link
-                            key={cat.name}
+                            key={cat.id}
                             to={`/?search=${encodeURIComponent(cat.name)}`}
                             className="category-icon-item"
                         >
                             <div className="category-base">
-                                {cat.svg}
+                                {cat.image_url ? (
+                                    <img src={cat.image_url} alt={cat.name} className="cat-nav-img" />
+                                ) : (
+                                    <span style={{ fontSize: '24px' }}>{cat.icon || '📦'}</span>
+                                )}
                             </div>
                             <span className="category-label">{cat.name}</span>
                         </Link>
                     ))}
+                    {homeCategories.length === 0 && (
+                        <p style={{ gridColumn: '1 / -1', textAlign: 'center', opacity: 0.5, fontSize: '0.8rem', padding: '1rem' }}>
+                            No categories available
+                        </p>
+                    )}
                 </div>
             </div>
+
 
             <main className="container main-content">
                 {/* Nearby Stores */}
@@ -509,16 +545,20 @@ const Home = () => {
                     <div className="stores-horizontal-scroll">
                         {nearestStores.length > 0 ? (
                             nearestStores.map(store => (
-                                <Link to={`/${encodeURIComponent(store.name)}`} key={store.id} className="store-circle-card">
-
-                                    <div className="store-circle-img">
+                                <Link to={`/${encodeURIComponent(store.name)}`} key={store.id} className="store-premium-card">
+                                    <div className="store-card-image">
                                         <img src={store.banner_url || 'https://via.placeholder.com/150'} alt={store.name} />
                                         {store.distance !== Infinity && (
                                             <span className="store-dist-badge">{store.distance.toFixed(1)} km</span>
                                         )}
                                     </div>
-                                    <h4>{store.name}</h4>
-                                    <span>{store.category || 'Local Shop'}</span>
+                                    <div className="store-card-content">
+                                        <h4>{store.name}</h4>
+                                        <span className="store-category">{store.category || 'Local Shop'}</span>
+                                        <div className="view-shop-btn">
+                                            {t('home.viewShop') || 'View Shop'} <ChevronRight size={14} />
+                                        </div>
+                                    </div>
                                 </Link>
                             ))
                         ) : (
@@ -968,7 +1008,7 @@ const Home = () => {
         /* Stores Horizontal Scroll */
         .stores-horizontal-scroll {
             display: flex;
-            gap: 2rem;
+            gap: 1.25rem;
             overflow-x: auto;
             padding: 1rem 0.5rem;
             scrollbar-width: none;
@@ -976,41 +1016,81 @@ const Home = () => {
         }
         .stores-horizontal-scroll::-webkit-scrollbar { display: none; }
         
-        .store-circle-card {
-            flex: 0 0 100px;
-            text-align: center;
+        .store-premium-card {
+            flex: 0 0 160px;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            align-items: center;
             text-decoration: none;
-            transition: transform 0.2s;
+            transition: all 0.3s ease;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
-        .store-circle-card:hover { transform: translateY(-5px); }
-        .store-circle-img {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
+        .store-premium-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: #e2e8f0;
+        }
+        .store-card-image {
+            width: 100%;
+            height: 100px;
             overflow: hidden;
-            margin-bottom: 0.5rem;
             position: relative;
-            border: 2px solid white;
-            box-shadow: var(--shadow-sm);
         }
-        .store-circle-img img { width: 100%; height: 100%; object-fit: cover; }
+        .store-card-image img { width: 100%; height: 100%; object-fit: cover; }
         .store-dist-badge {
             position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--success);
+            top: 8px;
+            right: 8px;
+            background: rgba(16, 185, 129, 0.9);
+            backdrop-filter: blur(4px);
             color: white;
             font-size: 0.65rem;
-            padding: 2px 6px;
-            border-radius: 10px;
+            padding: 2px 8px;
+            border-radius: 20px;
             font-weight: 700;
         }
-        .store-circle-card h4 { font-size: 0.8rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.1rem; }
-        .store-circle-card span { font-size: 0.65rem; color: var(--text-muted); }
+        .store-card-content {
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        .store-premium-card h4 { 
+            font-size: 0.85rem; 
+            font-weight: 700; 
+            color: #1e293b; 
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .store-category { 
+            font-size: 0.7rem; 
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+        .view-shop-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            background: #f8fafc;
+            color: #4f46e5;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 6px;
+            border-radius: 8px;
+            transition: all 0.2s;
+            border: 1px solid #f1f5f9;
+        }
+        .store-premium-card:hover .view-shop-btn {
+            background: #4f46e5;
+            color: white;
+            border-color: #4f46e5;
+        }
 
         /* Products Grid */
         .products-grid {
@@ -1208,6 +1288,8 @@ const Home = () => {
                 text-align: center;
             }
             .empty-inline-stores p { font-size: 0.9rem; font-weight: 600; }
+            .category-base { overflow: hidden; display: flex; align-items: center; justify-content: center; }
+            .cat-nav-img { width: 100%; height: 100%; object-fit: cover; }
       `}</style>
         </div>
     );

@@ -474,18 +474,14 @@ const PublicStore = () => {
             )}
 
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap');
-
                 .luxury-store-wrapper { 
                     background: #fdfcfb; 
                     min-height: 100vh; 
                     padding-bottom: 8rem; 
                     color: #2c241e; 
-                    font-family: 'Inter', sans-serif; 
                     overflow-x: hidden;
                 }
-                
-                h1, h2, h3, h4, .luxury-origin { font-family: 'Playfair Display', serif; }
+
 
                 /* PHASE 3: LEFT-ALIGNED SWIPEABLE */
                 .luxury-hero { 

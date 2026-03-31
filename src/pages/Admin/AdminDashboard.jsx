@@ -4,7 +4,7 @@ import {
     Users, Store, Package, ShoppingBag, IndianRupee, LogOut, 
     TrendingUp, Search, ChevronLeft, ShieldCheck, UserPlus, 
     ShieldAlert, Edit, Trash2, CheckCircle, XCircle, Settings,
-    Lock, Unlock, Clock, Database, Plus, Eye
+    Lock, Unlock, Clock, Database, Plus, Eye, Pencil, Check, X
 } from 'lucide-react';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import './AdminDashboard.css';
@@ -41,7 +41,30 @@ const AdminDashboard = ({ onLogout }) => {
     const [desktopPreview, setDesktopPreview] = useState(null);
     const [mobilePreview, setMobilePreview] = useState(null);
     const [categories, setCategories] = useState([]);
-    const [newCategory, setNewCategory] = useState({ name: '', icon: '', parent_id: null });
+    const [sections, setSections] = useState([]);
+    const [subsections, setSubsections] = useState([]);
+    const [selectedSectionId, setSelectedSectionId] = useState(null);
+    const [newSection, setNewSection] = useState({ name: '' });
+    const [newSubsection, setNewSubsection] = useState({ name: '', section_id: null });
+
+    // Category Image Upload State
+    const [sectionFile, setSectionFile] = useState(null);
+    const [sectionPreview, setSectionPreview] = useState(null);
+    const [subsectionFile, setSubsectionFile] = useState(null);
+    const [subsectionPreview, setSubsectionPreview] = useState(null);
+    const [categoryUploading, setCategoryUploading] = useState(false);
+
+    // Editing States
+    const [editingSectionId, setEditingSectionId] = useState(null);
+    const [editingSectionName, setEditingSectionName] = useState('');
+    const [editSectionFile, setEditSectionFile] = useState(null);
+    const [editSectionPreview, setEditSectionPreview] = useState(null);
+
+    const [editingSubsectionId, setEditingSubsectionId] = useState(null);
+    const [editingSubsectionName, setEditingSubsectionName] = useState('');
+    const [editSubsectionFile, setEditSubsectionFile] = useState(null);
+    const [editSubsectionPreview, setEditSubsectionPreview] = useState(null);
+
 
     // Subscription Control State
     const [isSubSectionEnabled, setIsSubSectionEnabled] = useState(false);
@@ -65,11 +88,80 @@ const AdminDashboard = ({ onLogout }) => {
     const [productImages, setProductImages] = useState([]);
     const [productPreviews, setProductPreviews] = useState([]);
 
+    const [homeCategories, setHomeCategories] = useState([]);
+    const [isHomeCategoryTab, setIsHomeCategoryTab] = useState(false);
+
     useEffect(() => {
         fetchAdminData();
         fetchBanners();
         fetchCategories();
+        fetchSections();
+        fetchHomeCategories();
     }, []);
+
+    const fetchHomeCategories = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('home_page_categories')
+                .select('*')
+                .order('id');
+            if (error) throw error;
+            
+            if (data?.length === 0) {
+                // Auto-seed table if empty
+                const { error: seedError } = await supabase
+                    .from('home_page_categories')
+                    .insert([
+                        { name: 'Men' },
+                        { name: 'Women' },
+                        { name: 'Kids' },
+                        { name: 'Others' }
+                    ]);
+                if (seedError) throw seedError;
+                fetchHomeCategories(); // Refresh
+                return;
+            }
+            setHomeCategories(data || []);
+        } catch (e) { console.error('Error fetching home categories:', e.message); }
+    };
+
+    const fetchSections = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('category_sections')
+                .select('*')
+                .order('name');
+            if (error) throw error;
+            setSections(data || []);
+            if (data?.length > 0 && !selectedSectionId) {
+                setSelectedSectionId(data[0].id);
+            }
+        } catch (error) {
+            console.error('Error fetching sections:', error.message);
+        }
+    };
+
+    const fetchSubsections = async (sectionId) => {
+        if (!sectionId) return;
+        try {
+            const { data, error } = await supabase
+                .from('category_subsections')
+                .select('*')
+                .eq('section_id', sectionId)
+                .order('name');
+            if (error) throw error;
+            setSubsections(data || []);
+        } catch (error) {
+            console.error('Error fetching subsections:', error.message);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedSectionId) {
+            fetchSubsections(selectedSectionId);
+        }
+    }, [selectedSectionId]);
+
 
     const fetchCategories = async () => {
         try {
@@ -496,7 +588,76 @@ const AdminDashboard = ({ onLogout }) => {
         );
     }
 
+    const uploadCategoryImage = async (file) => {
+        if (!file) return null;
+        try {
+            setCategoryUploading(true);
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}.${fileExt}`;
+            const filePath = `categories/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('banners')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('banners')
+                .getPublicUrl(filePath);
+
+            return publicUrl;
+        } catch (error) {
+            console.error('Error uploading image:', error.message);
+            alert('Upload failed: ' + error.message);
+            return null;
+        } finally {
+            setCategoryUploading(false);
+        }
+    };
+
+    const handleEditSaveSection = async (sectionId) => {
+        if (!editingSectionName) return;
+        setCategoryUploading(true);
+        try {
+            let imgUrl = editSectionPreview;
+            if (editSectionFile) {
+                const uploadedUrl = await uploadCategoryImage(editSectionFile);
+                if (uploadedUrl) imgUrl = uploadedUrl;
+            }
+            const { error } = await supabase
+                .from('category_sections')
+                .update({ name: editingSectionName, image_url: imgUrl })
+                .eq('id', sectionId);
+            if (error) throw error;
+            setEditingSectionId(null);
+            fetchSections();
+        } catch (e) { alert(e.message); }
+        finally { setCategoryUploading(false); }
+    };
+
+    const handleEditSaveSubsection = async (subId) => {
+        if (!editingSubsectionName) return;
+        setCategoryUploading(true);
+        try {
+            let imgUrl = editSubsectionPreview;
+            if (editSubsectionFile) {
+                const uploadedUrl = await uploadCategoryImage(editSubsectionFile);
+                if (uploadedUrl) imgUrl = uploadedUrl;
+            }
+            const { error } = await supabase
+                .from('category_subsections')
+                .update({ name: editingSubsectionName, image_url: imgUrl })
+                .eq('id', subId);
+            if (error) throw error;
+            setEditingSubsectionId(null);
+            if (selectedSectionId) fetchSubsections(selectedSectionId);
+        } catch (e) { alert(e.message); }
+        finally { setCategoryUploading(false); }
+    };
+
     return (
+
         <div className="admin-dashboard-layout">
             <aside className="admin-sidebar">
                 <div className="admin-logo">
@@ -1359,83 +1520,337 @@ const AdminDashboard = ({ onLogout }) => {
                         </section>
                     </div>
                 ) : activeTab === 'categories' ? (
-                    <div className="admin-categories-view">
+                    <div className="admin-categories-view-new">
                         <section className="admin-section">
                             <div className="section-header">
-                                <h2>Category Management</h2>
-                                <p>Manage platform-wide categories and subcategories.</p>
-                            </div>
-                            
-                            <div className="add-category-form-card">
-                                <h3>Add New Category</h3>
-                                <div className="category-inputs-row">
-                                    <input 
-                                        type="text" 
-                                        placeholder="Category Name (e.g. Anime)" 
-                                        value={newCategory.name}
-                                        onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-                                    />
-                                    <input 
-                                        type="text" 
-                                        placeholder="Icon (e.g. 🧸)" 
-                                        value={newCategory.icon}
-                                        onChange={(e) => setNewCategory({ ...newCategory, icon: e.target.value })}
-                                    />
-                                    <select 
-                                        value={newCategory.parent_id || ''}
-                                        onChange={(e) => setNewCategory({ ...newCategory, parent_id: e.target.value ? parseInt(e.target.value) : null })}
-                                    >
-                                        <option value="">Top Level Category</option>
-                                        {categories.filter(c => !c.parent_id).map(c => (
-                                            <option key={c.id} value={c.id}>Under {c.name}</option>
-                                        ))}
-                                    </select>
-                                    <button className="btn-primary" onClick={async () => {
-                                        if (!newCategory.name) return alert('Name is required');
-                                        try {
-                                            const { error } = await supabase.from('categories').insert([newCategory]);
-                                            if (error) throw error;
-                                            setNewCategory({ name: '', icon: '', parent_id: null });
-                                            fetchCategories();
-                                            alert('Category added successfully');
-                                        } catch (e) { alert(e.message); }
-                                    }}>Add</button>
+                                <div className="dual-header">
+                                    <div className="title-group">
+                                        <h2>Platform Hierarchy Management</h2>
+                                        <p>Manage store category Sections and their child Sub-sections or home page visuals.</p>
+                                    </div>
+                                    <div className="header-actions">
+                                        <div className="tab-toggle-group">
+                                            <button 
+                                                className={`tab-btn ${!isHomeCategoryTab ? 'active' : ''}`}
+                                                onClick={() => setIsHomeCategoryTab(false)}
+                                            >
+                                                General Categories
+                                            </button>
+                                            <button 
+                                                className={`tab-btn ${isHomeCategoryTab ? 'active' : ''}`}
+                                                onClick={() => setIsHomeCategoryTab(true)}
+                                            >
+                                                Home Page Categories
+                                            </button>
+                                        </div>
+                                        <button 
+                                            className="btn-primary" 
+                                            onClick={async () => {
+                                                const { data, error } = await supabase.rpc('sync_legacy_categories');
+                                                if (error) alert(error.message);
+                                                else alert('Legacy categories synced.');
+                                            }}
+                                            title="Developer tool to sync data"
+                                        >
+                                            <Database size={16} /> Sync Legacy
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="table-container mt-6">
-                                <table className="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Icon</th>
-                                            <th>Name</th>
-                                            <th>Type</th>
-                                            <th>Parent</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {categories.map(cat => (
-                                            <tr key={cat.id}>
-                                                <td style={{ fontSize: '1.5rem' }}>{cat.icon || '📦'}</td>
-                                                <td className="font-bold">{cat.name}</td>
-                                                <td>{cat.parent_id ? 'Subcategory' : 'Main Category'}</td>
-                                                <td>{categories.find(c => c.id === cat.parent_id)?.name || '-'}</td>
-                                                <td className="actions-cell">
-                                                    <button className="btn-icon-sm delete" onClick={async () => {
-                                                        if (!window.confirm('Delete this category and its subcategories?')) return;
-                                                        try {
-                                                            const { error } = await supabase.from('categories').delete().eq('id', cat.id);
-                                                            if (error) throw error;
-                                                            fetchCategories();
-                                                        } catch (e) { alert(e.message); }
-                                                    }}>🗑</button>
-                                                </td>
-                                            </tr>
+                            {/* CONDITIONAL CONTENT: HOME VS GENERAL */}
+                            {isHomeCategoryTab ? (
+                                <div className="home-category-management">
+                                    <div className="info-banner">
+                                        <ShieldAlert size={20} />
+                                        <p>These are the 4 fixed categories shown on the Home Page row. You can change their images here.</p>
+                                    </div>
+                                    <div className="home-cat-grid">
+                                        {homeCategories.map(cat => (
+                                            <div key={cat.id} className="home-cat-card">
+                                                <div 
+                                                    className="home-cat-preview" 
+                                                    onClick={() => document.getElementById(`home-img-${cat.id}`).click()}
+                                                >
+                                                    {cat.image_url ? (
+                                                        <img src={cat.image_url} alt={cat.name} />
+                                                    ) : (
+                                                        <div className="placeholder">
+                                                            <ShoppingBag size={32} opacity={0.2} />
+                                                            <span>No Image</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="hover-overlay">
+                                                        <Plus size={24} />
+                                                        <span>Upload Image</span>
+                                                    </div>
+                                                </div>
+                                                <input 
+                                                    id={`home-img-${cat.id}`}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    hidden
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files[0];
+                                                        if (file) {
+                                                            setCategoryUploading(true);
+                                                            try {
+                                                                const imgUrl = await uploadCategoryImage(file);
+                                                                if (imgUrl) {
+                                                                    const { error } = await supabase
+                                                                        .from('home_page_categories')
+                                                                        .update({ image_url: imgUrl })
+                                                                        .eq('id', cat.id);
+                                                                    if (error) throw error;
+                                                                    fetchHomeCategories();
+                                                                }
+                                                            } catch (err) { alert(err.message); }
+                                                            finally { setCategoryUploading(false); }
+                                                        }
+                                                    }}
+                                                />
+                                                <div className="home-cat-info">
+                                                    <h4>{cat.name}</h4>
+                                                    <p>Appears on Home Page</p>
+                                                </div>
+                                            </div>
                                         ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="category-management-grid">
+                                    {/* LEFT PANEL: SECTIONS */}
+                                    <div className="management-panel sections-panel">
+                                        <div className="panel-header">
+                                            <h3>1. Category Sections</h3>
+                                            <span className="count-badge">{sections.length}</span>
+                                        </div>
+                                        
+                                        <div className="panel-form">
+                                            <div className="cat-upload-wrapper">
+                                                <div className="cat-upload-preview" onClick={() => document.getElementById('s-img').click()}>
+                                                    {sectionPreview ? <img src={sectionPreview} alt="" /> : <span>🖼️</span>}
+                                                </div>
+                                                <input id="s-img" type="file" accept="image/*" hidden onChange={(e) => {
+                                                    const file = e.target.files[0];
+                                                    if(file) { setSectionFile(file); setSectionPreview(URL.createObjectURL(file)); }
+                                                }} />
+                                                <div className="cat-inputs">
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="Section Name" 
+                                                        value={newSection.name}
+                                                        onChange={(e) => setNewSection({ ...newSection, name: e.target.value })}
+                                                    />
+                                                </div>
+                                                <button className="btn-add-circle" disabled={categoryUploading} onClick={async () => {
+                                                    if (!newSection.name) return;
+                                                    setCategoryUploading(true);
+                                                    try {
+                                                        const imgUrl = await uploadCategoryImage(sectionFile);
+                                                        const { error } = await supabase.from('category_sections').insert([{
+                                                            name: newSection.name,
+                                                            image_url: imgUrl
+                                                        }]);
+                                                        if (error) throw error;
+                                                        setNewSection({ name: '' });
+                                                        setSectionFile(null); setSectionPreview(null);
+                                                        fetchSections();
+                                                    } catch (e) { alert(e.message); }
+                                                    finally { setCategoryUploading(false); }
+                                                }}>{categoryUploading ? '...' : <Plus size={20} />}</button>
+                                            </div>
+                                        </div>
+
+                                        <div className="panel-list">
+                                            {sections.map(section => (
+                                                <div 
+                                                    key={section.id} 
+                                                    className={`panel-item ${selectedSectionId === section.id ? 'active' : ''}`}
+                                                    onClick={() => setSelectedSectionId(section.id)}
+                                                >
+                                                    {editingSectionId === section.id ? (
+                                                        <div className="item-edit-form" onClick={(e) => e.stopPropagation()}>
+                                                            <div className="edit-img-mini" onClick={() => document.getElementById(`edit-s-img-${section.id}`).click()}>
+                                                                {editSectionPreview ? <img src={editSectionPreview} alt="" /> : <span className="item-icon-text">🖼️</span>}
+                                                                <input 
+                                                                    id={`edit-s-img-${section.id}`} 
+                                                                    type="file" 
+                                                                    accept="image/*" 
+                                                                    hidden 
+                                                                    onChange={(e) => {
+                                                                        const file = e.target.files[0];
+                                                                        if(file) { setEditSectionFile(file); setEditSectionPreview(URL.createObjectURL(file)); }
+                                                                    }} 
+                                                                />
+                                                            </div>
+                                                            <input 
+                                                                type="text" 
+                                                                className="edit-name-input"
+                                                                value={editingSectionName}
+                                                                onChange={(e) => setEditingSectionName(e.target.value)}
+                                                                autoFocus
+                                                            />
+                                                            <div className="edit-actions">
+                                                                <button className="btn-save-sm" onClick={() => handleEditSaveSection(section.id)}><Check size={14} /></button>
+                                                                <button className="btn-cancel-sm" onClick={() => setEditingSectionId(null)}><X size={14} /></button>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <div className="item-main">
+                                                                <div className="item-img-mini">
+                                                                    {section.image_url ? <img src={section.image_url} alt="" /> : <span className="item-icon-text">{section.icon || '📦'}</span>}
+                                                                </div>
+                                                                <span className="item-name">{section.name}</span>
+                                                            </div>
+                                                            <div className="item-actions">
+                                                                <button className="item-edit" onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditingSectionId(section.id);
+                                                                    setEditingSectionName(section.name);
+                                                                    setEditSectionPreview(section.image_url);
+                                                                    setEditSectionFile(null);
+                                                                }}><Pencil size={14} /></button>
+                                                                <button className="item-delete" onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    if (!window.confirm(`Delete section "${section.name}" and all its sub-sections?`)) return;
+                                                                    try {
+                                                                        const { error } = await supabase.from('category_sections').delete().eq('id', section.id);
+                                                                        if (error) throw error;
+                                                                        fetchSections();
+                                                                        if (selectedSectionId === section.id) setSelectedSectionId(null);
+                                                                    } catch (err) { alert(err.message); }
+                                                                }}><Trash2 size={14} /></button>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* RIGHT PANEL: SUB-SECTIONS */}
+                                    <div className="management-panel subsections-panel">
+                                        <div className="panel-header">
+                                            <h3>2. {sections.find(s => s.id === selectedSectionId)?.name || 'Select Section'} Sub-sections</h3>
+                                            <span className="count-badge">{subsections.length}</span>
+                                        </div>
+
+                                        {selectedSectionId ? (
+                                            <>
+                                                <div className="panel-form">
+                                                    <div className="cat-upload-wrapper">
+                                                        <div className="cat-upload-preview" onClick={() => document.getElementById('sub-img').click()}>
+                                                            {subsectionPreview ? <img src={subsectionPreview} alt="" /> : <span>🖼️</span>}
+                                                        </div>
+                                                        <input id="sub-img" type="file" accept="image/*" hidden onChange={(e) => {
+                                                            const file = e.target.files[0];
+                                                            if(file) { setSubsectionFile(file); setSubsectionPreview(URL.createObjectURL(file)); }
+                                                        }} />
+                                                        <div className="cat-inputs">
+                                                            <input 
+                                                                type="text" 
+                                                                placeholder="Sub-section Name" 
+                                                                value={newSubsection.name}
+                                                                onChange={(e) => setNewSubsection({ ...newSubsection, name: e.target.value })}
+                                                            />
+                                                        </div>
+                                                        <button className="btn-add-circle" disabled={categoryUploading} onClick={async () => {
+                                                            if (!newSubsection.name) return;
+                                                            setCategoryUploading(true);
+                                                            try {
+                                                                const imgUrl = await uploadCategoryImage(subsectionFile);
+                                                                const { error } = await supabase.from('category_subsections').insert([{
+                                                                    name: newSubsection.name,
+                                                                    section_id: selectedSectionId,
+                                                                    image_url: imgUrl
+                                                                }]);
+                                                                if (error) throw error;
+                                                                setNewSubsection({ name: '' });
+                                                                setSubsectionFile(null); setSubsectionPreview(null);
+                                                                fetchSubsections(selectedSectionId);
+                                                            } catch (e) { alert(e.message); }
+                                                            finally { setCategoryUploading(false); }
+                                                        }}>{categoryUploading ? '...' : <Plus size={20} />}</button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="panel-list">
+                                                    {subsections.length > 0 ? subsections.map(sub => (
+                                                        <div key={sub.id} className="panel-item no-hover">
+                                                            {editingSubsectionId === sub.id ? (
+                                                                <div className="item-edit-form">
+                                                                    <div className="edit-img-mini" onClick={() => document.getElementById(`edit-sub-img-${sub.id}`).click()}>
+                                                                        {editSubsectionPreview ? <img src={editSubsectionPreview} alt="" /> : <span className="item-icon-text">🖼️</span>}
+                                                                        <input 
+                                                                            id={`edit-sub-img-${sub.id}`} 
+                                                                            type="file" 
+                                                                            accept="image/*" 
+                                                                            hidden 
+                                                                            onChange={(e) => {
+                                                                                const file = e.target.files[0];
+                                                                                if(file) { setEditSubsectionFile(file); setEditSubsectionPreview(URL.createObjectURL(file)); }
+                                                                            }} 
+                                                                        />
+                                                                    </div>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        className="edit-name-input"
+                                                                        value={editingSubsectionName}
+                                                                        onChange={(e) => setEditingSubsectionName(e.target.value)}
+                                                                        autoFocus
+                                                                    />
+                                                                    <div className="edit-actions">
+                                                                        <button className="btn-save-sm" onClick={() => handleEditSaveSubsection(sub.id)}><Check size={14} /></button>
+                                                                        <button className="btn-cancel-sm" onClick={() => setEditingSubsectionId(null)}><X size={14} /></button>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <>
+                                                                    <div className="item-main">
+                                                                        <div className="item-img-mini">
+                                                                            {sub.image_url ? <img src={sub.image_url} alt="" /> : <div className="dot"></div>}
+                                                                        </div>
+                                                                        <span className="item-name">{sub.name}</span>
+                                                                    </div>
+                                                                    <div className="item-actions">
+                                                                        <button className="item-edit" onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setEditingSubsectionId(sub.id);
+                                                                            setEditingSubsectionName(sub.name);
+                                                                            setEditSubsectionPreview(sub.image_url);
+                                                                            setEditSubsectionFile(null);
+                                                                        }}><Pencil size={14} /></button>
+                                                                        <button className="item-delete" onClick={async () => {
+                                                                            if (!window.confirm(`Delete sub-section "${sub.name}"?`)) return;
+                                                                            try {
+                                                                                const { error } = await supabase.from('category_subsections').delete().eq('id', sub.id);
+                                                                                if (error) throw error;
+                                                                                fetchSubsections(selectedSectionId);
+                                                                            } catch (err) { alert(err.message); }
+                                                                        }}><Trash2 size={14} /></button>
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    )) : (
+                                                        <div className="empty-panel-state">
+                                                            <Database size={40} opacity={0.1} />
+                                                            <p>No sub-sections found for this section.</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="empty-panel-state central">
+                                                <ChevronLeft size={48} opacity={0.2} />
+                                                <p>Select a category section from the left to manage its sub-sections.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
                         </section>
                     </div>
                 ) : (
@@ -1587,20 +2002,32 @@ const AdminDashboard = ({ onLogout }) => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label>Category</label>
+                                    <label>Category (Sub-section)</label>
                                     <select 
                                         required 
                                         value={productForm.category}
                                         onChange={(e) => setProductForm({...productForm, category: e.target.value})}
                                     >
                                         <option value="">Select Category</option>
-                                        {categories.map(cat => (
+                                        {/* New Hierarchy */}
+                                        {sections.map(section => (
+                                            <optgroup key={section.id} label={section.name}>
+                                                {subsections.filter(sub => sub.section_id === section.id).map(sub => (
+                                                    <option key={sub.id} value={sub.name}>
+                                                        {sub.name}
+                                                    </option>
+                                                ))}
+                                            </optgroup>
+                                        ))}
+                                        {/* Legacy Fallback if needed */}
+                                        {sections.length === 0 && categories.map(cat => (
                                             <option key={cat.id} value={cat.name}>
                                                 {cat.parent_id ? '└ ' : ''}{cat.name}
                                             </option>
                                         ))}
                                     </select>
                                 </div>
+
                                 <div className="form-group">
                                     <label>Online Price (₹)</label>
                                     <input 

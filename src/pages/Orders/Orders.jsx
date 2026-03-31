@@ -209,7 +209,7 @@ const Orders = () => {
                                 }}>
                                     <div className="order-card-inner">
                                         <div className="order-header-top">
-                                            <span className="order-id-text">#ORD-{order.id.slice(0, 6).toUpperCase()}</span>
+                                            <span className="order-id-text">{order.display_id ? `#${order.display_id}` : `#ORD-${order.id.slice(0, 6).toUpperCase()}`}</span>
                                             <div className={`status-pill ${order.status}`}>
                                                 <div className="status-dot"></div>
                                                 <span>{order.status === 'pending' ? 'PENDING' : order.status === 'accepted' ? 'IN PROGRESS' : order.status === 'dispatched' ? 'DISPATCHED' : order.status === 'delivered' ? 'DELIVERED' : order.status.toUpperCase()}</span>
@@ -228,6 +228,7 @@ const Orders = () => {
                                                     </div>
                                                     <div className="item-info-mobile">
                                                         <h4>{getLocalizedName(item.name, i18n.language)}</h4>
+                                                        <p className="item-prd-id">ID: #PRD-{item.id?.slice(0, 6).toUpperCase() || 'N/A'}</p>
                                                         <p className="item-meta-mobile">Qty: {item.quantity} • {order.delivery_type === 'Self-pick' ? 'Self-pickup' : `Home Delivery`}</p>
                                                         <div className="item-price-mobile">₹{item.online_price}</div>
                                                     </div>

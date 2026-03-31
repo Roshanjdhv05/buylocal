@@ -14,7 +14,7 @@ const InvoiceModal = ({ order, store, onClose }) => {
         window.print();
     };
 
-    const orderId = "#ORD-" + order.id.slice(0, 6).toUpperCase();
+    const orderId = order.display_id ? `#${order.display_id}` : "#ORD-" + order.id.slice(0, 6).toUpperCase();
 
     return (
         <div className="invoice-modal-overlay" onClick={onClose}>

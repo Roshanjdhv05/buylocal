@@ -277,14 +277,13 @@ const StoreCategoryView = () => {
             )}
 
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
                 .store-category-page {
-                    font-family: 'Inter', sans-serif;
-                    background: #fdfaf3;
+                    background: #ffffff;
                     min-height: 100vh;
                     padding-bottom: 6rem;
+                    color: #000000;
                 }
+
 
                 .custom-container {
                     max-width: 1200px;
@@ -297,12 +296,13 @@ const StoreCategoryView = () => {
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
-                    background: #f4ecd8;
+                    background: #f8fafc;
                     padding: 0.85rem 1rem;
                     border-radius: 99px; /* Pill shape */
                     margin-bottom: 2rem;
                     cursor: pointer;
                     transition: transform 0.2s;
+                    border: 1px solid #f1f5f9;
                 }
                 .store-info-card:active {
                     transform: scale(0.98);
@@ -317,7 +317,7 @@ const StoreCategoryView = () => {
                     width: 36px;
                     height: 36px;
                     border-radius: 50%;
-                    background: #fbdec9;
+                    background: #f1f5f9;
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -336,13 +336,13 @@ const StoreCategoryView = () => {
                 .store-name {
                     font-size: 0.95rem;
                     font-weight: 800;
-                    color: #2c241e;
+                    color: #000000;
                     margin: 0;
                     line-height: 1;
                 }
                 .store-subtitle {
                     font-size: 0.6rem;
-                    color: #8b8b8b;
+                    color: #64748b;
                     font-weight: 600;
                     letter-spacing: 0.05em;
                 }
@@ -358,7 +358,7 @@ const StoreCategoryView = () => {
                     align-items: center;
                     gap: 0.35rem;
                     font-size: 0.75rem;
-                    color: #2c241e;
+                    color: #000000;
                     font-weight: 700;
                 }
 
@@ -369,7 +369,7 @@ const StoreCategoryView = () => {
                 .category-title {
                     font-size: 2.2rem;
                     font-weight: 800;
-                    color: #5b0a51;
+                    color: #000000;
                     margin: 0 0 0.5rem 0;
                     letter-spacing: -0.02em;
                 }
@@ -396,13 +396,13 @@ const StoreCategoryView = () => {
                     display: flex;
                     align-items: center;
                     gap: 0.4rem;
-                    background: #faebd7;
-                    color: #2c241e;
+                    background: #f8fafc;
+                    color: #000000;
                     font-size: 0.8rem;
                     font-weight: 700;
                     padding: 0.5rem 1rem;
                     border-radius: 20px;
-                    border: none;
+                    border: 1px solid #e2e8f0;
                     cursor: pointer;
                 }
 
@@ -433,7 +433,7 @@ const StoreCategoryView = () => {
                     border-radius: 20px;
                     overflow: hidden;
                     position: relative;
-                    background: #1e293b; /* Fallback dark bg */
+                    background: #f8fafc;
                     margin-bottom: 0.75rem;
                 }
                 .product-image-wrap img {
@@ -448,7 +448,7 @@ const StoreCategoryView = () => {
                     width: 32px;
                     height: 32px;
                     border-radius: 50%;
-                    background: rgba(255,255,255,0.8);
+                    background: rgba(255,255,255,0.9);
                     backdrop-filter: blur(4px);
                     display: flex;
                     align-items: center;
@@ -456,13 +456,14 @@ const StoreCategoryView = () => {
                     border: none;
                     cursor: pointer;
                     z-index: 2;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
                 }
                 .new-badge {
                     position: absolute;
                     bottom: 10px;
                     left: 10px;
-                    background: #faebd7;
-                    color: #2c241e;
+                    background: #000000;
+                    color: #ffffff;
                     font-size: 0.6rem;
                     font-weight: 800;
                     padding: 0.35rem 0.6rem;
@@ -477,7 +478,7 @@ const StoreCategoryView = () => {
                 .product-name {
                     font-size: 0.9rem;
                     font-weight: 700;
-                    color: #1e293b;
+                    color: #000000;
                     margin: 0 0 0.4rem 0;
                     line-height: 1.3;
                     display: -webkit-box;
@@ -494,7 +495,7 @@ const StoreCategoryView = () => {
                 .product-price {
                     font-size: 1.1rem;
                     font-weight: 800;
-                    color: #5b0a51;
+                    color: #000000;
                 }
                 .product-rating {
                     display: flex;
@@ -502,11 +503,11 @@ const StoreCategoryView = () => {
                     gap: 0.2rem;
                     font-size: 0.75rem;
                     font-weight: 700;
-                    color: #2c241e;
+                    color: #000000;
                 }
                 .product-brand {
                     font-size: 0.65rem;
-                    color: #94a3b8;
+                    color: #64748b;
                     font-weight: 700;
                     letter-spacing: 0.05em;
                     text-transform: uppercase;
@@ -529,10 +530,10 @@ const StoreCategoryView = () => {
                     width: 5px;
                     height: 5px;
                     border-radius: 50%;
-                    background: #d1d5db;
+                    background: #e2e8f0;
                 }
                 .dot.active {
-                    background: #5b0a51;
+                    background: #000000;
                 }
                 .discovering-text {
                     font-size: 0.65rem;
@@ -544,18 +545,18 @@ const StoreCategoryView = () => {
                 /* FAB */
                 .fab-top {
                     position: fixed;
-                    bottom: 100px; /* Moved up to clear location button */
+                    bottom: 100px;
                     right: 24px;
-                    width: 44px; /* Made smaller */
-                    height: 44px; /* Made smaller */
+                    width: 44px;
+                    height: 44px;
                     border-radius: 50%;
-                    background: #5b0a51;
+                    background: #000000;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     border: none;
                     cursor: pointer;
-                    box-shadow: 0 4px 14px rgba(91, 10, 81, 0.4);
+                    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
                     z-index: 99;
                     transition: transform 0.2s;
                 }
@@ -563,27 +564,23 @@ const StoreCategoryView = () => {
                     transform: scale(0.95);
                 }
 
-                /* FILTER OVERLAY & DRAWER (Reused basic styles) */
+                /* FILTER OVERLAY & DRAWER */
                 .ss-filter-overlay {
                     position: fixed; inset: 0; z-index: 9999;
                     background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(4px);
                     display: flex; justify-content: flex-end;
-                    animation: overlayIn 0.25s ease;
                 }
-                @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
 
                 .ss-filter-drawer {
                     width: 340px; max-width: 85vw; height: 100%;
                     background: #fff; display: flex; flex-direction: column;
-                    animation: drawerSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                 }
-                @keyframes drawerSlide { from { transform: translateX(100%); } to { transform: translateX(0); } }
 
                 .ss-drawer-header {
                     display: flex; justify-content: space-between; align-items: center;
                     padding: 1.25rem 1.5rem; border-bottom: 1px solid #f1f5f9;
                 }
-                .ss-drawer-header h3 { font-size: 1.1rem; font-weight: 800; color: #1e293b; margin: 0; }
+                .ss-drawer-header h3 { font-size: 1.1rem; font-weight: 800; color: #000000; margin: 0; }
                 .ss-drawer-close { width: 36px; height: 36px; border-radius: 50%; background: #f8fafc; border: none; display: flex; align-items: center; justify-content: center; color: #64748b; cursor: pointer; }
 
                 .ss-drawer-body { flex: 1; overflow-y: auto; padding: 1.5rem; }
@@ -591,11 +588,11 @@ const StoreCategoryView = () => {
                 .ss-filter-label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.75rem; margin-top: 0; }
                 .ss-sort-options { display: flex; flex-direction: column; gap: 0.5rem; }
                 .ss-sort-chip { padding: 0.75rem 1rem; border-radius: 10px; border: 1.5px solid #f1f5f9; background: #fafafa; color: #475569; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-align: left; }
-                .ss-sort-chip.active { border-color: #5b0a51; background: #faf5fa; color: #5b0a51; box-shadow: 0 2px 8px rgba(91, 10, 81, 0.1); }
+                .ss-sort-chip.active { border-color: #000000; background: #f8fafc; color: #000000; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
 
                 .ss-drawer-footer { padding: 1.25rem 1.5rem; border-top: 1px solid #f1f5f9; display: flex; gap: 0.75rem; }
                 .ss-clear-btn { flex: 1; padding: 0.75rem; border-radius: 12px; border: 1.5px solid #e2e8f0; background: #fff; color: #64748b; font-weight: 700; cursor: pointer; }
-                .ss-apply-btn { flex: 2; padding: 0.75rem; border-radius: 12px; border: none; background: #5b0a51; color: white; font-weight: 700; cursor: pointer; }
+                .ss-apply-btn { flex: 2; padding: 0.75rem; border-radius: 12px; border: none; background: #000000; color: white; font-weight: 700; cursor: pointer; }
             `}</style>
         </div>
     );
