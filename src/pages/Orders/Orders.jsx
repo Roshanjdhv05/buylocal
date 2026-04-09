@@ -24,6 +24,7 @@ const Orders = () => {
     const [trendingProducts, setTrendingProducts] = useState([]);
     const [recommendedStores, setRecommendedStores] = useState([]);
     const [activeTab, setActiveTab] = useState('active');
+    const [cancellingId, setCancellingId] = useState(null);
 
     useEffect(() => {
         if (user) {
@@ -83,6 +84,39 @@ const Orders = () => {
         return () => {
             supabase.removeChannel(subscription);
         };
+    };
+
+    const handleCancelOrder = async (orderId) => {
+        const confirmed = window.confirm(
+            'Are you sure you want to cancel this order?\n\nYou can only cancel orders that have not been accepted by the seller yet.'
+        );
+        if (!confirmed) return;
+
+        setCancellingId(orderId);
+        try {
+            const { error } = await supabase
+                .from('orders')
+                .update({
+                    status: 'cancelled',
+                    cancelled_at: new Date().toISOString(),
+                    cancelled_by: 'buyer'
+                })
+                .eq('id', orderId)
+                .eq('buyer_id', user.id)
+                .eq('status', 'pending');  // double-check: only pending orders
+
+            if (error) throw error;
+
+            // Optimistic update
+            setOrders(prev => prev.map(o =>
+                o.id === orderId ? { ...o, status: 'cancelled', cancelled_by: 'buyer' } : o
+            ));
+        } catch (err) {
+            console.error('Cancel order error:', err.message);
+            alert('Could not cancel this order. It may have already been accepted by the seller.');
+        } finally {
+            setCancellingId(null);
+        }
     };
 
     const getStatusText = (status) => {
@@ -181,87 +215,118 @@ const Orders = () => {
                             className={`tab-btn-mobile ${activeTab === 'active' ? 'active' : ''}`}
                             onClick={() => setActiveTab('active')}
                         >
-                            Active Orders
+                            Active
                         </button>
                         <button
                             className={`tab-btn-mobile ${activeTab === 'past' ? 'active' : ''}`}
                             onClick={() => setActiveTab('past')}
                         >
-                            Past Orders
+                            Delivered
+                        </button>
+                        <button
+                            className={`tab-btn-mobile ${activeTab === 'cancelled' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('cancelled')}
+                        >
+                            Cancelled
                         </button>
                     </div>
 
                     {orders.length === 0 ? <EmptyState /> : (
                         <div className="orders-list">
-                            {orders.filter(order =>
-                                activeTab === 'active'
-                                    ? ['pending', 'accepted', 'dispatched'].includes(order.status)
-                                    : order.status === 'delivered'
-                            ).length === 0 ? (
-                                <div className="no-orders-msg">{t('orders.noOrders')}</div>
-                            ) : orders.filter(order =>
-                                activeTab === 'active'
-                                    ? ['pending', 'accepted', 'dispatched'].includes(order.status)
-                                    : order.status === 'delivered'
-                            ).map(order => (
-                                <div key={order.id} className="order-card-mobile glass-card" onClick={() => {
-                                    navigate(`/orders/${order.id}`);
-                                }}>
-                                    <div className="order-card-inner">
-                                        <div className="order-header-top">
-                                            <span className="order-id-text">{order.display_id ? `#${order.display_id}` : `#ORD-${order.id.slice(0, 6).toUpperCase()}`}</span>
-                                            <div className={`status-pill ${order.status}`}>
-                                                <div className="status-dot"></div>
-                                                <span>{order.status === 'pending' ? 'PENDING' : order.status === 'accepted' ? 'IN PROGRESS' : order.status === 'dispatched' ? 'DISPATCHED' : order.status === 'delivered' ? 'DELIVERED' : order.status.toUpperCase()}</span>
-                                            </div>
-                                        </div>
-                                        <h3 className="order-store-name">{order.stores?.name}</h3>
-                                        
-                                        <div className="order-items-wrapper">
-                                            {order.items.map((item, i) => (
-                                                <div key={i} className="order-item-mobile">
-                                                    <div className="item-image-wrapper">
-                                                        <img
-                                                            src={(Array.isArray(item.images) ? item.images[0] : item.image) || 'https://via.placeholder.com/80'}
-                                                            alt={item.name}
-                                                        />
-                                                    </div>
-                                                    <div className="item-info-mobile">
-                                                        <h4>{getLocalizedName(item.name, i18n.language)}</h4>
-                                                        <p className="item-prd-id">ID: #PRD-{item.id?.slice(0, 6).toUpperCase() || 'N/A'}</p>
-                                                        <p className="item-meta-mobile">Qty: {item.quantity} • {order.delivery_type === 'Self-pick' ? 'Self-pickup' : `Home Delivery`}</p>
-                                                        <div className="item-price-mobile">₹{item.online_price}</div>
-                                                    </div>
+                            {(() => {
+                                const filtered = orders.filter(order => {
+                                    if (activeTab === 'active') return ['pending', 'accepted', 'dispatched'].includes(order.status);
+                                    if (activeTab === 'past') return order.status === 'delivered';
+                                    if (activeTab === 'cancelled') return order.status === 'cancelled';
+                                    return false;
+                                });
+
+                                if (filtered.length === 0) return (
+                                    <div className="no-orders-msg">
+                                        {activeTab === 'cancelled' ? 'No cancelled orders.' : t('orders.noOrders')}
+                                    </div>
+                                );
+
+                                return filtered.map(order => (
+                                    <div key={order.id} className="order-card-mobile glass-card" onClick={() => navigate(`/orders/${order.id}`)}>
+                                        <div className="order-card-inner">
+                                            <div className="order-header-top">
+                                                <span className="order-id-text">{order.display_id ? `#${order.display_id}` : `#ORD-${order.id.slice(0, 6).toUpperCase()}`}</span>
+                                                <div className={`status-pill ${order.status}`}>
+                                                    <div className="status-dot"></div>
+                                                    <span>{
+                                                        order.status === 'pending' ? 'PENDING' :
+                                                        order.status === 'accepted' ? 'IN PROGRESS' :
+                                                        order.status === 'dispatched' ? 'DISPATCHED' :
+                                                        order.status === 'delivered' ? 'DELIVERED' :
+                                                        order.status === 'cancelled' ? 'CANCELLED' :
+                                                        order.status.toUpperCase()
+                                                    }</span>
                                                 </div>
-                                            ))}
-                                        </div>
+                                            </div>
+                                            <h3 className="order-store-name">{order.stores?.name}</h3>
 
-                                        <div className="order-divider"></div>
+                                            <div className="order-items-wrapper">
+                                                {order.items.map((item, i) => (
+                                                    <div key={i} className="order-item-mobile">
+                                                        <div className="item-image-wrapper">
+                                                            <img
+                                                                src={(Array.isArray(item.images) ? item.images[0] : item.image) || 'https://via.placeholder.com/80'}
+                                                                alt={item.name}
+                                                            />
+                                                        </div>
+                                                        <div className="item-info-mobile">
+                                                            <h4>{getLocalizedName(item.name, i18n.language)}</h4>
+                                                            <p className="item-meta-mobile">Qty: {item.quantity} • {order.delivery_type === 'Self-pick' ? 'Self-pickup' : 'Home Delivery'}</p>
+                                                            <div className="item-price-mobile">₹{item.online_price}</div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
 
-                                        <div className="order-summary-mobile">
-                                            <div className="payment-method-mobile">
-                                                <div className="payment-icon">
-                                                    {order.payment_method === 'COD' ? <span style={{fontWeight:'bold', fontSize:'0.75rem'}}>₹</span> : '💳'}
+                                            <div className="order-divider"></div>
+
+                                            <div className="order-summary-mobile">
+                                                <div className="payment-method-mobile">
+                                                    <div className="payment-icon">
+                                                        {order.payment_method === 'COD' ? <span style={{fontWeight:'bold', fontSize:'0.75rem'}}>₹</span> : '💳'}
+                                                    </div>
+                                                    <span>{order.payment_method === 'COD' ? 'COD' : 'Online Payment'}</span>
                                                 </div>
-                                                <span>{order.payment_method === 'COD' ? 'COD' : 'Online Payment'}</span>
+                                                <div className="total-amount-mobile">
+                                                    <span>Total Amount</span>
+                                                    <strong>₹{order.total_amount}</strong>
+                                                </div>
                                             </div>
-                                            <div className="total-amount-mobile">
-                                                <span>Total Amount</span>
-                                                <strong>₹{order.total_amount}</strong>
-                                            </div>
-                                        </div>
 
-                                        <div className="order-actions-mobile">
-                                            {activeTab === 'active' ? (
-                                                <button className="btn-action primary" onClick={(e) => { e.stopPropagation(); navigate(`/orders/${order.id}`); }}>Track Order</button>
-                                            ) : (
-                                                <button className="btn-action primary-light" onClick={(e) => { e.stopPropagation(); navigate(`/${encodeURIComponent(order.stores?.name)}`); }}>Reorder</button>
+                                            <div className="order-actions-mobile">
+                                                {activeTab === 'active' && (
+                                                    <>
+                                                        <button className="btn-action primary" onClick={(e) => { e.stopPropagation(); navigate(`/orders/${order.id}`); }}>Track Order</button>
+                                                        {order.status === 'pending' && (
+                                                            <button
+                                                                className="btn-action cancel"
+                                                                disabled={cancellingId === order.id}
+                                                                onClick={(e) => { e.stopPropagation(); handleCancelOrder(order.id); }}
+                                                            >
+                                                                {cancellingId === order.id ? 'Cancelling...' : 'Cancel'}
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                )}
+                                                {activeTab === 'past' && (
+                                                    <button className="btn-action primary-light" onClick={(e) => { e.stopPropagation(); navigate(`/${encodeURIComponent(order.stores?.name)}`); }}>Reorder</button>
+                                                )}
+                                                <button className="btn-action secondary" onClick={(e) => { e.stopPropagation(); navigate(`/orders/${order.id}`); }}>Details</button>
+                                            </div>
+
+                                            {order.status === 'cancelled' && order.cancelled_by && (
+                                                <p className="cancelled-note">Cancelled by {order.cancelled_by}</p>
                                             )}
-                                            <button className="btn-action secondary" onClick={(e) => { e.stopPropagation(); navigate(`/orders/${order.id}`); }}>Details</button>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                ));
+                            })()}
                         </div>
                     )}
                 </div>
@@ -525,6 +590,23 @@ const Orders = () => {
         }
         .status-pill.cancelled .status-dot {
             background: #dc2626;
+        }
+
+        .btn-action.cancel {
+            background: #fff1f2;
+            color: #be123c;
+            border: 1px solid #fecdd3;
+            flex: 0 0 auto;
+        }
+        .btn-action.cancel:hover { background: #ffe4e6; }
+        .btn-action.cancel:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .cancelled-note {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 0.5rem;
+            text-transform: capitalize;
         }
 
         .order-store-name {

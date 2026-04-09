@@ -16,18 +16,56 @@ const Cart = () => {
 
     const [loading, setLoading] = useState(false);
     const [orderForm, setOrderForm] = useState({
-        shipping_address: profile?.address || '',
+        address_line1: profile?.address_line1 || '',
+        address_line2: profile?.address_line2 || '',
+        city: profile?.city || '',
+        state: profile?.state || '',
+        pincode: profile?.pincode || '',
+        landmark: profile?.landmark || '',
         contact_number: profile?.phone || '',
         payment_method: 'COD',
         delivery_type: 'Delivery'
     });
 
-    const calculateDeliveryCharges = () => {
-        if (orderForm.delivery_type === 'Self-pick') return 0;
-        return cart.reduce((total, item) => total + (item.delivery_charges || 0), 0);
+    const calculateDeliveryByStores = () => {
+        if (orderForm.delivery_type === 'Self-pick') return { total: 0, byStore: {} };
+
+        const storesTotal = {};
+        const stores = [...new Set(cart.map(item => item.store_id))];
+
+        stores.forEach(storeId => {
+            const storeItems = cart.filter(item => item.store_id === storeId);
+            const subtotal = storeItems.reduce((acc, item) => acc + (item.online_price * item.quantity), 0);
+            const firstItem = storeItems[0];
+            const threshold = parseFloat(firstItem.storeFreeThreshold);
+            const standardCharge = parseFloat(firstItem.storeDeliveryCharges || 0);
+
+            let charge = standardCharge;
+            let neededForFree = 0;
+
+            if (threshold && threshold > 0) {
+                if (subtotal >= threshold) {
+                    charge = 0;
+                } else {
+                    neededForFree = threshold - subtotal;
+                }
+            }
+
+            storesTotal[storeId] = {
+                charge,
+                subtotal,
+                neededForFree,
+                storeName: firstItem.storeName,
+                isFree: charge === 0 && threshold > 0
+            };
+        });
+
+        const total = Object.values(storesTotal).reduce((acc, s) => acc + s.charge, 0);
+        return { total, byStore: storesTotal };
     };
 
-    const deliveryCharges = calculateDeliveryCharges();
+    const deliveryInfo = calculateDeliveryByStores();
+    const deliveryCharges = deliveryInfo.total;
     const finalTotal = cartTotal + deliveryCharges;
 
     const handleCheckout = async (e) => {
@@ -37,15 +75,10 @@ const Cart = () => {
 
         setLoading(true);
         try {
-            // Group items by store (since orders are store-specific)
-            const storesInCart = [...new Set(cart.map(item => item.store_id))];
+            const storesInCart = Object.keys(deliveryInfo.byStore);
 
-            // Get today's order count for ID generation
             const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth() + 1;
-            const date = now.getDate();
-            const dateStr = `${year}${month}${date}`;
+            const dateStr = `${now.getFullYear()}${now.getMonth() + 1}${now.getDate()}`;
 
             const startOfDay = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
             const { count: todayCount } = await supabase
@@ -57,10 +90,9 @@ const Cart = () => {
 
             for (const storeId of storesInCart) {
                 const storeItems = cart.filter(item => item.store_id === storeId);
-                const storeCartTotal = storeItems.reduce((acc, item) => acc + (item.online_price * item.quantity), 0);
-                const storeDeliveryCharges = orderForm.delivery_type === 'Self-pick' ? 0 : storeItems.reduce((acc, item) => acc + (item.delivery_charges || 0), 0);
-
+                const storeData = deliveryInfo.byStore[storeId];
                 const customOrderId = `${dateStr}${currentCount}`;
+                const fullAddress = `${orderForm.address_line1}, ${orderForm.address_line2 ? orderForm.address_line2 + ', ' : ''}${orderForm.city}, ${orderForm.state} - ${orderForm.pincode} (Landmark: ${orderForm.landmark})`;
 
                 const { error } = await supabase
                     .from('orders')
@@ -68,10 +100,10 @@ const Cart = () => {
                         buyer_id: user.id,
                         store_id: storeId,
                         items: storeItems,
-                        total_amount: storeCartTotal + storeDeliveryCharges,
-                        delivery_charges: storeDeliveryCharges,
+                        total_amount: storeData.subtotal + storeData.charge,
+                        delivery_charges: storeData.charge,
                         display_id: customOrderId,
-                        shipping_address: orderForm.delivery_type === 'Self-pick' ? 'Self-pick at Store' : orderForm.shipping_address,
+                        shipping_address: orderForm.delivery_type === 'Self-pick' ? 'Self-pick at Store' : fullAddress,
                         contact_number: orderForm.contact_number,
                         payment_method: orderForm.payment_method,
                         delivery_type: orderForm.delivery_type,
@@ -79,7 +111,23 @@ const Cart = () => {
                     }]);
 
                 if (error) throw error;
-                currentCount++; // Increment for next store in current checkout session
+                currentCount++;
+            }
+
+            // Update user profile with the latest address details for future use
+            if (user && orderForm.delivery_type === 'Delivery') {
+                await supabase
+                    .from('users')
+                    .update({
+                        address_line1: orderForm.address_line1,
+                        address_line2: orderForm.address_line2,
+                        city: orderForm.city,
+                        state: orderForm.state,
+                        pincode: orderForm.pincode,
+                        landmark: orderForm.landmark,
+                        phone: orderForm.contact_number
+                    })
+                    .eq('id', user.id);
             }
 
             clearCart();
@@ -110,28 +158,48 @@ const Cart = () => {
                             </div>
                         ) : (
                             <div className="items-list">
-                                {cart.map(item => (
-                                    <div key={item.id} className="cart-item">
-                                        <Link to={`/product/${item.id}`} className="item-info-link">
-                                            <img src={item.images?.[0] || item.image} alt={item.name} className="item-img" />
-                                            <div className="item-details">
-                                                <h3>{getLocalizedName(item.name, i18n.language)}</h3>
-                                                <p className="item-store">{item.storeName}</p>
-                                                <p className="item-price">₹{item.online_price} {item.delivery_charges > 0 && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(+₹{item.delivery_charges} Del.)</span>}</p>
+                                {Object.keys(deliveryInfo.byStore).map(storeId => {
+                                    const storeData = deliveryInfo.byStore[storeId];
+                                    const storeItems = cart.filter(item => item.store_id === storeId);
+                                    
+                                    return (
+                                        <div key={storeId} className="store-group" style={{ marginBottom: '2rem' }}>
+                                            <div className="store-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', padding: '0.5rem', background: '#f8fafc', borderRadius: '8px' }}>
+                                                <h3 style={{ fontSize: '1rem', fontWeight: '800' }}>{storeData.storeName}</h3>
+                                                {storeData.neededForFree > 0 ? (
+                                                    <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: '600' }}>
+                                                        Spend ₹{storeData.neededForFree.toFixed(0)} more for FREE delivery
+                                                    </span>
+                                                ) : storeData.isFree ? (
+                                                    <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: '700' }}>
+                                                        ✨ FREE DELIVERY applied!
+                                                    </span>
+                                                ) : null}
                                             </div>
-                                        </Link>
-                                        <div className="item-controls">
-                                            <div className="quantity-toggle">
-                                                <button onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus size={16} /></button>
-                                                <span>{item.quantity}</span>
-                                                <button onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus size={16} /></button>
-                                            </div>
-                                            <button className="remove-btn" onClick={() => removeFromCart(item.id)}>
-                                                <Trash2 size={18} />
-                                            </button>
+                                            {storeItems.map(item => (
+                                                <div key={item.id} className="cart-item">
+                                                    <Link to={`/product/${item.id}`} className="item-info-link">
+                                                        <img src={item.images?.[0] || item.image} alt={item.name} className="item-img" />
+                                                        <div className="item-details">
+                                                            <h3>{getLocalizedName(item.name, i18n.language)}</h3>
+                                                            <p className="item-price">₹{item.online_price}</p>
+                                                        </div>
+                                                    </Link>
+                                                    <div className="item-controls">
+                                                        <div className="quantity-toggle">
+                                                            <button onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus size={16} /></button>
+                                                            <span>{item.quantity}</span>
+                                                            <button onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus size={16} /></button>
+                                                        </div>
+                                                        <button className="remove-btn" onClick={() => removeFromCart(item.id)}>
+                                                            <Trash2 size={18} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </section>
@@ -200,13 +268,68 @@ const Cart = () => {
                                     </div>
 
                                     {orderForm.delivery_type === 'Delivery' && (
-                                        <div className="input-group">
-                                            <label><MapPin size={16} /> {t('cart.address')}</label>
-                                            <textarea
-                                                required
-                                                value={orderForm.shipping_address}
-                                                onChange={(e) => setOrderForm({ ...orderForm, shipping_address: e.target.value })}
-                                            />
+                                        <div className="address-fields-grid">
+                                            <div className="input-group">
+                                                <label><MapPin size={16} /> Address Line 1</label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    placeholder="House/Flat No., Building Name"
+                                                    value={orderForm.address_line1}
+                                                    onChange={(e) => setOrderForm({ ...orderForm, address_line1: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="input-group">
+                                                <label>Address Line 2 (Optional)</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Street, Area, Colony"
+                                                    value={orderForm.address_line2}
+                                                    onChange={(e) => setOrderForm({ ...orderForm, address_line2: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="selection-grid">
+                                                <div className="input-group">
+                                                    <label>City</label>
+                                                    <input
+                                                        type="text"
+                                                        required
+                                                        value={orderForm.city}
+                                                        onChange={(e) => setOrderForm({ ...orderForm, city: e.target.value })}
+                                                    />
+                                                </div>
+                                                <div className="input-group">
+                                                    <label>State</label>
+                                                    <input
+                                                        type="text"
+                                                        required
+                                                        value={orderForm.state}
+                                                        onChange={(e) => setOrderForm({ ...orderForm, state: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="selection-grid">
+                                                <div className="input-group">
+                                                    <label>Pin Code</label>
+                                                    <input
+                                                        type="text"
+                                                        required
+                                                        placeholder="6-digit PIN"
+                                                        value={orderForm.pincode}
+                                                        onChange={(e) => setOrderForm({ ...orderForm, pincode: e.target.value })}
+                                                    />
+                                                </div>
+                                                <div className="input-group">
+                                                    <label>Landmark</label>
+                                                    <input
+                                                        type="text"
+                                                        required
+                                                        placeholder="Nearby notable place"
+                                                        value={orderForm.landmark}
+                                                        onChange={(e) => setOrderForm({ ...orderForm, landmark: e.target.value })}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                     <button type="submit" className="btn-primary checkout-btn" disabled={loading}>
@@ -253,6 +376,10 @@ const Cart = () => {
         .free { color: var(--success); font-weight: 600; }
 
         .checkout-form { margin-top: 2rem; display: flex; flex-direction: column; gap: 1.25rem; }
+        .address-fields-grid { display: flex; flex-direction: column; gap: 1rem; }
+        .address-fields-grid .input-group { margin-bottom: 0; }
+        .address-fields-grid label { font-size: 0.8rem; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+        .address-fields-grid input { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; }
         
         .options-group { display: flex; flex-direction: column; gap: 0.75rem; }
         .options-group label { font-size: 0.875rem; font-weight: 700; color: var(--text-main); }

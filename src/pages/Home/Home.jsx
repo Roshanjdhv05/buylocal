@@ -7,7 +7,7 @@ import { calculateDistance } from '../../utils/distance';
 import ProductCard from '../../components/ProductCard';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
-import { MapPin, ArrowRight, ChevronRight, Store, ChevronLeft, ArrowLeft, Package } from 'lucide-react';
+import { MapPin, ArrowRight, ChevronRight, Store, ChevronLeft, ArrowLeft, Package, SlidersHorizontal, X } from 'lucide-react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getRecentlyViewed } from '../../utils/recentlyViewed';
 import { useTranslation } from 'react-i18next';
@@ -33,6 +33,48 @@ const Home = () => {
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [dbCategories, setDbCategories] = useState([]);
     const [homeCategories, setHomeCategories] = useState([]);
+
+    // Filter states for search results
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [sortOrder, setSortOrder] = useState('none');
+    const [tempSortOrder, setTempSortOrder] = useState('none');
+    const [minPrice, setMinPrice] = useState('');
+    const [maxPrice, setMaxPrice] = useState('');
+    const [tempMinPrice, setTempMinPrice] = useState('');
+    const [tempMaxPrice, setTempMaxPrice] = useState('');
+    const [activeFilterCount, setActiveFilterCount] = useState(0);
+
+    const openFilter = () => {
+        setTempSortOrder(sortOrder);
+        setTempMinPrice(minPrice);
+        setTempMaxPrice(maxPrice);
+        setIsFilterOpen(true);
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeFilter = () => {
+        setIsFilterOpen(false);
+        document.body.style.overflow = '';
+    };
+
+    const applyFilters = () => {
+        setSortOrder(tempSortOrder);
+        setMinPrice(tempMinPrice);
+        setMaxPrice(tempMaxPrice);
+
+        let count = 0;
+        if (tempSortOrder !== 'none') count++;
+        if (tempMinPrice || tempMaxPrice) count++;
+        setActiveFilterCount(count);
+
+        closeFilter();
+    };
+
+    const clearFilters = () => {
+        setTempSortOrder('none');
+        setTempMinPrice('');
+        setTempMaxPrice('');
+    };
 
     const [showSplash, setShowSplash] = useState(() => {
         // Only show splash screen once per session
@@ -227,6 +269,21 @@ const Home = () => {
         );
     }) : [];
 
+    // Apply filters to search results
+    let filteredSearchResults = [...searchResults];
+    if (minPrice) {
+        filteredSearchResults = filteredSearchResults.filter(p => (p.online_price || p.price || 0) >= Number(minPrice));
+    }
+    if (maxPrice) {
+        filteredSearchResults = filteredSearchResults.filter(p => (p.online_price || p.price || 0) <= Number(maxPrice));
+    }
+
+    if (sortOrder === 'asc') {
+        filteredSearchResults.sort((a, b) => (a.online_price || a.price || 0) - (b.online_price || b.price || 0));
+    } else if (sortOrder === 'desc') {
+        filteredSearchResults.sort((a, b) => (b.online_price || b.price || 0) - (a.online_price || a.price || 0));
+    }
+
     const recommendedProducts = [...enrichedProducts]
         .sort((a, b) => a.distance - b.distance)
         .slice(0, 8);
@@ -240,9 +297,9 @@ const Home = () => {
         .sort((a, b) => (b.views_count || 0) - (a.views_count || 0))
         .slice(0, 8);
 
-    const productsUnder99 = enrichedProducts.filter(p => p.online_price < 99).slice(0, 4);
-    const productsUnder199 = enrichedProducts.filter(p => p.online_price < 199).slice(0, 4);
     const productsUnder299 = enrichedProducts.filter(p => p.online_price < 299).slice(0, 4);
+    const productsUnder699 = enrichedProducts.filter(p => p.online_price < 699).slice(0, 4);
+    const productsUnder999 = enrichedProducts.filter(p => p.online_price < 999).slice(0, 4);
 
     if (showSplash || loading) {
         return (
@@ -334,9 +391,51 @@ const Home = () => {
                         )}
                     </div>
 
-                    {searchResults.length > 0 ? (
+                    <div className="search-controls-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', marginTop: '1.5rem', padding: '0 0.25rem' }}>
+                        <span className="search-stats" style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', letterSpacing: '0.05em' }}>
+                            SHOWING {filteredSearchResults.length} OF {searchResults.length} ITEMS
+                        </span>
+                        <button className="ss-filter-btn" onClick={openFilter} style={{
+                            display: 'flex', alignItems: 'center', gap: '0.4rem',
+                            padding: '0.55rem 1rem', borderRadius: '10px',
+                            border: '1.5px solid #e2e8f0', background: '#fff',
+                            color: '#475569', fontSize: '0.85rem', fontWeight: '600',
+                            cursor: 'pointer', position: 'relative'
+                        }}>
+                            <SlidersHorizontal size={16} />
+                            <span>Filter</span>
+                            {activeFilterCount > 0 && (
+                                <span className="ss-filter-badge" style={{
+                                    position: 'absolute', top: '-6px', right: '-6px',
+                                    width: '18px', height: '18px', borderRadius: '50%',
+                                    background: '#000', color: '#fff', fontSize: '0.6rem',
+                                    fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                }}>{activeFilterCount}</span>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Active filter tags */}
+                    {activeFilterCount > 0 && (
+                        <div className="ss-active-filters" style={{ marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            {sortOrder !== 'none' && (
+                                <span className="ss-filter-tag">
+                                    {sortOrder === 'asc' ? '↑ Price: Low to High' : '↓ Price: High to Low'}
+                                    <X size={12} onClick={() => { setSortOrder('none'); setActiveFilterCount(prev => prev - 1); }} />
+                                </span>
+                            )}
+                            {(minPrice || maxPrice) && (
+                                <span className="ss-filter-tag">
+                                    ₹{minPrice || '0'} – ₹{maxPrice || '∞'}
+                                    <X size={12} onClick={() => { setMinPrice(''); setMaxPrice(''); setActiveFilterCount(prev => prev - 1); }} />
+                                </span>
+                            )}
+                        </div>
+                    )}
+
+                    {filteredSearchResults.length > 0 ? (
                         <div className="products-grid">
-                            {searchResults.map(product => (
+                            {filteredSearchResults.map(product => (
                                 <ProductCard key={product.id} product={product} />
                             ))}
                         </div>
@@ -345,10 +444,148 @@ const Home = () => {
                             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</div>
                             <h3>{t('home.noMatches')}</h3>
                             <p>{t('home.tryChecking')}</p>
+                            {activeFilterCount > 0 && (
+                                <button onClick={() => { setSortOrder('none'); setMinPrice(''); setMaxPrice(''); setActiveFilterCount(0); }}
+                                    style={{ marginTop: '1rem', background: '#000', color: '#fff', border: 'none', padding: '0.6rem 1.5rem', borderRadius: '10px', fontWeight: '700', cursor: 'pointer' }}>
+                                    Clear Filters
+                                </button>
+                            )}
                         </div>
                     )}
                 </main>
                 <Footer />
+
+                {/* FILTER SIDEBAR OVERLAY */}
+                {isFilterOpen && (
+                    <div className="ss-filter-overlay" onClick={closeFilter} style={{
+                        position: 'fixed', inset: 0, zIndex: 9999,
+                        background: 'rgba(0, 0, 0, 0.45)', backdropFilter: 'blur(4px)',
+                        display: 'flex', justifyContent: 'flex-end'
+                    }}>
+                        <div className="ss-filter-drawer" onClick={e => e.stopPropagation()} style={{
+                            width: '340px', maxWidth: '85vw', height: '100%',
+                            background: '#fff', display: 'flex', flexDirection: 'column'
+                        }}>
+                            <div className="ss-drawer-header" style={{
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                padding: '1.25rem 1.5rem', borderBottom: '1px solid #f1f5f9'
+                            }}>
+                                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800 }}>Sort & Filter</h3>
+                                <button onClick={closeFilter} style={{
+                                    width: '36px', height: '36px', borderRadius: '50%',
+                                    background: '#f8fafc', border: 'none', display: 'flex',
+                                    alignItems: 'center', justifyContent: 'center', color: '#64748b', cursor: 'pointer'
+                                }}>
+                                    <X size={22} />
+                                </button>
+                            </div>
+
+                            <div className="ss-drawer-body" style={{ flex: 1, overflowY: 'auto', padding: '1.5rem' }}>
+                                <div className="ss-filter-section" style={{ marginBottom: '2rem' }}>
+                                    <h4 className="ss-filter-label" style={{
+                                        fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8',
+                                        textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem'
+                                    }}>Sort By</h4>
+                                    <div className="ss-sort-options" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        {[
+                                            { value: 'none', label: 'Default' },
+                                            { value: 'asc', label: 'Price: Low to High' },
+                                            { value: 'desc', label: 'Price: High to Low' },
+                                        ].map(opt => (
+                                            <button
+                                                key={opt.value}
+                                                className={`ss-sort-chip ${tempSortOrder === opt.value ? 'active' : ''}`}
+                                                onClick={() => setTempSortOrder(opt.value)}
+                                                style={{
+                                                    padding: '0.75rem 1rem', borderRadius: '10px',
+                                                    border: '1.5px solid #f1f5f9', background: tempSortOrder === opt.value ? '#f8fafc' : '#fafafa',
+                                                    color: tempSortOrder === opt.value ? '#000' : '#475569', fontSize: '0.85rem',
+                                                    fontWeight: 600, cursor: 'pointer', textAlign: 'left',
+                                                    borderColor: tempSortOrder === opt.value ? '#000' : '#f1f5f9'
+                                                }}
+                                            >
+                                                {opt.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="ss-filter-section">
+                                    <h4 className="ss-filter-label" style={{
+                                        fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8',
+                                        textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem'
+                                    }}>Price Range</h4>
+                                    <div className="ss-price-inputs" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                                        <div className="ss-price-field" style={{
+                                            flex: 1, display: 'flex', alignItems: 'center',
+                                            border: '1.5px solid #f1f5f9', borderRadius: '10px',
+                                            padding: '0 0.75rem', background: '#fafafa'
+                                        }}>
+                                            <span style={{ color: '#94a3b8', fontWeight: 600, fontSize: '0.9rem' }}>₹</span>
+                                            <input
+                                                type="number"
+                                                placeholder="Min"
+                                                value={tempMinPrice}
+                                                onChange={e => setTempMinPrice(e.target.value)}
+                                                style={{ border: 'none', background: 'transparent', padding: '0.65rem 0', width: '100%', outline: 'none' }}
+                                            />
+                                        </div>
+                                        <span style={{ color: '#cbd5e1' }}>–</span>
+                                        <div className="ss-price-field" style={{
+                                            flex: 1, display: 'flex', alignItems: 'center',
+                                            border: '1.5px solid #f1f5f9', borderRadius: '10px',
+                                            padding: '0 0.75rem', background: '#fafafa'
+                                        }}>
+                                            <span style={{ color: '#94a3b8', fontWeight: 600, fontSize: '0.9rem' }}>₹</span>
+                                            <input
+                                                type="number"
+                                                placeholder="Max"
+                                                value={tempMaxPrice}
+                                                onChange={e => setTempMaxPrice(e.target.value)}
+                                                style={{ border: 'none', background: 'transparent', padding: '0.65rem 0', width: '100%', outline: 'none' }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="ss-price-presets" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                        {[
+                                            { label: 'Under ₹500', min: '', max: '500' },
+                                            { label: '₹500 – ₹1000', min: '500', max: '1000' },
+                                            { label: '₹1000 – ₹2000', min: '1000', max: '2000' },
+                                            { label: 'Above ₹2000', min: '2000', max: '' },
+                                        ].map((preset, idx) => (
+                                            <button
+                                                key={idx}
+                                                className={`ss-preset-chip ${tempMinPrice === preset.min && tempMaxPrice === preset.max ? 'active' : ''}`}
+                                                onClick={() => { setTempMinPrice(preset.min); setTempMaxPrice(preset.max); }}
+                                                style={{
+                                                    padding: '0.4rem 0.85rem', borderRadius: '20px',
+                                                    border: '1.5px solid #f1f5f9', background: (tempMinPrice === preset.min && tempMaxPrice === preset.max) ? '#000' : '#fafafa',
+                                                    color: (tempMinPrice === preset.min && tempMaxPrice === preset.max) ? '#fff' : '#64748b',
+                                                    fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer'
+                                                }}
+                                            >
+                                                {preset.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="ss-drawer-footer" style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid #f1f5f9', display: 'flex', gap: '0.75rem' }}>
+                                <button onClick={clearFilters} style={{
+                                    flex: 1, padding: '0.75rem', borderRadius: '12px',
+                                    border: '1.5px solid #e2e8f0', background: '#fff',
+                                    color: '#64748b', fontWeight: 700, cursor: 'pointer'
+                                }}>Clear All</button>
+                                <button onClick={applyFilters} style={{
+                                    flex: 2, padding: '0.75rem', borderRadius: '12px',
+                                    border: 'none', background: '#000', color: '#fff',
+                                    fontWeight: 700, cursor: 'pointer'
+                                }}>Apply Filters</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 <style>{`
                     .home-page { background: #fafafa; min-height: 100vh; }
                     .products-grid {
@@ -632,19 +869,19 @@ const Home = () => {
                         </div>
                     </div>
                     <div className="price-segments-grid">
-                        <Link to="/price-filter/99" className="price-segment-card bg-rose">
-                            <h3>{t('home.under99')}</h3>
-                            <p>{productsUnder99.length} {t('home.itemsAvailable')}</p>
-                            <ChevronRight size={24} />
-                        </Link>
-                        <Link to="/price-filter/199" className="price-segment-card bg-amber">
-                            <h3>{t('home.under199')}</h3>
-                            <p>{productsUnder199.length} {t('home.itemsAvailable')}</p>
-                            <ChevronRight size={24} />
-                        </Link>
-                        <Link to="/price-filter/299" className="price-segment-card bg-indigo">
+                        <Link to="/price-filter/299" className="price-segment-card bg-rose">
                             <h3>{t('home.under299')}</h3>
                             <p>{productsUnder299.length} {t('home.itemsAvailable')}</p>
+                            <ChevronRight size={24} />
+                        </Link>
+                        <Link to="/price-filter/699" className="price-segment-card bg-amber">
+                            <h3>{t('home.under699')}</h3>
+                            <p>{productsUnder699.length} {t('home.itemsAvailable')}</p>
+                            <ChevronRight size={24} />
+                        </Link>
+                        <Link to="/price-filter/999" className="price-segment-card bg-indigo">
+                            <h3>{t('home.under999')}</h3>
+                            <p>{productsUnder999.length} {t('home.itemsAvailable')}</p>
                             <ChevronRight size={24} />
                         </Link>
                     </div>

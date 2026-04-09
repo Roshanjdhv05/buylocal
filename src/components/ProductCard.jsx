@@ -191,8 +191,8 @@ const ProductCard = ({ product }) => {
 
         <div className="luxury-price-row">
           <span className="luxury-current-price">₹{product.online_price || product.price}</span>
-          {product.mrp && product.mrp > (product.online_price || product.price) && (
-            <span className="luxury-old-price">₹{product.mrp}</span>
+          {(product.mrp || product.offline_price) && parseFloat(product.mrp || product.offline_price) > parseFloat(product.online_price || product.price) && (
+            <span className="luxury-old-price">₹{product.mrp || product.offline_price}</span>
           )}
         </div>
         

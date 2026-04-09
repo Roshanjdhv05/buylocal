@@ -16,7 +16,7 @@ const StoreSection = () => {
     const [store, setStore] = useState(null);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const decodedSectionName = decodeURIComponent(sectionName);
+    const decodedSectionName = sectionName; // useParams already decodes
     const sectionRefs = useRef({});
 
     // Filter states
@@ -35,7 +35,7 @@ const StoreSection = () => {
                 const { data: storeData, error: storeError } = await supabase
                     .from('stores')
                     .select('*')
-                    .eq('name', decodeURIComponent(storeName))
+                    .eq('name', storeName) // useParams already decodes
                     .single();
 
                 if (storeError) throw storeError;

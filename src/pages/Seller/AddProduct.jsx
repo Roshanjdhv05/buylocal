@@ -3,18 +3,18 @@ import { ArrowLeft, Save, Eye, Upload, Check, Info, Plus, CloudUpload, X, Tag, C
 import { supabase } from '../../services/supabase';
 import './DashboardStyles.css';
 
-const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = null, customCategories = [] }) => {
+const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = null, customCategories = [], defaultDeliveryCharges = '50' }) => {
     const [formData, setFormData] = useState({
         name: '',
         category: '',
         ageGroup: 'Adults',
         sizes: [],
         deliveryTime: '2-3',
+        deliveryCharges: defaultDeliveryCharges || '50',
         codEnabled: true,
         description: '',
         onlinePrice: '',
         marketPrice: '',
-        deliveryCharges: '0',
         images: [],
         section: '',
         tags: [],
@@ -34,11 +34,11 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                 ageGroup: initialData.age_group || 'Adults',
                 sizes: initialData.sizes || [],
                 deliveryTime: initialData.delivery_time || '2-3',
+                deliveryCharges: initialData.delivery_charges || '50',
                 codEnabled: initialData.cod_available ?? true,
                 description: initialData.description || '',
                 onlinePrice: initialData.online_price || '',
                 marketPrice: initialData.offline_price || '',
-                deliveryCharges: initialData.delivery_charges || '0',
                 images: initialData.images || [],
                 section: initialData.section || '',
                 tags: initialData.tags || [],
@@ -47,6 +47,12 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
             });
         }
     }, [initialData]);
+
+    useEffect(() => {
+        if (!initialData && defaultDeliveryCharges) {
+            setFormData(prev => ({ ...prev, deliveryCharges: defaultDeliveryCharges }));
+        }
+    }, [defaultDeliveryCharges, initialData]);
 
     const [customSize, setCustomSize] = useState('');
     const [availableSizes] = useState(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
@@ -122,8 +128,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
     const market = parseFloat(formData.marketPrice) || 0;
     const savings = market > online ? market - online : 0;
     const savingsPercent = market > 0 ? Math.round((savings / market) * 100) : 0;
-    const platformFee = online * 0.05; // 5% fee example
-    const netEarnings = online - platformFee;
+    const netEarnings = online;
 
 
     return (
@@ -444,8 +449,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                     />
                                 </div>
                             </div>
-
-                            <div className="form-group-mobile" style={{ marginBottom: 0 }}>
+                            <div className="form-group-mobile">
                                 <label>Delivery Charges (₹)</label>
                                 <div style={{ position: 'relative' }}>
                                     <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: '700', color: '#64748b' }}>₹</span>
@@ -456,9 +460,6 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                         onChange={e => setFormData({ ...formData, deliveryCharges: e.target.value })}
                                     />
                                 </div>
-                                <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.5rem' }}>
-                                    Recommended: ₹20 - ₹149 for your region.
-                                </p>
                             </div>
                         </div>
 
@@ -474,8 +475,8 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                         <span style={{ color: '#22c55e', fontWeight: '700' }}>₹{savings.toFixed(2)} ({savingsPercent}%)</span>
                                     </div>
                                     <div className="summary-row">
-                                        <span>Marketplace Fee (5%)</span>
-                                        <span>- ₹{platformFee.toFixed(2)}</span>
+                                        <span>Marketplace Fee (0%)</span>
+                                        <span style={{ color: '#22c55e' }}>FREE</span>
                                     </div>
                                     <div className="summary-total">
                                         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -492,7 +493,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                         </div>
                         <p style={{ display: 'flex', gap: '8px', fontSize: '0.75rem', color: '#64748b', padding: '1rem' }}>
                             <Info size={14} flexShrink={0} />
-                            Increasing your offline price slightly could offset the marketplace fee while keeping buyer savings high.
+                            Your online price is your net earning. We take 0% commission on your sales.
                         </p>
                     </div>
                 )}
@@ -562,7 +563,12 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                 <div style={{ flex: 1 }}>
                                     <h5 style={{ fontSize: '0.9rem', fontWeight: '800', marginBottom: '2px' }}>{formData.name || 'Untitled Product'}</h5>
                                     <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: '4px' }}>Category: {formData.category || 'Not Set'}</div>
-                                    <div style={{ fontSize: '0.9rem', fontWeight: '800', color: '#000000' }}>₹{formData.onlinePrice || '0'}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <div style={{ fontSize: '1rem', fontWeight: '800', color: '#000000' }}>₹{formData.onlinePrice || '0'}</div>
+                                        {formData.marketPrice && parseFloat(formData.marketPrice) > parseFloat(formData.onlinePrice) && (
+                                            <div style={{ fontSize: '0.8rem', color: '#94a3b8', textDecoration: 'line-through' }}>₹{formData.marketPrice}</div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -573,7 +579,9 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                 </div>
                                 <div>
                                     <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '800' }}>Shipping</div>
-                                    <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>{formData.deliveryCharges === '0' ? 'Free Local Delivery' : `₹${formData.deliveryCharges}`}</div>
+                                    <div style={{ fontSize: '0.85rem', fontWeight: '700' }}>
+                                        {parseFloat(formData.deliveryCharges) > 0 ? `₹${formData.deliveryCharges} Delivery` : 'Free Local Delivery'}
+                                    </div>
                                 </div>
                             </div>
 

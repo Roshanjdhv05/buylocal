@@ -31,7 +31,7 @@ export const CartProvider = ({ children }) => {
                     quantity,
                     product:products(
                         *,
-                        stores(name)
+                        stores(name, delivery_charges, free_delivery_threshold)
                     )
                 `)
                 .eq('user_id', user.id);
@@ -44,7 +44,9 @@ export const CartProvider = ({ children }) => {
                     .map(item => ({
                         ...item.product,
                         quantity: item.quantity,
-                        storeName: item.product.stores?.name || 'Local Store'
+                        storeName: item.product.stores?.name || 'Local Store',
+                        storeDeliveryCharges: item.product.stores?.delivery_charges || 0,
+                        storeFreeThreshold: item.product.stores?.free_delivery_threshold || null
                     }));
                 setCart(formattedCart);
             }

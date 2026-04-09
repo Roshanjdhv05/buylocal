@@ -8,6 +8,11 @@ CREATE TABLE IF NOT EXISTS public.users (
     role TEXT CHECK (role IN ('buyer', 'seller')) DEFAULT 'buyer',
     city TEXT,
     state TEXT,
+    address_line1: TEXT,
+    address_line2: TEXT,
+    pincode: TEXT,
+    landmark: TEXT,
+    phone: TEXT,
     lat FLOAT8,
     lng FLOAT8,
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -28,6 +33,8 @@ CREATE TABLE IF NOT EXISTS public.stores (
     lat FLOAT8,
     lng FLOAT8,
     delivery_time TEXT,
+    delivery_charges DECIMAL(10,2) DEFAULT 50.00,
+    free_delivery_threshold DECIMAL(10,2) DEFAULT NULL,
     gallery_urls TEXT[] DEFAULT '{}',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW()
@@ -47,6 +54,7 @@ CREATE TABLE IF NOT EXISTS public.products (
     offline_price DECIMAL(10,2),
     cod_available BOOLEAN DEFAULT TRUE,
     delivery_time TEXT,
+    delivery_charges DECIMAL(10,2) DEFAULT 50.00,
     images JSONB DEFAULT '[]'::jsonb,
     stock_status TEXT DEFAULT 'in_stock',
     created_at TIMESTAMPTZ DEFAULT NOW()

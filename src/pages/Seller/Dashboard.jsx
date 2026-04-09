@@ -12,7 +12,7 @@ import {
     Archive, DollarSign, LogOut, User, Home,
     LayoutDashboard, BarChart, ShoppingBag, PlusCircle, ExternalLink, Edit, Clock, Truck,
     Filter, MoreHorizontal, ChevronLeft, Search, MapPin, Zap, Menu, BookOpen,
-    Megaphone, Calendar, Play, Pause, Trash
+    Megaphone, Calendar, Play, Pause, Trash, Copy
 } from 'lucide-react';
 import './DashboardStyles.css';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
@@ -37,8 +37,8 @@ const SellerDashboard = () => {
     const [editedStore, setEditedStore] = useState({
         name: '', description: '', address: '', phone: '', city: '', state: '',
         delivery_time: '', whatsapp: '', instagram: '',
-        legacy_heading: '', legacy_description: '', legacy_image_url: '',
-        profile_picture_url: '', location_url: '', gst_number: ''
+        profile_picture_url: '', location_url: '', gst_number: '',
+        delivery_charges: '50', free_delivery_threshold: '500'
     });
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
     const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState(null);
@@ -61,6 +61,7 @@ const SellerDashboard = () => {
     const [newCategory, setNewCategory] = useState({ name: '', image: null });
     const [categoryPreview, setCategoryPreview] = useState(null);
     const [categoryUploading, setCategoryUploading] = useState(false);
+    const [newHighlight, setNewHighlight] = useState('');
 
     // Product filter states
     const [productSearch, setProductSearch] = useState('');
@@ -181,7 +182,12 @@ const SellerDashboard = () => {
                     legacy_image_url: storeData.legacy_image_url || '',
                     profile_picture_url: storeData.profile_picture_url || '',
                     location_url: storeData.location_url || '',
-                    gst_number: storeData.gst_number || ''
+                    gst_number: storeData.gst_number || '',
+                    free_delivery: storeData.free_delivery || false,
+                    cod_available: storeData.cod_available ?? true,
+                    custom_highlights: Array.isArray(storeData.custom_highlights) ? storeData.custom_highlights : [],
+                    delivery_charges: storeData.delivery_charges || '50',
+                    free_delivery_threshold: storeData.free_delivery_threshold || ''
                 });
 
                 // Fetch Sections - Non-blocking
@@ -488,6 +494,7 @@ const SellerDashboard = () => {
         e.preventDefault();
         setUploading(true);
         try {
+            console.log('Pushing Store Update:', editedStore);
             const { error } = await supabase
                 .from('stores')
                 .update(editedStore)
@@ -826,6 +833,29 @@ const SellerDashboard = () => {
         }
     };
 
+    const handleAddHighlight = () => {
+        if (!newHighlight.trim()) return;
+        setEditedStore(prev => {
+            const currentHighlights = Array.isArray(prev.custom_highlights) ? prev.custom_highlights : [];
+            if (currentHighlights.includes(newHighlight.trim())) {
+                alert('This highlight already exists.');
+                return prev;
+            }
+            return {
+                ...prev,
+                custom_highlights: [...currentHighlights, newHighlight.trim()]
+            };
+        });
+        setNewHighlight('');
+    };
+
+    const handleRemoveHighlight = (item) => {
+        setEditedStore(prev => ({
+            ...prev,
+            custom_highlights: (Array.isArray(prev.custom_highlights) ? prev.custom_highlights : []).filter(h => h !== item)
+        }));
+    };
+
     const handleCreateCategory = async (e) => {
         e.preventDefault();
         if (!newCategory.name || !newCategory.image || !store) return;
@@ -1000,6 +1030,7 @@ const SellerDashboard = () => {
                         sections={sections}
                         initialData={editingProduct}
                         customCategories={customCategories}
+                        defaultDeliveryCharges={store?.delivery_charges}
                     />
                 ) : (
                     <>
@@ -1347,6 +1378,7 @@ const SellerDashboard = () => {
                                                               <span className={`status-dot ${(product.stock_quantity !== null && (product.stock_quantity || 0) <= 0) ? 'out-of-stock' : ''}`}>
                                                                 <span className="dot"></span> <span className="status-text">{(product.stock_quantity === null || (product.stock_quantity || 0) > 0) ? 'Active' : 'Out of Stock'}</span>
                                                             </span>
+                                                            <span className="product-id-pill">#PRD-{product.id?.slice(0, 6).toUpperCase()}</span>
                                                         </div>
                                                         <h3 className="pro-card-name" title={product.name}>{product.name}</h3>
                                                         {product.tags && product.tags.length > 0 && (
@@ -1406,7 +1438,7 @@ const SellerDashboard = () => {
                                 </div>
 
                                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-                                    {['all', 'pending', 'accepted', 'dispatched', 'delivered', 'rejected'].map(status => (
+                                    {['all', 'pending', 'accepted', 'dispatched', 'delivered', 'cancelled', 'rejected'].map(status => (
                                         <button 
                                             key={status}
                                             onClick={() => setOrderStatusTab(status)}
@@ -1423,7 +1455,11 @@ const SellerDashboard = () => {
                                                 whiteSpace: 'nowrap'
                                             }}
                                         >
-                                            {status}
+                                            {status} {status !== 'all' && (
+                                                <span style={{ marginLeft: '4px', background: orderStatusTab === status ? '#c7d2fe' : '#f1f5f9', color: orderStatusTab === status ? '#4338ca' : '#64748b', borderRadius: '99px', padding: '0 6px', fontSize: '0.7rem', fontWeight: '700' }}>
+                                                    {orders.filter(o => o.status === status).length}
+                                                </span>
+                                            )}
                                         </button>
                                     ))}
                                 </div>
@@ -1467,7 +1503,14 @@ const SellerDashboard = () => {
                                                             <div className="so-header-left">
                                                                 <div className="so-id-row">
                                                                     <span className="so-id">{order.display_id ? `#${order.display_id}` : `#ORD-${order.id?.substring(0,6).toUpperCase()}`}</span>
-                                                                    <span className={`so-badge so-badge-${order.status || 'new'}`}>{order.status === 'pending' ? 'NEW' : order.status}</span>
+                                                                    <span className={`so-badge so-badge-${order.status || 'new'}`}>
+                                                                    {
+                                                                        order.status === 'pending' ? 'NEW' :
+                                                                        order.status === 'cancelled' ? 'CANCELLED' :
+                                                                        order.status === 'rejected' ? 'REJECTED' :
+                                                                        order.status
+                                                                    }
+                                                                </span>
                                                                 </div>
                                                                 <div className="so-time-row">
                                                                     <Clock size={14} color="#6b7280" />
@@ -1496,8 +1539,10 @@ const SellerDashboard = () => {
                                                                          )}
                                                                      </div>
                                                                     <div className="so-item-details">
-                                                                        <p className="so-item-name">{item.name}</p>
-                                                                        <p className="so-item-meta">ID: #PRD-{item.id?.slice(0, 6).toUpperCase() || 'N/A'} • Qty: {item.quantity}{item.size ? ` • Size: ${item.size}` : ''}</p>
+                                                                        <h4 className="so-item-name">{item.name}</h4>
+                                                                        <p className="so-item-meta">
+                                                                            ID: #PRD-{(item.id || item.product_id)?.slice(0, 6).toUpperCase() || 'N/A'} • Qty: {item.quantity}{item.size ? ` • Size: ${item.size}` : ''}
+                                                                        </p>
                                                                     </div>
                                                                     <div className="so-item-price" style={{ display: 'none' }}>
                                                                         ₹{Number(item.online_price || item.price || 0) * (item.quantity || 1)}
@@ -1547,6 +1592,11 @@ const SellerDashboard = () => {
                                                             )}
                                                             {order.status === 'delivered' && (
                                                                 <span className="btn-so-completed">✅ Completed</span>
+                                                            )}
+                                                            {(order.status === 'cancelled' || order.status === 'rejected') && (
+                                                                <span className="btn-so-cancelled">
+                                                                    {order.status === 'cancelled' ? '❌ Cancelled by Buyer' : '❌ Rejected'}
+                                                                </span>
                                                             )}
                                                         </div>
                                                     </div>
@@ -1947,6 +1997,18 @@ const SellerDashboard = () => {
                                                         <input className="settings-input-light" style={{ flex: 1 }} placeholder="e.g. 2-3 days" value={editedStore.delivery_time} onChange={e => setEditedStore({ ...editedStore, delivery_time: e.target.value })} />
                                                     </div>
                                                 </div>
+                                                <div className="settings-input-group light-bg">
+                                                    <label className="settings-label">Default Delivery Charges (₹)</label>
+                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                        <input type="number" className="settings-input-light" style={{ flex: 1 }} placeholder="e.g. 50" value={editedStore.delivery_charges} onChange={e => setEditedStore({ ...editedStore, delivery_charges: e.target.value })} />
+                                                    </div>
+                                                </div>
+                                                <div className="settings-input-group light-bg">
+                                                    <label className="settings-label">Free Delivery Above (₹)</label>
+                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                        <input type="number" className="settings-input-light" style={{ flex: 1 }} placeholder="e.g. 500" value={editedStore.free_delivery_threshold} onChange={e => setEditedStore({ ...editedStore, free_delivery_threshold: e.target.value })} />
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div className="settings-input-group light-bg">
                                                 <label className="settings-label">Physical Address</label>
@@ -2090,6 +2152,34 @@ const SellerDashboard = () => {
 
                                             <div className="ops-row">
                                                 <div className="ops-label">
+                                                    <h4>Free Delivery</h4>
+                                                    <p>{editedStore.free_delivery ? 'Enabled for all orders' : 'Disabled'}</p>
+                                                </div>
+                                                <div 
+                                                    className={`switch-toggle ${editedStore.free_delivery ? 'active' : ''}`}
+                                                    onClick={() => setEditedStore(prev => ({ ...prev, free_delivery: !prev.free_delivery }))}
+                                                    style={{ cursor: 'pointer' }}
+                                                >
+                                                    <div className={`switch-handle ${!editedStore.free_delivery ? 'float-left' : ''}`}></div>
+                                                </div>
+                                            </div>
+
+                                            <div className="ops-row">
+                                                <div className="ops-label">
+                                                    <h4>COD Available</h4>
+                                                    <p>{editedStore.cod_available ? 'Available for orders' : 'Disabled'}</p>
+                                                </div>
+                                                <div 
+                                                    className={`switch-toggle ${editedStore.cod_available ? 'active' : ''}`}
+                                                    onClick={() => setEditedStore(prev => ({ ...prev, cod_available: !prev.cod_available }))}
+                                                    style={{ cursor: 'pointer' }}
+                                                >
+                                                    <div className={`switch-handle ${!editedStore.cod_available ? 'float-left' : ''}`}></div>
+                                                </div>
+                                            </div>
+
+                                            <div className="ops-row">
+                                                <div className="ops-label">
                                                     <h4>Featured Profile</h4>
                                                     <p>Higher visibility in search</p>
                                                 </div>
@@ -2163,6 +2253,62 @@ const SellerDashboard = () => {
                                                     </span>
                                                 )) : (
                                                     <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>No sections created yet.</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Store Highlights Management */}
+                                        <div className="sections-card-pro" style={{ background: 'white', padding: '1.5rem', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', marginTop: '2rem' }}>
+                                            <div className="card-header-pro" style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                                                <div className="card-icon" style={{ background: '#ecfdf5', color: '#059669', width: '40px', height: '40px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Check size={24} /></div>
+                                                <h3 style={{ fontSize: '1.1rem', fontWeight: '700' }}>Store Highlights</h3>
+                                            </div>
+
+                                            <div className="create-section-input" style={{ marginBottom: '1.5rem' }}>
+                                                <div style={{ display: 'flex', gap: '8px' }}>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="New Highlight (e.g. Handmade)"
+                                                        value={newHighlight}
+                                                        onChange={(e) => setNewHighlight(e.target.value)}
+                                                        style={{ flex: 1, padding: '0.75rem', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.9rem' }}
+                                                    />
+                                                    <button
+                                                        onClick={handleAddHighlight}
+                                                        style={{ background: '#059669', color: 'white', border: 'none', padding: '0 1rem', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
+                                                    >
+                                                        Add
+                                                    </button>
+                                                </div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                                                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: 0 }}>These appear in your public stats bar.</p>
+                                                    <button 
+                                                        onClick={(e) => { e.preventDefault(); handleUpdateStore(e); }}
+                                                        style={{ background: 'none', border: '1px solid #059669', color: '#059669', fontSize: '0.65rem', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+                                                    >
+                                                        Sync to Live Page
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="section-list" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                                {(editedStore.custom_highlights || []).length > 0 ? editedStore.custom_highlights.map((h, idx) => (
+                                                    <div key={idx} style={{ 
+                                                        background: '#ecfdf5', 
+                                                        padding: '6px 12px', 
+                                                        borderRadius: '8px', 
+                                                        fontSize: '0.8rem', 
+                                                        fontWeight: '600', 
+                                                        color: '#065f46',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px'
+                                                    }}>
+                                                        {h}
+                                                        <X size={14} style={{ cursor: 'pointer' }} onClick={() => handleRemoveHighlight(h)} />
+                                                    </div>
+                                                )) : (
+                                                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontStyle: 'italic' }}>No highlights added yet.</span>
                                                 )}
                                             </div>
                                         </div>

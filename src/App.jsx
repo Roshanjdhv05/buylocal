@@ -33,6 +33,11 @@ import Toast from './components/Toast';
 import LoadingSpinner from './components/LoadingSpinner/LoadingSpinner';
 import PageTransitionLoader from './components/PageTransitionLoader';
 
+// Legal Pages
+import Terms from './pages/Legal/Terms';
+import Privacy from './pages/Legal/Privacy';
+import Refunds from './pages/Legal/Refunds';
+
 const ProtectedRoute = ({ children, role }) => {
     const { user, profile, loading } = useAuth();
 
@@ -198,6 +203,12 @@ const AppContent = () => {
                 <Route path="/:storeName" element={<PublicStore />} />
                 <Route path="/:storeName/section/:sectionName" element={<StoreSection />} />
                 <Route path="/:storeName/category/:categoryName" element={<StoreCategoryView />} />
+                
+                {/* Legal Routes */}
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/privacy" element={<Privacy />} />
+                <Route path="/refunds" element={<Refunds />} />
+
                 {/* Fallback */}
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>

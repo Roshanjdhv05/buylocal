@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { supabase, withTimeout } from '../../services/supabase';
-import { Mail, Lock, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, Clock } from 'lucide-react';
 import AuthLayout from '../../components/AuthLayout';
 import { useTranslation } from 'react-i18next';
+import { useRateLimit, CLIENT_RATE_POLICIES } from '../../hooks/useRateLimit';
+import { parseRateLimitError, formatCountdown } from '../../utils/rateLimitHandler';
 
 const Login = () => {
     const { t } = useTranslation();
@@ -16,6 +18,17 @@ const Login = () => {
     const { signIn, signInWithGoogle } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+
+    // Client-side rate limiting (UX only — backend enforces the real limit)
+    const {
+        checkLimit,
+        isLimited,
+        secondsLeft,
+        remaining,
+        maxRequests,
+        hasAttempted,
+        reset: resetRateLimit,
+    } = useRateLimit('login', CLIENT_RATE_POLICIES.auth);
 
     const handleGoogleLogin = async () => {
         try {
@@ -31,6 +44,16 @@ const Login = () => {
     };
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // ── Client-side rate limit check (UX guard) ────────────────────────
+        const { allowed } = checkLimit();
+        if (!allowed) {
+            setError(
+                `Too many login attempts. Please wait ${formatCountdown(secondsLeft)} before trying again.`
+            );
+            return;
+        }
+
         setLoading(true);
         setError('');
 
@@ -39,18 +62,21 @@ const Login = () => {
             const { user, session } = await signIn(email, password);
             console.log('Login: Sign in success, session established.');
 
-            // Instead of manually fetching role, we can wait a moment or just use 
-            // the profile from AuthContext if we really need it, but for a simple 
-            // redirect, we can just check the data we already have or assume 'buyer'
-            // and let the Home page handle it if they need to be a seller.
+            resetRateLimit(); // Clear client-side counter on success
 
-            // Checking redirect path
             const from = location.state?.from?.pathname || '/';
             navigate(from, { replace: true });
 
         } catch (err) {
             console.error('Login: Submit error:', err.message);
-            setError(err.message);
+
+            // ── Handle backend 429 rate limit response ─────────────────────
+            const rateLimitInfo = parseRateLimitError(err);
+            if (rateLimitInfo.isRateLimited) {
+                setError(rateLimitInfo.userMessage);
+            } else {
+                setError(err.message);
+            }
         } finally {
             setLoading(false);
         }
@@ -96,7 +122,47 @@ const Login = () => {
 
                 {error && <p className="auth-error-refined">{error}</p>}
 
-                <button type="submit" className="auth-submit-refined" disabled={loading}>
+                {/* Attempts feedback — visible from the very first failed attempt */}
+                {hasAttempted && !isLimited && (
+                    <div className="auth-attempts-tracker">
+                        <div className="auth-attempts-bar-wrap">
+                            <div
+                                className="auth-attempts-bar-fill"
+                                style={{
+                                    width: `${((maxRequests - remaining) / maxRequests) * 100}%`,
+                                    background: remaining <= 2
+                                        ? '#ef4444'
+                                        : remaining <= 5
+                                        ? '#f59e0b'
+                                        : '#22c55e',
+                                }}
+                            />
+                        </div>
+                        <p className={`auth-attempts-text ${
+                            remaining <= 2 ? 'danger' : remaining <= 5 ? 'warn' : 'safe'
+                        }`}>
+                            {remaining} of {maxRequests} attempt{remaining !== 1 ? 's' : ''} remaining
+                            {remaining <= 5 && ' — be careful'}
+                        </p>
+                    </div>
+                )}
+
+                {/* Full block: countdown banner */}
+                {isLimited && (
+                    <div className="auth-rate-limit-banner">
+                        <Clock size={16} />
+                        <span>
+                            Too many attempts. Try again in <strong>{formatCountdown(secondsLeft)}</strong>
+                        </span>
+                    </div>
+                )}
+
+                <button
+                    type="submit"
+                    className="auth-submit-refined"
+                    disabled={loading || isLimited}
+                    id="login-submit-btn"
+                >
                     {loading ? t('common.loading') : t('nav.login')}
                 </button>
 
@@ -178,6 +244,54 @@ const Login = () => {
                 .auth-submit-refined:hover { transform: translateY(-1px); box-shadow: 0 20px 25px -5px rgba(124, 58, 237, 0.4); background: #6d28d9; }
                 .auth-submit-refined:active { transform: translateY(0); }
                 .auth-submit-refined:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+
+                .auth-rate-limit-banner {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    padding: 0.85rem 1.25rem;
+                    background: #fff1f2;
+                    border: 1px solid #fecdd3;
+                    border-radius: 10px;
+                    color: #be123c;
+                    font-size: 0.875rem;
+                    font-weight: 500;
+                    animation: fadeInDown 0.3s ease;
+                }
+                .auth-rate-limit-banner strong { font-weight: 700; }
+
+                /* Attempt tracker: progress bar + label */
+                .auth-attempts-tracker {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.4rem;
+                    animation: fadeInDown 0.25s ease;
+                }
+                .auth-attempts-bar-wrap {
+                    width: 100%;
+                    height: 5px;
+                    background: #f1f5f9;
+                    border-radius: 99px;
+                    overflow: hidden;
+                }
+                .auth-attempts-bar-fill {
+                    height: 100%;
+                    border-radius: 99px;
+                    transition: width 0.4s ease, background 0.4s ease;
+                }
+                .auth-attempts-text {
+                    font-size: 0.78rem;
+                    font-weight: 500;
+                    text-align: right;
+                }
+                .auth-attempts-text.safe  { color: #16a34a; }
+                .auth-attempts-text.warn  { color: #d97706; }
+                .auth-attempts-text.danger { color: #dc2626; }
+
+                @keyframes fadeInDown {
+                    from { opacity: 0; transform: translateY(-8px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
 
                 .auth-divider {
                     margin: 1.5rem 0;

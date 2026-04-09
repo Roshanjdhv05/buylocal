@@ -14,7 +14,7 @@ const StoreCategoryView = () => {
     const [store, setStore] = useState(null);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const decodedCategoryName = decodeURIComponent(categoryName);
+    const decodedCategoryName = categoryName; // useParams already decodes
 
     // Filter states
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -32,7 +32,7 @@ const StoreCategoryView = () => {
                 const { data: storeData, error: storeError } = await supabase
                     .from('stores')
                     .select('*')
-                    .eq('name', decodeURIComponent(storeName))
+                    .eq('name', storeName) // useParams already decodes
                     .single();
 
                 if (storeError) throw storeError;
@@ -134,7 +134,7 @@ const StoreCategoryView = () => {
             
             <div className="container custom-container" style={{ marginTop: '70px' }}>
                 {/* Header Card */}
-                <div className="store-info-card" onClick={() => navigate(`/${store.name}`)}>
+                <div className="store-info-card" onClick={() => navigate(`/${encodeURIComponent(store.name)}`)}>
                     <div className="info-left">
                         <div className="store-avatar">
                             {store.profile_picture_url ? (
@@ -173,9 +173,27 @@ const StoreCategoryView = () => {
                             <span className="products-visible-text">1 OF {filteredProducts.length} PRODUCTS</span>
                             <button className="sort-pill" onClick={openFilter}>
                                 <SlidersHorizontal size={14} />
-                                Sort
+                                Filter {activeFilterCount > 0 && `(${activeFilterCount})`}
                             </button>
                         </div>
+
+                        {/* Active filter tags */}
+                        {activeFilterCount > 0 && (
+                            <div className="ss-active-filters" style={{ padding: '0 0rem', marginBottom: '1.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                {sortOrder !== 'none' && (
+                                    <span className="ss-filter-tag">
+                                        {sortOrder === 'asc' ? '↑ Price: Low to High' : '↓ Price: High to Low'}
+                                        <X size={12} onClick={() => { setSortOrder('none'); setActiveFilterCount(prev => prev - 1); }} />
+                                    </span>
+                                )}
+                                {(minPrice || maxPrice) && (
+                                    <span className="ss-filter-tag">
+                                        ₹{minPrice || '0'} – ₹{maxPrice || '∞'}
+                                        <X size={12} onClick={() => { setMinPrice(''); setMaxPrice(''); setActiveFilterCount(prev => prev - 1); }} />
+                                    </span>
+                                )}
+                            </div>
+                        )}
 
                         {/* Product Grid */}
                         <div className="category-grid">
@@ -262,6 +280,47 @@ const StoreCategoryView = () => {
                                             onClick={() => setTempSortOrder(opt.value)}
                                         >
                                             {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="ss-filter-section">
+                                <h4 className="ss-filter-label">Price Range</h4>
+                                <div className="ss-price-inputs">
+                                    <div className="ss-price-field">
+                                        <span className="ss-price-prefix">₹</span>
+                                        <input
+                                            type="number"
+                                            placeholder="Min"
+                                            value={tempMinPrice}
+                                            onChange={e => setTempMinPrice(e.target.value)}
+                                        />
+                                    </div>
+                                    <span className="ss-price-dash">–</span>
+                                    <div className="ss-price-field">
+                                        <span className="ss-price-prefix">₹</span>
+                                        <input
+                                            type="number"
+                                            placeholder="Max"
+                                            value={tempMaxPrice}
+                                            onChange={e => setTempMaxPrice(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="ss-price-presets">
+                                    {[
+                                        { label: 'Under ₹500', min: '', max: '500' },
+                                        { label: '₹500 – ₹1000', min: '500', max: '1000' },
+                                        { label: '₹1000 – ₹2000', min: '1000', max: '2000' },
+                                        { label: 'Above ₹2000', min: '2000', max: '' },
+                                    ].map((preset, idx) => (
+                                        <button
+                                            key={idx}
+                                            className={`ss-preset-chip ${tempMinPrice === preset.min && tempMaxPrice === preset.max ? 'active' : ''}`}
+                                            onClick={() => { setTempMinPrice(preset.min); setTempMaxPrice(preset.max); }}
+                                        >
+                                            {preset.label}
                                         </button>
                                     ))}
                                 </div>
@@ -593,6 +652,104 @@ const StoreCategoryView = () => {
                 .ss-drawer-footer { padding: 1.25rem 1.5rem; border-top: 1px solid #f1f5f9; display: flex; gap: 0.75rem; }
                 .ss-clear-btn { flex: 1; padding: 0.75rem; border-radius: 12px; border: 1.5px solid #e2e8f0; background: #fff; color: #64748b; font-weight: 700; cursor: pointer; }
                 .ss-apply-btn { flex: 2; padding: 0.75rem; border-radius: 12px; border: none; background: #000000; color: white; font-weight: 700; cursor: pointer; }
+
+                /* PRICE INPUTS */
+                .ss-price-inputs {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    margin-bottom: 0.75rem;
+                }
+                .ss-price-field {
+                    flex: 1;
+                    display: flex;
+                    align-items: center;
+                    border: 1.5px solid #f1f5f9;
+                    border-radius: 10px;
+                    padding: 0 0.75rem;
+                    background: #fafafa;
+                    transition: border-color 0.2s;
+                }
+                .ss-price-field:focus-within {
+                    border-color: #000;
+                    background: #fff;
+                }
+                .ss-price-prefix {
+                    color: #94a3b8;
+                    font-weight: 600;
+                    font-size: 0.9rem;
+                    margin-right: 0.25rem;
+                }
+                .ss-price-field input {
+                    border: none;
+                    background: transparent;
+                    padding: 0.65rem 0;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    color: #1e293b;
+                    width: 100%;
+                    outline: none;
+                    box-shadow: none;
+                }
+                .ss-price-dash {
+                    color: #cbd5e1;
+                    font-weight: 600;
+                }
+
+                /* PRICE PRESETS */
+                .ss-price-presets {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 0.5rem;
+                }
+                .ss-preset-chip {
+                    padding: 0.4rem 0.85rem;
+                    border-radius: 20px;
+                    border: 1.5px solid #f1f5f9;
+                    background: #fafafa;
+                    color: #64748b;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    white-space: nowrap;
+                }
+                .ss-preset-chip:hover {
+                    border-color: #000;
+                    color: #000;
+                }
+                .ss-preset-chip.active {
+                    border-color: #000;
+                    background: #000;
+                    color: white;
+                }
+
+                /* ACTIVE FILTER TAGS */
+                .ss-active-filters {
+                    display: flex;
+                    gap: 0.5rem;
+                    flex-wrap: wrap;
+                }
+                .ss-filter-tag {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.4rem;
+                    padding: 0.35rem 0.75rem;
+                    border-radius: 8px;
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    color: #475569;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                }
+                .ss-filter-tag svg {
+                    cursor: pointer;
+                    opacity: 0.6;
+                    transition: opacity 0.2s;
+                }
+                .ss-filter-tag svg:hover {
+                    opacity: 1;
+                }
             `}</style>
         </div>
     );

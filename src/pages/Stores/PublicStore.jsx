@@ -4,7 +4,7 @@ import { supabase, withTimeout } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import {
     ShoppingCart, MapPin, Phone, Clock, ArrowLeft, Store,
-    UserCheck, MessageSquare, Package, Star, CreditCard, ChevronRight,
+    UserCheck, MessageSquare, Package, Star, CreditCard, ChevronRight, ChevronLeft,
     Award, ShieldCheck, Globe, Instagram, Twitter, Facebook, X, Truck, Box
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
@@ -32,6 +32,15 @@ const PublicStore = () => {
     const [submittingReview, setSubmittingReview] = useState(false);
     const [currentTestimonialIndex, setCurrentTestimonialIndex] = useState(0);
     const [customCategories, setCustomCategories] = useState([]);
+    const [selectedGalleryIndex, setSelectedGalleryIndex] = useState(null);
+
+    const nextSlide = () => {
+        setSelectedGalleryIndex(prev => (prev + 1) % store.gallery_urls.length);
+    };
+
+    const prevSlide = () => {
+        setSelectedGalleryIndex(prev => (prev - 1 + store.gallery_urls.length) % store.gallery_urls.length);
+    };
 
     useEffect(() => {
         fetchStoreProfile();
@@ -120,7 +129,7 @@ const PublicStore = () => {
             const { data: storeData, error: storeError } = await withTimeout(supabase
                 .from('stores')
                 .select('*')
-                .eq('name', decodeURIComponent(storeName))
+                .eq('name', storeName) // useParams already decodes
                 .single(), 30000, 'Public Store FetchProfile');
 
             if (storeError) throw storeError;
@@ -270,7 +279,7 @@ const PublicStore = () => {
                             <div 
                                 key={cat.id || idx} 
                                 className="category-box-card"
-                                onClick={() => navigate(`/${store.name}/category/${encodeURIComponent(cat.name)}`)}
+                                onClick={() => navigate(`/${encodeURIComponent(store.name)}/category/${encodeURIComponent(cat.name)}`)}
                                 style={{ cursor: 'pointer' }}
                             >
                                 <div className="category-box-img-wrap">
@@ -291,14 +300,33 @@ const PublicStore = () => {
                         <Package size={14} />
                         <span>{products.length} {t('publicStore.stats.products', 'Products')}</span>
                     </div>
-                    <div className="stat-item-minimal">
-                        <Truck size={14} />
-                        <span>{t('publicStore.stats.freeDelivery', 'Free Delivery')}</span>
-                    </div>
-                    <div className="stat-item-minimal">
-                        <CreditCard size={14} />
-                        <span>{t('publicStore.stats.codAvailable', 'COD Available')}</span>
-                    </div>
+                    {store.free_delivery && (
+                        <div className="stat-item-minimal">
+                            <Truck size={14} />
+                            <span>{t('publicStore.stats.freeDelivery', 'Free Delivery')}</span>
+                        </div>
+                    )}
+                    {store.cod_available !== false && (
+                        <div className="stat-item-minimal">
+                            <CreditCard size={14} />
+                            <span>{t('publicStore.stats.codAvailable', 'COD Available')}</span>
+                        </div>
+                    )}
+                    
+                    {/* Render Custom Highlights - Defensive Implementation */}
+                    {store.custom_highlights && Array.isArray(store.custom_highlights) && store.custom_highlights.length > 0 ? (
+                        store.custom_highlights.map((h, idx) => (
+                            <div key={`custom-h-${idx}`} className="stat-item-minimal" style={{ border: '1px solid #bc8a5f33' }}>
+                                <Award size={14} style={{ color: '#bc8a5f' }} />
+                                <span>{h}</span>
+                            </div>
+                        ))
+                    ) : (
+                        process.env.NODE_ENV === 'development' && <span style={{fontSize: '10px', color: '#ccc'}}>No custom highlights data</span>
+                    )}
+                    
+                    {/* Hidden debug log for developer console */}
+                    {process.env.NODE_ENV === 'development' && console.log('Store Highlights Data:', store.custom_highlights)}
                 </div>
             </div>
 
@@ -323,7 +351,7 @@ const PublicStore = () => {
                             </button>
                         </div>
 
-                        <div className={sectionName === t('publicStore.generalCollection', 'General Collection') ? "products-slider-wrap" : "products-grid"}>
+                        <div className="products-slider-wrap">
                             {sectionProducts.map(product => (
                                 <ProductCard key={product.id} product={{ ...product, storeName: store.name }} />
                             ))}
@@ -347,7 +375,7 @@ const PublicStore = () => {
                             <h2>{t('publicStore.boutiqueExperience', 'The Boutique Experience')}</h2>
                             <button className="control-btn view-all-btn" onClick={() => {
                                 const container = document.getElementById('gallery-slider');
-                                container.scrollBy({ left: 400, behavior: 'smooth' });
+                                container.scrollBy({ left: 340, behavior: 'smooth' });
                             }}>
                                 {t('publicStore.gallery', 'GALLERY')}
                             </button>
@@ -357,7 +385,7 @@ const PublicStore = () => {
                             {store.gallery_urls.map((url, idx) => {
                                 const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) || url.includes('/video');
                                 return (
-                                    <div key={idx} className="multimedia-card">
+                                    <div key={idx} className="multimedia-card" onClick={() => setSelectedGalleryIndex(idx)} style={{ cursor: 'pointer' }}>
                                         {isVideo ? (
                                             <video src={url} autoPlay muted loop playsInline className="slider-media" />
                                         ) : (
@@ -473,6 +501,36 @@ const PublicStore = () => {
                 </div>
             )}
 
+            {/* GALLERY LIGHTBOX */}
+            {selectedGalleryIndex !== null && (
+                <div className="lightbox-overlay" onClick={() => setSelectedGalleryIndex(null)}>
+                    <button className="lightbox-close" onClick={() => setSelectedGalleryIndex(null)}>
+                        <X size={32} />
+                    </button>
+                    
+                    <button className="lightbox-arrow prev" onClick={(e) => { e.stopPropagation(); prevSlide(); }}>
+                        <ChevronLeft size={40} />
+                    </button>
+
+                    <div className="lightbox-content" onClick={e => e.stopPropagation()}>
+                        {(() => {
+                            const url = store.gallery_urls[selectedGalleryIndex];
+                            if (!url) return null;
+                            const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) || url.includes('/video');
+                            return isVideo ? (
+                                <video src={url} controls autoPlay className="lightbox-media" />
+                            ) : (
+                                <img src={url} alt="Gallery view" className="lightbox-media" />
+                            );
+                        })()}
+                    </div>
+
+                    <button className="lightbox-arrow next" onClick={(e) => { e.stopPropagation(); nextSlide(); }}>
+                        <ChevronRight size={40} />
+                    </button>
+                </div>
+            )}
+
             <style>{`
                 .luxury-store-wrapper { 
                     background: #fdfcfb; 
@@ -503,7 +561,7 @@ const PublicStore = () => {
                 .hero-overlay { 
                     position: absolute; 
                     inset: 0; 
-                    background: linear-gradient(to top, rgba(140, 90, 60, 0.4) 0%, rgba(140, 90, 60, 0.1) 100%); 
+                    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.3) 100%); 
                     z-index: 2; 
                 }
                 
@@ -650,13 +708,14 @@ const PublicStore = () => {
                     display: flex; 
                     align-items: center; 
                     gap: 0.4rem; 
-                    color: #8b8b8b; 
+                    color: #000000; 
                     font-size: 0.7rem; 
-                    font-weight: 600; 
+                    font-weight: 700; 
                     background: #f8f8f8;
                     padding: 0.6rem 0.9rem;
                     border-radius: 8px;
                     white-space: nowrap;
+                    border: 1px solid #eee;
                 }
                 .stat-item-minimal svg { color: #bc8a5f; }
 
@@ -707,9 +766,9 @@ const PublicStore = () => {
                 .products-slider-wrap::-webkit-scrollbar { display: none; }
 
                 .multimedia-card {
-                    flex: 0 0 280px;
-                    height: 180px;
-                    border-radius: 16px;
+                    flex: 0 0 320px;
+                    height: 480px;
+                    border-radius: 4px;
                     overflow: hidden;
                     position: relative;
                 }
@@ -783,6 +842,77 @@ const PublicStore = () => {
                     width: 100%; max-width: 450px; padding: 2.5rem; position: relative; background: #fff; border-radius: 24px;
                 }
                 .modal-close { position: absolute; top: 1.25rem; right: 1.25rem; background: none; border: none; color: #64748b; }
+
+                /* LIGHTBOX */
+                .lightbox-overlay {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(0, 0, 0, 0.95);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    backdrop-filter: blur(10px);
+                }
+                .lightbox-content {
+                    max-width: 90vw;
+                    max-height: 85vh;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    position: relative;
+                }
+                .lightbox-media {
+                    max-width: 100%;
+                    max-height: 85vh;
+                    object-fit: contain;
+                    border-radius: 4px;
+                    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+                }
+                .lightbox-close {
+                    position: absolute;
+                    top: 2rem;
+                    right: 2rem;
+                    background: none;
+                    border: none;
+                    color: white;
+                    cursor: pointer;
+                    z-index: 10001;
+                    opacity: 0.7;
+                    transition: opacity 0.2s;
+                }
+                .lightbox-close:hover { opacity: 1; }
+                .lightbox-arrow {
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    background: rgba(255,255,255,0.1);
+                    border: none;
+                    color: white;
+                    width: 60px;
+                    height: 60px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    z-index: 10001;
+                    transition: all 0.2s;
+                }
+                .lightbox-arrow:hover { background: rgba(255,255,255,0.2); }
+                .lightbox-arrow.prev { left: 2rem; }
+                .lightbox-arrow.next { right: 2rem; }
+
+                @media (max-width: 768px) {
+                    .lightbox-arrow {
+                        width: 44px;
+                        height: 44px;
+                        background: rgba(0,0,0,0.3);
+                    }
+                    .lightbox-arrow.prev { left: 1rem; }
+                    .lightbox-arrow.next { right: 1rem; }
+                    .lightbox-close { top: 1rem; right: 1rem; }
+                }
             `}</style>
         </div>
     );

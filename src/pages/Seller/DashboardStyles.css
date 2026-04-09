@@ -3777,6 +3777,30 @@ input:checked+.slider:before {
     font-weight: 700;
 }
 
+.btn-so-cancelled {
+    grid-column: span 2;
+    text-align: center;
+    padding: 14px;
+    background: #fff1f2;
+    color: #be123c;
+    border-radius: 16px;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.so-badge-cancelled, .so-badge-rejected {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.so-badge-dispatched {
+    background: #f5f3ff;
+    color: #6d28d9;
+}
+
+.status-dot.cancelled { background: #fee2e2; color: #dc2626; }
+
+
 @media (max-width: 640px) {
     .so-card {
         padding: 20px;

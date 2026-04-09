@@ -18,9 +18,11 @@ const CreateStore = () => {
         state: profile?.state || '',
         lat: profile?.lat || null,
         lng: profile?.lng || null,
-        est_delivery_time: '30-45 mins',
+        est_delivery_time: '',
         whatsapp: '',
         instagram: '',
+        delivery_charges: '50',
+        free_delivery_threshold: '500'
     });
 
     const [banner, setBanner] = useState(null);
@@ -182,6 +184,20 @@ const CreateStore = () => {
                             </div>
                         </div>
                         <div className="input-group">
+                            <label>Default Delivery Charges (₹)</label>
+                            <div className="with-icon">
+                                <Truck size={18} />
+                                <input
+                                    type="number"
+                                    placeholder="e.g. 50"
+                                    value={formData.delivery_charges}
+                                    onChange={(e) => setFormData({ ...formData, delivery_charges: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="grid-2">
+                        <div className="input-group">
                             <label>Delivery Days</label>
                             <div className="with-icon">
                                 <Truck size={18} />
@@ -192,6 +208,21 @@ const CreateStore = () => {
                                     onChange={(e) => setFormData({ ...formData, est_delivery_time: e.target.value })}
                                 />
                             </div>
+                        </div>
+                        <div className="input-group">
+                            <label>Free Delivery Above (₹)</label>
+                            <div className="with-icon">
+                                <Minus size={18} />
+                                <input
+                                    type="number"
+                                    placeholder="e.g. 500"
+                                    value={formData.free_delivery_threshold}
+                                    onChange={(e) => setFormData({ ...formData, free_delivery_threshold: e.target.value })}
+                                />
+                            </div>
+                            <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+                                Leave blank to disable free delivery.
+                            </p>
                         </div>
                     </div>
                     <div className="input-group">

@@ -18,9 +18,19 @@ export const AuthProvider = ({ children }) => {
             const error = urlParams.get('error');
             const errorDescription = urlParams.get('error_description');
 
+            const hashStr = window.location.hash;
+            const isRecovery = hashStr.includes('type=recovery');
+
             console.log('Auth: Initializing...');
             console.log('Auth: Current URL:', window.location.href);
-            console.log('Auth: Hash:', window.location.hash);
+            console.log('Auth: Hash:', hashStr);
+            
+            if (isRecovery && window.location.pathname !== '/update-password') {
+                console.log('Auth: Recovery hash detected, redirecting...');
+                // Redirect before supabase consumes the token
+                window.location.replace(`/update-password${hashStr}`);
+                return;
+            }
             
             if (code) {
                 console.log('Auth: Found code in URL. This is an OAuth redirect callback.');
@@ -72,8 +82,14 @@ export const AuthProvider = ({ children }) => {
             console.log(`Auth Event: ${event}`, session?.user?.email || 'No User');
             const currentUser = session?.user ?? null;
 
-            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || (event === 'INITIAL_SESSION' && session)) {
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'PASSWORD_RECOVERY' || (event === 'INITIAL_SESSION' && session)) {
                 setUser(currentUser);
+                
+                // If they recovered password but router hasn't updated yet
+                if (event === 'PASSWORD_RECOVERY' && window.location.pathname !== '/update-password') {
+                    window.location.replace(`/update-password${window.location.hash}`);
+                }
+
                 if (currentUser) {
                     console.log('Auth: Syncing profile (background)...');
                     handleProfileSync(currentUser); // Non-blocking sync

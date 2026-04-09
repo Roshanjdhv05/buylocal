@@ -308,29 +308,16 @@ const ProductDetails = () => {
                             </button>
                         </div>
 
-                        <div className="trust-features-list">
-                            <div className="trust-item">
-                                <div className="trust-icon"><Truck size={20} color="#7c3aed" /></div>
-                                <div className="trust-content">
-                                    <h4>Complimentary Express Shipping</h4>
-                                    <p>Arrives in 2-3 business days.</p>
-                                </div>
+                        {store?.custom_highlights && store.custom_highlights.length > 0 && (
+                            <div className="store-highlights-tags">
+                                {store.custom_highlights.map((h, idx) => (
+                                    <div key={idx} className="highlight-tag">
+                                        <Award size={16} />
+                                        <span>{h}</span>
+                                    </div>
+                                ))}
                             </div>
-                            <div className="trust-item">
-                                <div className="trust-icon"><RefreshCcw size={20} color="#7c3aed" /></div>
-                                <div className="trust-content">
-                                    <h4>30-Day Bespoke Returns</h4>
-                                    <p>Hassle-free collection from your door.</p>
-                                </div>
-                            </div>
-                            <div className="trust-item">
-                                <div className="trust-icon"><Award size={20} color="#7c3aed" /></div>
-                                <div className="trust-content">
-                                    <h4>Extended 2-Year Warranty</h4>
-                                    <p>Full coverage for manufacturing excellence.</p>
-                                </div>
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </main>
 
