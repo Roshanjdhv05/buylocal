@@ -13,6 +13,7 @@ import { getRecentlyViewed } from '../../utils/recentlyViewed';
 import { useTranslation } from 'react-i18next';
 import SplashScreen from '../../components/SplashScreen/SplashScreen';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
+import { usePageCache } from '../../hooks/usePageCache';
 
 const Home = () => {
     const { t } = useTranslation();
@@ -21,29 +22,45 @@ const Home = () => {
     const navigate = useNavigate();
     const searchQuery = searchParams.get('search') || '';
 
-    const [products, setProducts] = useState([]);
-    const [stores, setStores] = useState([]);
+    // Cache Integration
+    const { pageState, updatePageState, restoreScroll } = usePageCache({
+        initialState: {
+            products: [],
+            stores: [],
+            reviews: [],
+            dbCategories: [],
+            homeCategories: [],
+            campaigns: [],
+            sortOrder: 'none',
+            minPrice: '',
+            maxPrice: '',
+            activeFilterCount: 0
+        }
+    });
+
+    const [products, setProducts] = useState(pageState.products);
+    const [stores, setStores] = useState(pageState.stores);
     const [recentlyViewed, setRecentlyViewed] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(pageState.products.length === 0);
     const { location } = useLocation();
-    const [reviews, setReviews] = useState([]);
+    const [reviews, setReviews] = useState(pageState.reviews);
     const [activeCategory, setActiveCategory] = useState(t('home.trending'));
-    const [campaigns, setCampaigns] = useState([]);
+    const [campaigns, setCampaigns] = useState(pageState.campaigns);
     const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-    const [dbCategories, setDbCategories] = useState([]);
-    const [homeCategories, setHomeCategories] = useState([]);
+    const [dbCategories, setDbCategories] = useState(pageState.dbCategories);
+    const [homeCategories, setHomeCategories] = useState(pageState.homeCategories);
 
     // Filter states for search results
     const [isFilterOpen, setIsFilterOpen] = useState(false);
-    const [sortOrder, setSortOrder] = useState('none');
-    const [tempSortOrder, setTempSortOrder] = useState('none');
-    const [minPrice, setMinPrice] = useState('');
-    const [maxPrice, setMaxPrice] = useState('');
-    const [tempMinPrice, setTempMinPrice] = useState('');
-    const [tempMaxPrice, setTempMaxPrice] = useState('');
-    const [activeFilterCount, setActiveFilterCount] = useState(0);
+    const [sortOrder, setSortOrder] = useState(pageState.sortOrder);
+    const [tempSortOrder, setTempSortOrder] = useState(pageState.sortOrder);
+    const [minPrice, setMinPrice] = useState(pageState.minPrice);
+    const [maxPrice, setMaxPrice] = useState(pageState.maxPrice);
+    const [tempMinPrice, setTempMinPrice] = useState(pageState.minPrice);
+    const [tempMaxPrice, setTempMaxPrice] = useState(pageState.maxPrice);
+    const [activeFilterCount, setActiveFilterCount] = useState(pageState.activeFilterCount);
 
     const openFilter = () => {
         setTempSortOrder(sortOrder);
@@ -110,6 +127,29 @@ const Home = () => {
 
         return () => clearInterval(timer);
     }, [campaigns, currentBannerIndex, isPaused]);
+
+    // Update Cache when essential data changes
+    useEffect(() => {
+        updatePageState({
+            products,
+            stores,
+            reviews,
+            dbCategories,
+            homeCategories,
+            campaigns,
+            sortOrder,
+            minPrice,
+            maxPrice,
+            activeFilterCount
+        });
+    }, [products, stores, reviews, dbCategories, homeCategories, campaigns, sortOrder, minPrice, maxPrice, activeFilterCount]);
+
+    // Restore scroll after loading finishes
+    useEffect(() => {
+        if (!loading && products.length > 0) {
+            restoreScroll(500); // Wait for images/layout to settle
+        }
+    }, [loading, products]);
 
     useEffect(() => {
         let mounted = true;

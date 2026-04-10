@@ -100,6 +100,7 @@ const AdminRouteHandler = () => {
 };
 
 import LocationFAB from './components/LocationFAB';
+import { savePageState, loadPageState } from './utils/pageCache';
 
 const AppContent = () => {
     const { toast, setToast } = useLocation();
@@ -110,12 +111,41 @@ const AppContent = () => {
     useEffect(() => {
         if (isFirstMount.current) {
             isFirstMount.current = false;
+            // Restore scroll for the current page if it exists
+            const cached = loadPageState(routeLocation.pathname);
+            if (cached && cached.scrollY) {
+                window.scrollTo(0, cached.scrollY);
+            }
             return;
         }
+
+        // Save scroll position for the page we are leaving
+        // We use a small hack here: routeLocation.pathname is the NEW pathname after navigation starts,
+        // but since this effect runs after the switch, we might need a ref for the PREVIOUS pathname.
+    }, []);
+
+    // Track previous path to save its scroll
+    const prevPathRef = React.useRef(routeLocation.pathname);
+
+    useEffect(() => {
+        if (prevPathRef.current !== routeLocation.pathname) {
+            // Save state for the page we just left
+            // For pages not using usePageCache, we at least save the scrollY
+            const cached = loadPageState(prevPathRef.current);
+            savePageState(prevPathRef.current, cached ? cached.data : {});
+            
+            prevPathRef.current = routeLocation.pathname;
+        }
+
         setIsPageChanging(true);
         const timer = setTimeout(() => {
             setIsPageChanging(false);
-        }, 800); // Show for 800ms
+            // On navigation finish, try to restore scroll
+            const cached = loadPageState(routeLocation.pathname);
+            if (cached && cached.scrollY) {
+                window.scrollTo(0, cached.scrollY);
+            }
+        }, 800); 
         return () => clearTimeout(timer);
     }, [routeLocation.pathname]);
 

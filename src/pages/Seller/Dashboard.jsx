@@ -17,6 +17,7 @@ import {
 import './DashboardStyles.css';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import InvoiceModal from '../../components/InvoiceModal';
+import { clearPageCache } from '../../utils/pageCache';
 
 const SellerDashboard = () => {
     const { t } = useTranslation();
@@ -410,6 +411,7 @@ const SellerDashboard = () => {
                 alert('Product added successfully!');
             }
 
+            clearPageCache(); // Clear draft/state after successful submission
             setIsAddingProduct(false);
             setEditingProduct(null);
             setNewProduct({
@@ -503,6 +505,7 @@ const SellerDashboard = () => {
             if (error) throw error;
             setStore({ ...store, ...editedStore });
             setIsEditingStore(false);
+            clearPageCache();
             alert('Store updated successfully!');
         } catch (error) {
             alert(error.message);

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, withTimeout } from '../services/supabase';
 import { requestNotificationPermission } from '../utils/pushNotification';
+import { clearPageCache } from '../utils/pageCache';
 
 const AuthContext = createContext({});
 
@@ -234,6 +235,7 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
             setProfile(null);
             localStorage.removeItem('supabase.auth.token'); // Fallback for some older versions
+            clearPageCache();
             console.log('Auth: State cleared.');
         }
     };
