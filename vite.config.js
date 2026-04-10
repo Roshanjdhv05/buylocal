@@ -1,12 +1,10 @@
 import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 import prerender from '@prerenderer/rollup-plugin';
-
-// Pre-rendering is only active for standard static routes for SEO.
-// Note: Generating dynamic product pages might require feeding the complete dynamic routes list.
-// For now, we pre-render Home, Search, Stores, Trending, Categories to ensure Googlebot gets HTML.
 
 export default defineConfig({
   plugins: [
+    react(),
     prerender({
       routes: [
         '/',
@@ -19,13 +17,6 @@ export default defineConfig({
       rendererOptions: {
         maxConcurrentRoutes: 1,
         renderAfterTime: 5000 // wait for 5 seconds to ensure React loads
-      },
-      postProcess(renderedRoute) {
-        // Optional: remove extraneous tags or optimize output
-        renderedRoute.html = renderedRoute.html.replace(
-          /<script.*?><\/script>/g,
-          ''
-        );
       }
     }),
   ],
