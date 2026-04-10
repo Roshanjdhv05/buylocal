@@ -35,11 +35,16 @@ const LoadingSpinner = ({ fullPage = false, size = "150px", inline = false }) =>
     return (
         <div style={containerStyle}>
             {animationData && (
-                <Lottie 
-                    animationData={animationData} 
-                    loop={true} 
-                    style={{ width: size, height: size }} 
-                />
+                (() => {
+                    const LottieComponent = Lottie.default || Lottie;
+                    return (
+                        <LottieComponent 
+                            animationData={animationData} 
+                            loop={true} 
+                            style={{ width: size, height: size }} 
+                        />
+                    );
+                })()
             )}
         </div>
     );

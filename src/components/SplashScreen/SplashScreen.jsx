@@ -123,16 +123,21 @@ const SplashScreen = ({ onComplete, isLoading = false }) => {
                         style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}
                     >
                         {animationData && (
-                            <Lottie 
-                                animationData={animationData} 
-                                loop={true} 
-                                style={{ 
-                                    maxWidth: '400px', 
-                                    width: '100%', 
-                                    height: 'auto',
-                                    filter: 'drop-shadow(0 15px 20px rgba(124, 58, 237, 0.2))'
-                                }} 
-                            />
+                            (() => {
+                                const LottieComponent = Lottie.default || Lottie;
+                                return (
+                                    <LottieComponent
+                                        animationData={animationData} 
+                                        loop={true} 
+                                        style={{ 
+                                            maxWidth: '400px', 
+                                            width: '100%', 
+                                            height: 'auto',
+                                            filter: 'drop-shadow(0 15px 20px rgba(124, 58, 237, 0.2))'
+                                        }} 
+                                    />
+                                );
+                            })()
                         )}
                     </motion.div>
                 </div>
