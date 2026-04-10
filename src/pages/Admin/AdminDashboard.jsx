@@ -425,12 +425,18 @@ const AdminDashboard = ({ onLogout }) => {
 
             if (error) throw error;
             
-            // Optimistic UI update: Remove from local state immediately
+            console.log('Successfully deleted store:', store.id);
+            
+            // 1. Remove from local state immediately for instant feedback
             setStores(prev => prev.filter(s => s.id !== store.id));
             
             alert('Store deleted successfully.');
-            fetchAdminData();
+            
+            // 2. Wait for the server to confirm the fresh state
+            await fetchAdminData();
+            console.log('Dashboard data refreshed after deletion.');
         } catch (error) {
+            console.error('Failed to delete store:', error);
             alert('Error deleting store: ' + error.message);
         } finally {
             setLoading(false);
