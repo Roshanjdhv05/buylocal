@@ -8,21 +8,31 @@ const InstallPWA = () => {
     useEffect(() => {
         const handler = (e) => {
             e.preventDefault();
-            console.log("we are being triggered :D");
+            console.log("PWA Install Prompt Triggered");
             setSupportsPWA(true);
             setPromptInstall(e);
         };
         window.addEventListener("beforeinstallprompt", handler);
 
-        return () => window.removeEventListener("transitionend", handler);
+        return () => window.removeEventListener("beforeinstallprompt", handler);
     }, []);
 
-    const onClick = (evt) => {
+    const onClick = async (evt) => {
         evt.preventDefault();
         if (!promptInstall) {
             return;
         }
+        
+        // Trigger the browser's native install prompt
         promptInstall.prompt();
+        
+        // Wait for usage to respond to the prompt
+        const { outcome } = await promptInstall.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+        
+        // The prompt can only be used once, so clear it out
+        setPromptInstall(null);
+        setSupportsPWA(false);
     };
 
     if (!supportsPWA) {

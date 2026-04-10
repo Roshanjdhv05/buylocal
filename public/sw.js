@@ -1,5 +1,19 @@
-/* eslint-disable no-restricted-globals */
-// Service Worker for Web Push Notifications
+// Service Worker for Web Push Notifications and PWA Installability
+
+// Standard PWA lifecycle events
+self.addEventListener('install', (event) => {
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil(self.clients.claim());
+});
+
+// A fetch handler is REQUIRED for the browser to consider the site installable as a PWA.
+// This simple pass-through satisfies the requirement while allowing standard network requests.
+self.addEventListener('fetch', (event) => {
+    // Standard fetch behavior
+});
 
 self.addEventListener('push', (event) => {
     let data = { title: 'BuyLocal', body: 'New notification from BuyLocal' };
