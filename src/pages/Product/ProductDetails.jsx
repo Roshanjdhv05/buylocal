@@ -5,6 +5,7 @@ import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import ProductCard from '../../components/ProductCard';
 import SEO from '../../components/SEO';
+import Navbar from '../../components/Navbar';
 import {
     ShoppingCart, Heart, Star, Store, ArrowLeft,
     Share2, MapPin, ShieldCheck, RefreshCcw, Truck,
@@ -242,6 +243,7 @@ const ProductDetails = () => {
                ogImage={images[0]}
                schema={[productSchema, breadcrumbSchema]}
             />
+            <Navbar />
             <div className="container">
                 {/* BREADCRUMBS */}
                 {fromStoreCategory ? (
