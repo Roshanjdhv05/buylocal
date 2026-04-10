@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
+import SEO from '../../components/SEO';
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import { getLocalizedName } from '../../utils/productTranslations';
@@ -207,8 +208,46 @@ const PublicStore = () => {
     if (loading) return <LoadingSpinner fullPage />;
     if (!store) return <div className="error-container">{t('publicStore.notFound')}</div>;
 
+    const storeSchema = {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "name": store.name,
+        "image": store.banner_url || store.profile_picture_url || 'https://buylocal.in/logo.png',
+        "description": store.description || store.legacy_description || `Shop premium products from ${store.name} on BuyLocal.`,
+        "url": typeof window !== 'undefined' ? window.location.href : '',
+        "telephone": store.phone || '',
+        "address": {
+            "@type": "PostalAddress",
+            "streetAddress": store.address || '',
+            "addressLocality": store.city || '',
+            "addressRegion": store.state || '',
+            "addressCountry": "IN"
+        }
+    };
+    if (store.lat && store.lng) {
+        storeSchema.geo = {
+            "@type": "GeoCoordinates",
+            "latitude": store.lat,
+            "longitude": store.lng
+        };
+    }
+    if (averageRating > 0 && reviews.length > 0) {
+        storeSchema.aggregateRating = {
+            "@type": "AggregateRating",
+            "ratingValue": averageRating,
+            "reviewCount": reviews.length
+        };
+    }
+
     return (
         <div className="luxury-store-wrapper">
+            <SEO 
+                title={`${store.name} - Shop collection | BuyLocal`}
+                description={store.description || `Browse the latest collection from ${store.name}. Shop directly from local stores.`}
+                canonicalUrl={typeof window !== 'undefined' ? window.location.href : ''}
+                ogImage={store.banner_url || store.profile_picture_url}
+                schema={storeSchema}
+            />
             <Navbar />
 
             {/* LUXURY HERO SECTION */}

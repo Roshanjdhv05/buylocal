@@ -38,6 +38,9 @@ import Terms from './pages/Legal/Terms';
 import Privacy from './pages/Legal/Privacy';
 import Refunds from './pages/Legal/Refunds';
 
+// Fallback Page
+import NotFound from './components/NotFound';
+
 const ProtectedRoute = ({ children, role }) => {
     const { user, profile, loading } = useAuth();
 
@@ -210,7 +213,7 @@ const AppContent = () => {
                 <Route path="/refunds" element={<Refunds />} />
 
                 {/* Fallback */}
-                <Route path="*" element={<Navigate to="/" />} />
+                <Route path="*" element={<NotFound />} />
             </Routes>
             <LocationOnboarding />
             <LocationFAB />

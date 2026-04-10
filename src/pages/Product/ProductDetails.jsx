@@ -4,6 +4,7 @@ import { supabase, withTimeout } from '../../services/supabase';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import ProductCard from '../../components/ProductCard';
+import SEO from '../../components/SEO';
 import {
     ShoppingCart, Heart, Star, Store, ArrowLeft,
     Share2, MapPin, ShieldCheck, RefreshCcw, Truck,
@@ -192,8 +193,55 @@ const ProductDetails = () => {
     const discount = product && product.mrp ? Math.round(((product.mrp - (product.online_price || product.price)) / product.mrp) * 100) : 0;
     const isOutOfStock = product.stock_quantity !== null && product.stock_quantity !== undefined && product.stock_quantity <= 0;
 
+    const productSchema = {
+        "@context": "https://schema.org/",
+        "@type": "Product",
+        "name": product.name,
+        "image": images,
+        "description": product.description || `Buy ${product.name} from local stores near you.`,
+        "brand": {
+            "@type": "Brand",
+            "name": store?.name || 'BuyLocal'
+        },
+        "offers": {
+            "@type": "Offer",
+            "url": typeof window !== 'undefined' ? window.location.href : '',
+            "priceCurrency": "INR",
+            "price": product.online_price || product.price,
+            "availability": isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+            "seller": {
+                "@type": "Organization",
+                "name": store?.name || 'Local Store'
+            }
+        }
+    };
+    if (avgRating > 0 && reviews.length > 0) {
+        productSchema.aggregateRating = {
+            "@type": "AggregateRating",
+            "ratingValue": avgRating,
+            "reviewCount": reviews.length
+        };
+    }
+
+    const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://buylocal.in/" },
+            { "@type": "ListItem", "position": 2, "name": product.category || "Category", "item": `https://buylocal.in/category/${product.category}` },
+            { "@type": "ListItem", "position": 3, "name": product.name }
+        ]
+    };
+
     return (
         <div className="pro-details-luxury">
+            <SEO 
+               title={`${product.name} - Buy online in ${store?.city || 'India'} | BuyLocal`}
+               description={product.description || `Shop ${product.name} from local stores near you with fast delivery.`}
+               canonicalUrl={typeof window !== 'undefined' ? window.location.href : ''}
+               ogImage={images[0]}
+               schema={[productSchema, breadcrumbSchema]}
+            />
             <div className="container">
                 {/* BREADCRUMBS */}
                 {fromStoreCategory ? (

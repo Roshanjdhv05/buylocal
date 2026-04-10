@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /cart
+Disallow: /profile
+Disallow: /orders
+Disallow: /seller/
+
+Sitemap: https://buylocal.in/sitemap.xml

@@ -26,11 +26,14 @@ export const useProduct = (productId) => {
                 setError(null);
 
                 // Fetch Product
+                const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productId);
+                const queryColumn = isUUID ? 'id' : 'slug';
+
                 const { data: productData, error: productError } = await withTimeout(
                     supabase
                         .from('products')
                         .select('*')
-                        .eq('id', productId)
+                        .eq(queryColumn, productId)
                         .single()
                 );
 
