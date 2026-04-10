@@ -10,9 +10,27 @@ self.addEventListener('activate', (event) => {
 });
 
 // A fetch handler is REQUIRED for the browser to consider the site installable as a PWA.
-// This simple pass-through satisfies the requirement while allowing standard network requests.
+// We implement a simple cache-first strategy for the manifest and icons to ensure reliability.
 self.addEventListener('fetch', (event) => {
-    // Standard fetch behavior
+    const url = new URL(event.request.url);
+    
+    // Cache manifest and icons
+    if (url.pathname === '/manifest.json' || url.pathname.startsWith('/icons/') || url.pathname === '/favicon.png') {
+        event.respondWith(
+            caches.open('pwa-assets').then((cache) => {
+                return cache.match(event.request).then((response) => {
+                    const fetchPromise = fetch(event.request).then((networkResponse) => {
+                        cache.put(event.request, networkResponse.clone());
+                        return networkResponse;
+                    });
+                    return response || fetchPromise;
+                });
+            })
+        );
+        return;
+    }
+
+    // Default fetch behavior for everything else
 });
 
 self.addEventListener('push', (event) => {
