@@ -12,6 +12,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { getRecentlyViewed } from '../../utils/recentlyViewed';
 import { useTranslation } from 'react-i18next';
 import SplashScreen from '../../components/SplashScreen/SplashScreen';
+import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 
 const Home = () => {
     const { t } = useTranslation();
@@ -301,18 +302,20 @@ const Home = () => {
     const productsUnder699 = enrichedProducts.filter(p => p.online_price < 699).slice(0, 4);
     const productsUnder999 = enrichedProducts.filter(p => p.online_price < 999).slice(0, 4);
 
-    if (showSplash || loading) {
+    if (showSplash) {
         return (
             <AnimatePresence>
-                {showSplash && (
-                    <SplashScreen 
-                        key="splash"
-                        onComplete={handleSplashComplete} 
-                        isLoading={loading} 
-                    />
-                )}
+                <SplashScreen 
+                    key="splash"
+                    onComplete={handleSplashComplete} 
+                    isLoading={loading} 
+                />
             </AnimatePresence>
         );
+    }
+
+    if (loading) {
+        return <LoadingSpinner fullPage />;
     }
 
     const categoryIcons = {
