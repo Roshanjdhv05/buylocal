@@ -18,7 +18,7 @@ const CreateStore = () => {
         state: profile?.state || '',
         lat: profile?.lat || null,
         lng: profile?.lng || null,
-        est_delivery_time: '',
+        delivery_time: '',
         whatsapp: '',
         instagram: '',
         delivery_charges: '50',
@@ -90,7 +90,7 @@ const CreateStore = () => {
                     ...formData,
                     owner_id: user.id,
                     banner_url: bannerUrl,
-                    gallery: galleryUrls
+                    gallery_urls: galleryUrls
                 }]));
 
             if (storeError) throw storeError;
@@ -204,8 +204,8 @@ const CreateStore = () => {
                                 <input
                                     type="text"
                                     placeholder="e.g. 2-3 days"
-                                    value={formData.est_delivery_time}
-                                    onChange={(e) => setFormData({ ...formData, est_delivery_time: e.target.value })}
+                                    value={formData.delivery_time}
+                                    onChange={(e) => setFormData({ ...formData, delivery_time: e.target.value })}
                                 />
                             </div>
                         </div>
