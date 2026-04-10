@@ -753,23 +753,7 @@ const SellerDashboard = () => {
         }
     };
 
-    const handleDeleteGalleryImage = async (urlToDelete) => {
-        if (!window.confirm('Are you sure you want to delete this image?')) return;
 
-        try {
-            const updatedGallery = store.gallery_urls.filter(url => url !== urlToDelete);
-
-            const { error } = await supabase
-                .from('stores')
-                .update({ gallery_urls: updatedGallery })
-                .eq('id', store.id);
-
-            if (error) throw error;
-            setStore({ ...store, gallery_urls: updatedGallery });
-        } catch (error) {
-            alert(error.message);
-        }
-    };
 
     const handleCampaignImageChange = (e, type = 'desktop') => {
         const file = e.target.files[0];
