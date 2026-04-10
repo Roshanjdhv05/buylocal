@@ -425,6 +425,9 @@ const AdminDashboard = ({ onLogout }) => {
 
             if (error) throw error;
             
+            // Optimistic UI update: Remove from local state immediately
+            setStores(prev => prev.filter(s => s.id !== store.id));
+            
             alert('Store deleted successfully.');
             fetchAdminData();
         } catch (error) {
@@ -1002,6 +1005,9 @@ const AdminDashboard = ({ onLogout }) => {
                                                 <td className="actions-cell">
                                                     <button className="btn-icon-sm view" onClick={() => handleStoreClick(store)} title="View Store & Products">
                                                         <Eye size={16} />
+                                                    </button>
+                                                    <button className="btn-icon-sm delete" onClick={() => handleDeleteStore(store)} title="Delete Store">
+                                                        <Trash2 size={16} />
                                                     </button>
                                                 </td>
                                             </tr>
