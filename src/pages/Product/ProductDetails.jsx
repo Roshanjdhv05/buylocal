@@ -18,6 +18,7 @@ import { addToRecentlyViewed } from '../../utils/recentlyViewed';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedName } from '../../utils/productTranslations';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
+import ImageLightbox from '../../components/ImageLightbox/ImageLightbox';
 import './ProductDetails.css';
 
 const ProductDetails = () => {
@@ -39,6 +40,7 @@ const ProductDetails = () => {
     const [reviews, setReviews] = useState([]);
     const [reviewsLoading, setReviewsLoading] = useState(false);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [showLightbox, setShowLightbox] = useState(false);
     const [isLiked, setIsLiked] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('description');
@@ -280,7 +282,7 @@ const ProductDetails = () => {
 
                     {/* COLUMN 2: HERO IMAGE */}
                     <div className="hero-column-wrapper">
-                        <div className="hero-column">
+                        <div className="hero-column" onClick={() => setShowLightbox(true)} style={{ cursor: 'zoom-in' }}>
                             <img src={images[selectedImageIndex]} alt={product.name} />
                             <div className="hero-badges">
                                 <span className="badge-fast">Fast Delivery</span>
@@ -554,6 +556,14 @@ const ProductDetails = () => {
                     </button>
                 </div>
             </div>
+
+            {showLightbox && (
+                <ImageLightbox 
+                    images={images} 
+                    currentIndex={selectedImageIndex} 
+                    onClose={() => setShowLightbox(false)} 
+                />
+            )}
         </div>
     );
 };

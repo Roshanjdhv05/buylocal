@@ -35,12 +35,18 @@ const PublicStore = () => {
     const [customCategories, setCustomCategories] = useState([]);
     const [selectedGalleryIndex, setSelectedGalleryIndex] = useState(null);
 
+    const allMedia = React.useMemo(() => {
+        const gallery = Array.isArray(store?.gallery_urls) ? store.gallery_urls : [];
+        const videos = Array.isArray(store?.video_urls) ? store.video_urls : [];
+        return [...videos, ...gallery];
+    }, [store?.gallery_urls, store?.video_urls]);
+
     const nextSlide = () => {
-        setSelectedGalleryIndex(prev => (prev + 1) % store.gallery_urls.length);
+        setSelectedGalleryIndex(prev => (prev + 1) % allMedia.length);
     };
 
     const prevSlide = () => {
-        setSelectedGalleryIndex(prev => (prev - 1 + store.gallery_urls.length) % store.gallery_urls.length);
+        setSelectedGalleryIndex(prev => (prev - 1 + allMedia.length) % allMedia.length);
     };
 
     useEffect(() => {
@@ -408,7 +414,7 @@ const PublicStore = () => {
                 )}
 
                 {/* MULTIMEDIA GALLERY SLIDER - "The Boutique Experience" */}
-                {store?.gallery_urls?.length > 0 && (
+                {allMedia.length > 0 && (
                     <section className="luxury-section gallery-slider-section">
                         <div className="section-header-luxury">
                             <h2>{t('publicStore.boutiqueExperience', 'The Boutique Experience')}</h2>
@@ -421,12 +427,15 @@ const PublicStore = () => {
                         </div>
 
                         <div className="multimedia-slider-wrap" id="gallery-slider">
-                            {store.gallery_urls.map((url, idx) => {
-                                const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) || url.includes('/video');
+                            {allMedia.map((url, idx) => {
+                                const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) || url.includes('/video') || url.includes('videos/');
                                 return (
                                     <div key={idx} className="multimedia-card" onClick={() => setSelectedGalleryIndex(idx)} style={{ cursor: 'pointer' }}>
                                         {isVideo ? (
-                                            <video src={url} autoPlay muted loop playsInline className="slider-media" />
+                                            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                                                <video src={url} muted loop playsInline className="slider-media" onMouseOver={e => e.target.play()} onMouseOut={e => e.target.pause()} />
+                                                <div className="video-badge" style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(0,0,0,0.5)', color: 'white', padding: '2px 8px', borderRadius: '12px', fontSize: '10px', fontWeight: 'bold' }}>VIDEO</div>
+                                            </div>
                                         ) : (
                                             <img src={url} alt={`Gallery ${idx}`} className="slider-media" />
                                         )}
@@ -553,9 +562,9 @@ const PublicStore = () => {
 
                     <div className="lightbox-content" onClick={e => e.stopPropagation()}>
                         {(() => {
-                            const url = store.gallery_urls[selectedGalleryIndex];
+                            const url = allMedia[selectedGalleryIndex];
                             if (!url) return null;
-                            const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) || url.includes('/video');
+                            const isVideo = url.toLowerCase().match(/\.(mp4|webm|ogg|mov)$/) || url.includes('/video') || url.includes('videos/');
                             return isVideo ? (
                                 <video src={url} controls autoPlay className="lightbox-media" />
                             ) : (

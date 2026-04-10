@@ -12,7 +12,7 @@ import {
     Archive, DollarSign, LogOut, User, Home,
     LayoutDashboard, BarChart, ShoppingBag, PlusCircle, ExternalLink, Edit, Clock, Truck,
     Filter, MoreHorizontal, ChevronLeft, Search, MapPin, Zap, Menu, BookOpen,
-    Megaphone, Calendar, Play, Pause, Trash, Copy
+    Megaphone, Calendar, Play, Pause, Trash, Copy, Video, PlayCircle
 } from 'lucide-react';
 import './DashboardStyles.css';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
@@ -39,7 +39,8 @@ const SellerDashboard = () => {
         name: '', description: '', address: '', phone: '', city: '', state: '',
         delivery_time: '', whatsapp: '', instagram: '',
         profile_picture_url: '', location_url: '', gst_number: '',
-        delivery_charges: '50', free_delivery_threshold: '500'
+        delivery_charges: '50', free_delivery_threshold: '500',
+        video_urls: []
     });
     const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
     const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState(null);
@@ -188,7 +189,8 @@ const SellerDashboard = () => {
                     cod_available: storeData.cod_available ?? true,
                     custom_highlights: Array.isArray(storeData.custom_highlights) ? storeData.custom_highlights : [],
                     delivery_charges: storeData.delivery_charges || '50',
-                    free_delivery_threshold: storeData.free_delivery_threshold || ''
+                    free_delivery_threshold: storeData.free_delivery_threshold || '',
+                    video_urls: Array.isArray(storeData.video_urls) ? storeData.video_urls : []
                 });
 
                 // Fetch Sections - Non-blocking
@@ -588,6 +590,94 @@ const SellerDashboard = () => {
             alert(error.message);
         } finally {
             setUploading(false);
+        }
+    };
+
+    const handleDeleteGalleryImage = async (urlToDelete) => {
+        if (!window.confirm('Remove this image from gallery?')) return;
+        try {
+            const updatedGallery = (store.gallery_urls || []).filter(url => url !== urlToDelete);
+            const { error } = await supabase
+                .from('stores')
+                .update({ gallery_urls: updatedGallery })
+                .eq('id', store.id);
+            if (error) throw error;
+            setStore({ ...store, gallery_urls: updatedGallery });
+        } catch (error) {
+            alert(error.message);
+        }
+    };
+
+    const handleVideoUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Restriction: Only 2 videos per store
+        const currentVideos = editedStore.video_urls || store?.video_urls || [];
+        if (currentVideos.length >= 2) {
+            alert('You can only add up to 2 videos per store.');
+            return;
+        }
+
+        // Basic size validation (e.g., 20MB)
+        if (file.size > 20 * 1024 * 1024) {
+            alert('Video file size must be less than 20MB.');
+            return;
+        }
+
+        setUploading(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+            const filePath = `videos/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('store-gallery')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('store-gallery')
+                .getPublicUrl(filePath);
+
+            const updatedVideos = [...currentVideos, publicUrl];
+            
+            // Update local state and DB immediately for videos
+            const { error: updateError } = await supabase
+                .from('stores')
+                .update({ video_urls: updatedVideos })
+                .eq('id', store.id);
+
+            if (updateError) throw updateError;
+            
+            setStore({ ...store, video_urls: updatedVideos });
+            setEditedStore(prev => ({ ...prev, video_urls: updatedVideos }));
+            alert('Video uploaded successfully!');
+        } catch (error) {
+            alert('Video upload failed: ' + error.message);
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const handleDeleteVideo = async (urlToDelete) => {
+        if (!window.confirm('Delete this video?')) return;
+        try {
+            const currentVideos = editedStore.video_urls || store?.video_urls || [];
+            const updatedVideos = currentVideos.filter(url => url !== urlToDelete);
+            
+            const { error } = await supabase
+                .from('stores')
+                .update({ video_urls: updatedVideos })
+                .eq('id', store.id);
+            
+            if (error) throw error;
+            
+            setStore({ ...store, video_urls: updatedVideos });
+            setEditedStore(prev => ({ ...prev, video_urls: updatedVideos }));
+        } catch (error) {
+            alert(error.message);
         }
     };
 
@@ -2086,10 +2176,36 @@ const SellerDashboard = () => {
                                                 ))}
                                                 <label className="gallery-add-btn" style={{ aspectRatio: '1', border: '2px dashed #c084fc', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#7c3aed', fontWeight: '700', fontSize: '0.75rem', gap: '0.5rem', background: '#faf5ff' }}>
                                                     <PlusCircle size={24} fill="#c084fc" color="white" />
-                                                    ADD MEDIA
+                                                    ADD IMAGES
                                                     <input type="file" hidden multiple accept="image/*" onChange={handleGalleryUpload} />
                                                 </label>
                                             </div>
+                                        </div>
+
+                                        <div className="settings-card-pro">
+                                            <div className="card-header-pro">
+                                                <div className="card-icon"><Video size={24} /></div>
+                                                <h3>Store Videos</h3>
+                                                <span style={{ marginLeft: 'auto', fontSize: '0.75rem', fontWeight: '700', color: '#6366f1' }}>MAX 2 VIDEOS</span>
+                                            </div>
+                                            <div className="gallery-preview-grid">
+                                                {(editedStore.video_urls || store?.video_urls || []).map((url, idx) => (
+                                                    <div key={idx} className="gallery-item-preview video-item">
+                                                        <video src={url} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                                                        <div className="video-overlay"><PlayCircle size={24} color="white" /></div>
+                                                        <button className="delete-gallery-img" onClick={() => handleDeleteVideo(url)}><Trash2 size={14} /></button>
+                                                    </div>
+                                                ))}
+                                                
+                                                {(editedStore.video_urls || store?.video_urls || []).length < 2 && (
+                                                    <label className="gallery-add-btn" style={{ aspectRatio: '1', border: '2px dashed #6366f1', borderRadius: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#4f46e5', fontWeight: '700', fontSize: '0.75rem', gap: '0.5rem', background: '#f5f3ff' }}>
+                                                        <Video size={24} color="#6366f1" />
+                                                        ADD VIDEO
+                                                        <input type="file" hidden accept="video/*" onChange={handleVideoUpload} />
+                                                    </label>
+                                                )}
+                                            </div>
+                                            <p style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '1rem' }}>Videos help customers trust your local shop more. Maximum 2 videos allowed.</p>
                                         </div>
 
                                         <div className="settings-card-pro">
