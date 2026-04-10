@@ -406,6 +406,34 @@ const AdminDashboard = ({ onLogout }) => {
         }
     };
 
+    const handleDeleteStore = async (store) => {
+        const password = window.prompt(`Are you sure you want to delete "${store.name}"? This will delete all products and orders linked to this store.\n\nEnter Admin Password to confirm:`);
+        
+        if (!password) return;
+        
+        if (password !== 'roshan') {
+            alert('Incorrect password. Deletion cancelled.');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const { error } = await supabase
+                .from('stores')
+                .delete()
+                .eq('id', store.id);
+
+            if (error) throw error;
+            
+            alert('Store deleted successfully.');
+            fetchAdminData();
+        } catch (error) {
+            alert('Error deleting store: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleProductSubmit = async (e) => {
         e.preventDefault();
         setUploading(true);
@@ -1040,6 +1068,9 @@ const AdminDashboard = ({ onLogout }) => {
                                                 <td className="actions-cell">
                                                     <button className="btn-icon-sm view" onClick={() => handleStoreClick(store)} title="View Store & Products">
                                                         <Eye size={16} />
+                                                    </button>
+                                                    <button className="btn-icon-sm delete" onClick={() => handleDeleteStore(store)} title="Delete Store">
+                                                        <Trash2 size={16} />
                                                     </button>
                                                 </td>
                                             </tr>
