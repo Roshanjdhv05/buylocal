@@ -17,11 +17,16 @@ const PageTransitionLoader = () => {
     return (
         <div className="page-transition-overlay">
             <div className="lottie-container">
-                <Lottie 
-                    animationData={animationData} 
-                    loop={true}
-                    style={{ width: 150, height: 150 }}
-                />
+                {(() => {
+                    const LottieComponent = Lottie.default || Lottie;
+                    return (
+                        <LottieComponent 
+                            animationData={animationData} 
+                            loop={true}
+                            style={{ width: 150, height: 150 }}
+                        />
+                    );
+                })()}
             </div>
             <style>{`
                 .page-transition-overlay {
