@@ -109,7 +109,7 @@ const Navbar = () => {
                         </button>
                         <div className="nav-brand-group">
                             <Link to="/" className="logo">
-                                <img src="/favicon.png" alt="ByLocal" className="logo-img" />
+                                <img src="/logo.png" alt="ByLocal" className="logo-img" />
                             </Link>
                         </div>
                     </div>
@@ -204,7 +204,7 @@ const Navbar = () => {
             <div className={`nav-drawer ${isOpen ? 'open' : ''}`}>
                 <div className="drawer-header">
                     <Link to="/" onClick={toggleMenu} className="logo">
-                        <img src="/favicon.png" alt="ByLocal" className="logo-img" />
+                        <img src="/logo.png" alt="ByLocal" className="logo-img" />
                     </Link>
                     <button onClick={toggleMenu}><X size={24} /></button>
                 </div>

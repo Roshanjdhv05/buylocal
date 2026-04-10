@@ -43,7 +43,7 @@ const InstallPWA = () => {
         <div className="install-banner">
             <div className="install-content">
                 <div className="install-left">
-                    <img src="/favicon.png" alt="ByLocal" className="install-icon" />
+                    <img src="/logo.png" alt="ByLocal" className="install-icon" />
                     <div className="install-text">
                         <span className="install-title">Install ByLocal</span>
                         <span className="install-subtitle">Your Neighborhood Shop</span>
