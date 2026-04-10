@@ -5,6 +5,7 @@ import prerender from '@prerenderer/rollup-plugin';
 export default defineConfig({
   plugins: [
     react(),
+    /* 
     prerender({
       routes: [
         '/',
@@ -19,6 +20,7 @@ export default defineConfig({
         renderAfterTime: 5000 // wait for 5 seconds to ensure React loads
       }
     }),
+    */
   ],
   build: {
     rollupOptions: {
