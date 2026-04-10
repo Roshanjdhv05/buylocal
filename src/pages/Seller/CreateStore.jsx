@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase, withTimeout } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
-import { Upload, Store, MapPin, Phone, Truck, Image as ImageIcon } from 'lucide-react';
+import { Upload, Store, MapPin, Phone, Truck, Image as ImageIcon, Minus } from 'lucide-react';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 
 const CreateStore = () => {
