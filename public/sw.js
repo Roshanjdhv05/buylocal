@@ -15,7 +15,7 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
     
     // Cache manifest and icons
-    if (url.pathname === '/manifest.json' || url.pathname.startsWith('/icons/') || url.pathname === '/favicon.png') {
+    if (url.pathname === '/manifest.json' || url.pathname === '/favicon.png') {
         event.respondWith(
             caches.open('pwa-assets').then((cache) => {
                 return cache.match(event.request).then((response) => {
@@ -46,8 +46,8 @@ self.addEventListener('push', (event) => {
 
     const options = {
         body: data.body,
-        icon: '/logo192.png', // Fallback to PWA icon
-        badge: '/badge.png',  // Small monochrome icon
+        icon: '/favicon.png', // Fallback to PWA icon
+        badge: '/favicon.png',  // Small monochrome icon
         vibrate: [100, 50, 100],
         data: {
             url: data.url || '/'
