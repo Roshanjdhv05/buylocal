@@ -342,6 +342,28 @@ const CreateStore = () => {
         }
 
         .submit-btn { width: 100%; margin-top: 1rem; padding: 1rem; font-size: 1.125rem; }
+
+        @media (max-width: 768px) {
+          .create-store-container { padding: 2rem 1rem; }
+          .form-header { margin-bottom: 2rem; }
+          .form-header h1 { font-size: 1.75rem; }
+          
+          .store-form { padding: 1.5rem; }
+          .form-section { margin-bottom: 2rem; }
+          .form-section h3 { font-size: 1.1rem; }
+          
+          .grid-2 { grid-template-columns: 1fr; gap: 0.75rem; }
+          .input-group { margin-bottom: 1rem; }
+          
+          .preview-container { height: 140px; }
+          .upload-placeholder svg { width: 32px; height: 32px; }
+          .upload-placeholder p { font-size: 0.875rem; }
+
+          .gallery-grid {
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 0.75rem;
+          }
+        }
       `}</style>
         </div>
     );
