@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { supabase, withTimeout } from '../../services/supabase';
-import { MapPin, User, Mail, Lock, ShoppingBag, Store, Navigation, ArrowLeft } from 'lucide-react';
+import { MapPin, User, Mail, Lock, ShoppingBag, Store, Navigation, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../../components/AuthLayout';
 import { useTranslation } from 'react-i18next';
 
@@ -21,6 +21,7 @@ const Signup = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [locationStatus, setLocationStatus] = useState('idle'); // idle, detecting, success, error
+    const [showPassword, setShowPassword] = useState(false);
 
     const { signUp, signInWithGoogle } = useAuth();
     const navigate = useNavigate();
@@ -74,11 +75,11 @@ const Signup = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         console.log('Signup: Handling submit...');
+        // Location is now optional
         if (!formData.lat || !formData.lng) {
-            console.warn('Signup: Missing location coordinates');
-            setError('Please detect your location first.');
-            return;
+            console.log('Signup: Proceeding without location coordinates');
         }
+
 
         setLoading(true);
         setError('');
@@ -132,14 +133,23 @@ const Signup = () => {
                     />
                 </div>
 
-                <div className="auth-input-refined">
+                <div className="auth-input-refined auth-input-password">
                     <input
-                        type="password"
+                        type={showPassword ? 'text' : 'password'}
                         placeholder={t('auth.password')}
                         required
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     />
+                    <button
+                        type="button"
+                        className="pw-toggle-btn"
+                        onClick={() => setShowPassword(v => !v)}
+                        tabIndex={-1}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                 </div>
 
                 <div className="auth-location-refined">
@@ -151,7 +161,7 @@ const Signup = () => {
                     >
                         <Navigation size={14} className={locationStatus === 'detecting' ? 'spin' : ''} />
                         {locationStatus === 'detecting' ? 'Detecting Location...' :
-                            locationStatus === 'success' ? `Located: ${formData.city || 'Success'}` : 'Detect My Location'}
+                            locationStatus === 'success' ? `Located: ${formData.city || 'Success'}` : 'Detect My Location (Optional)'}
                     </button>
                 </div>
 
@@ -219,6 +229,28 @@ const Signup = () => {
                     outline: none;
                     box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
                 }
+
+                .auth-input-password {
+                    position: relative;
+                }
+                .auth-input-password input {
+                    padding-right: 3rem;
+                }
+                .pw-toggle-btn {
+                    position: absolute;
+                    right: 1rem;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    background: none;
+                    border: none;
+                    color: #94a3b8;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    padding: 0;
+                    transition: color 0.2s;
+                }
+                .pw-toggle-btn:hover { color: #7c3aed; }
 
                 .auth-location-refined { margin-top: 0.5rem; }
                 .location-pill-btn {

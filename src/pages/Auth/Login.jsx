@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { supabase, withTimeout } from '../../services/supabase';
-import { Mail, Lock, ArrowLeft, Clock } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, Clock, Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../../components/AuthLayout';
 import { useTranslation } from 'react-i18next';
 import { useRateLimit, CLIENT_RATE_POLICIES } from '../../hooks/useRateLimit';
@@ -14,6 +14,7 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     const { signIn, signInWithGoogle } = useAuth();
     const navigate = useNavigate();
@@ -106,14 +107,23 @@ const Login = () => {
                     />
                 </div>
 
-                <div className="auth-input-refined">
+                <div className="auth-input-refined auth-input-password">
                     <input
-                        type="password"
+                        type={showPassword ? 'text' : 'password'}
                         placeholder={t('auth.password')}
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
+                    <button
+                        type="button"
+                        className="pw-toggle-btn"
+                        onClick={() => setShowPassword(v => !v)}
+                        tabIndex={-1}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                 </div>
 
                 <div className="forgot-password-link-refined">
@@ -224,6 +234,28 @@ const Login = () => {
                     outline: none;
                     box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
                 }
+
+                .auth-input-password {
+                    position: relative;
+                }
+                .auth-input-password input {
+                    padding-right: 3rem;
+                }
+                .pw-toggle-btn {
+                    position: absolute;
+                    right: 1rem;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    background: none;
+                    border: none;
+                    color: #94a3b8;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    padding: 0;
+                    transition: color 0.2s;
+                }
+                .pw-toggle-btn:hover { color: #7c3aed; }
 
                 .forgot-password-link-refined { text-align: right; margin-top: -0.5rem; }
                 .forgot-password-link-refined a { color: #64748b; font-size: 0.85rem; font-weight: 500; }

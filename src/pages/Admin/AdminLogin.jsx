@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import './AdminDashboard.css';
 
 const AdminLogin = ({ onLogin }) => {
     const [credentials, setCredentials] = useState({ username: '', password: '' });
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -31,15 +33,29 @@ const AdminLogin = ({ onLogin }) => {
                             required
                         />
                     </div>
-                    <div className="form-group">
+                    <div className="form-group" style={{ position: 'relative' }}>
                         <label>Password</label>
                         <input
-                            type="password"
+                            type={showPassword ? 'text' : 'password'}
                             value={credentials.password}
                             onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
                             placeholder="Enter password"
                             required
+                            style={{ paddingRight: '3rem' }}
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(v => !v)}
+                            tabIndex={-1}
+                            style={{
+                                position: 'absolute', right: '1rem', bottom: '0.75rem',
+                                background: 'none', border: 'none', cursor: 'pointer',
+                                color: '#94a3b8', display: 'flex', alignItems: 'center', padding: 0
+                            }}
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
                     </div>
                     {error && <p className="error-message">{error}</p>}
                     <button type="submit" className="admin-login-btn">Login to Dashboard</button>

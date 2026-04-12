@@ -4,7 +4,7 @@ import {
     Users, Store, Package, ShoppingBag, IndianRupee, LogOut, 
     TrendingUp, Search, ChevronLeft, ShieldCheck, UserPlus, 
     ShieldAlert, Edit, Trash2, CheckCircle, XCircle, Settings,
-    Lock, Unlock, Clock, Database, Plus, Eye, Pencil, Check, X
+    Lock, Unlock, Clock, Database, Plus, Eye, EyeOff, Pencil, Check, X
 } from 'lucide-react';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import './AdminDashboard.css';
@@ -70,6 +70,7 @@ const AdminDashboard = ({ onLogout }) => {
     const [isSubSectionEnabled, setIsSubSectionEnabled] = useState(false);
     const [showPasswordPopup, setShowPasswordPopup] = useState(false);
     const [subPassword, setSubPassword] = useState('');
+    const [showSubPassword, setShowSubPassword] = useState(false);
     const [globalProductLimit, setGlobalProductLimit] = useState(50);
 
     // Product CRUD State (within Store Details)
@@ -1356,23 +1357,41 @@ const AdminDashboard = ({ onLogout }) => {
                                     <div className="password-card">
                                         <h3>Admin Verification</h3>
                                         <p>Enter password to unlock subscription controls.</p>
-                                        <input 
-                                            type="password" 
-                                            placeholder="Enter password" 
-                                            value={subPassword}
-                                            onChange={(e) => setSubPassword(e.target.value)}
-                                            onKeyPress={(e) => {
-                                                if (e.key === 'Enter') {
-                                                    if (subPassword === 'roshan') {
-                                                        setIsSubSectionEnabled(true);
-                                                        setShowPasswordPopup(false);
-                                                        setSubPassword('');
-                                                    } else {
-                                                        alert('Incorrect password');
+                                        <div style={{ position: 'relative' }}>
+                                            <input 
+                                                type={showSubPassword ? 'text' : 'password'}
+                                                placeholder="Enter password" 
+                                                value={subPassword}
+                                                onChange={(e) => setSubPassword(e.target.value)}
+                                                style={{ paddingRight: '3rem', width: '100%' }}
+                                                onKeyPress={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        if (subPassword === 'roshan') {
+                                                            setIsSubSectionEnabled(true);
+                                                            setShowPasswordPopup(false);
+                                                            setSubPassword('');
+                                                            setShowSubPassword(false);
+                                                        } else {
+                                                            alert('Incorrect password');
+                                                        }
                                                     }
-                                                }
-                                            }}
-                                        />
+                                                }}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowSubPassword(v => !v)}
+                                                style={{
+                                                    position: 'absolute', right: '0.75rem', top: '50%',
+                                                    transform: 'translateY(-50%)',
+                                                    background: 'none', border: 'none', cursor: 'pointer',
+                                                    color: '#94a3b8', display: 'flex', alignItems: 'center', padding: 0
+                                                }}
+                                                tabIndex={-1}
+                                                aria-label={showSubPassword ? 'Hide password' : 'Show password'}
+                                            >
+                                                {showSubPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </button>
+                                        </div>
                                         <div className="password-actions">
                                             <button className="btn-secondary" onClick={() => setShowPasswordPopup(false)}>Cancel</button>
                                             <button className="btn-primary" onClick={() => {

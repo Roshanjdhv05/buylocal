@@ -9,6 +9,7 @@ const UpdatePassword = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const { updatePassword } = useAuth();
     const navigate = useNavigate();
@@ -66,12 +67,19 @@ const UpdatePassword = () => {
                     <div className="input-group">
                         <Lock size={18} />
                         <input
-                            type={showPassword ? "text" : "password"}
+                            type={showConfirmPassword ? "text" : "password"}
                             placeholder="Confirm New Password"
                             required
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
                         />
+                        <button
+                            type="button"
+                            className="toggle-visibility"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        >
+                            {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
                     </div>
 
                     {error && <p className="error-message">{error}</p>}
