@@ -186,20 +186,24 @@ const PublicStore = () => {
                 .insert([{
                     store_id: store.id,
                     user_id: user.id,
-
                     rating,
                     comment,
                     user_name: user.user_metadata?.full_name || user.email.split('@')[0],
                     user_avatar: user.user_metadata?.avatar_url
                 }]);
 
-            if (error) throw error;
+            if (error) {
+                // Handle duplicate review (unique constraint)
+                if (error.code === '23505') {
+                    throw new Error('You have already reviewed this store. Only one review per store is allowed.');
+                }
+                throw error;
+            }
 
             setIsReviewModalOpen(false);
             setComment('');
             setRating(5);
             fetchReviews();
-            alert('Review submitted successfully!');
         } catch (err) {
             alert(err.message);
         } finally {
@@ -468,9 +472,21 @@ const PublicStore = () => {
                 )}
 
                 {/* TESTIMONIALS - "The Collective Voice" */}
-                <section className="luxury-section">
+                <section className="luxury-section" id="reviews-section">
                     <div className="testimonials-wrap">
-                        <h2>{t('publicStore.collectiveVoice', 'The Collective Voice')}</h2>
+                        <div className="testimonials-header-row">
+                            <h2>{t('publicStore.collectiveVoice', 'The Collective Voice')}</h2>
+                            <button
+                                className="btn-write-review"
+                                onClick={() => {
+                                    if (!user) return navigate('/login', { state: { from: location } });
+                                    setIsReviewModalOpen(true);
+                                }}
+                            >
+                                <MessageSquare size={15} />
+                                {user ? 'Write a Review' : 'Login to Review'}
+                            </button>
+                        </div>
 
                         <div className="testimonial-carousel">
                             {reviews.length > 0 ? reviews.map((rev, idx) => (
@@ -501,8 +517,18 @@ const PublicStore = () => {
                                     </div>
                                 </div>
                             )) : (
-                                <div className="testimonial-card-luxury">
+                                <div className="testimonial-card-luxury no-reviews-card">
+                                    <MessageSquare size={32} style={{ color: '#bc8a5f', opacity: 0.4, marginBottom: '0.5rem' }} />
                                     <p className="t-text">"{t('publicStore.firstReview')}"</p>
+                                    <button
+                                        className="btn-write-review-inline"
+                                        onClick={() => {
+                                            if (!user) return navigate('/login', { state: { from: location } });
+                                            setIsReviewModalOpen(true);
+                                        }}
+                                    >
+                                        Be the first to review
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -881,6 +907,57 @@ const PublicStore = () => {
                 @media (max-width: 768px) {
                     .desktop-only { display: none; }
                 }
+
+                /* TESTIMONIALS - Write Review button */
+                .testimonials-header-row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0 1rem;
+                    margin-bottom: 1.5rem;
+                }
+                .testimonials-header-row h2 {
+                    font-size: 1.6rem;
+                    margin: 0;
+                }
+                .btn-write-review {
+                    display: flex;
+                    align-items: center;
+                    gap: 0.4rem;
+                    padding: 0.55rem 1.1rem;
+                    border-radius: 20px;
+                    background: #bc8a5f;
+                    color: white;
+                    font-size: 0.78rem;
+                    font-weight: 700;
+                    border: none;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    white-space: nowrap;
+                    flex-shrink: 0;
+                }
+                .btn-write-review:hover { background: #a3744d; transform: translateY(-1px); }
+
+                .no-reviews-card {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    text-align: center;
+                    min-width: 260px;
+                }
+                .btn-write-review-inline {
+                    margin-top: 0.75rem;
+                    padding: 0.5rem 1.25rem;
+                    border-radius: 20px;
+                    background: #fef8f4;
+                    color: #bc8a5f;
+                    font-size: 0.8rem;
+                    font-weight: 700;
+                    border: 1px solid #bc8a5f33;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .btn-write-review-inline:hover { background: #bc8a5f; color: white; }
 
                 /* MODAL */
                 .review-modal-overlay {
