@@ -4,6 +4,7 @@ import { requestNotificationPermission } from '../utils/pushNotification';
 import { clearPageCache } from '../utils/pageCache';
 
 const AuthContext = createContext({});
+const SITE_URL = import.meta.env.VITE_SITE_URL || window.location.origin;
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -217,7 +218,7 @@ export const AuthProvider = ({ children }) => {
         const { data, error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: window.location.origin
+                redirectTo: SITE_URL
             }
         });
         if (error) throw error;
@@ -242,8 +243,8 @@ export const AuthProvider = ({ children }) => {
 
     const sendPasswordResetEmail = async (email) => {
         const { error } = await withTimeout(supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${window.location.origin}/update-password`,
-        }), 30000, 'Password Reset');
+            redirectTo: `${SITE_URL}/update-password`,
+        }), 30000, 'Password Status');
         if (error) throw error;
     };
 

@@ -6,4 +6,4 @@ Disallow: /profile
 Disallow: /orders
 Disallow: /seller/
 
-Sitemap: https://buylocal.in/sitemap.xml
+Sitemap: https://bylocal.in/sitemap.xml

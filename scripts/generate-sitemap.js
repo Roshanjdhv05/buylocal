@@ -19,7 +19,7 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
-const SITE_URL = 'https://buylocal.in'; // Replace with actual domain
+const SITE_URL = 'https://bylocal.in'; // Replace with actual domain
 
 async function generateSitemap() {
   console.log("Generating sitemap...");
