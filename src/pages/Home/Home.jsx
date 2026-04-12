@@ -171,7 +171,7 @@ const Home = () => {
                     console.log('Home: Stores fetched successfully, count:', storesData?.length);
                 }
 
-                const { data: productsData, error: productsError } = await withTimeout(supabase.from('products').select('*'), 30000, 'Home Fetch Products');
+                const { data: productsData, error: productsError } = await withTimeout(supabase.from('products').select('*').order('created_at', { ascending: false }), 30000, 'Home Fetch Products');
                 if (productsError) console.error('Home: Fetch products error:', productsError);
 
                 const { data: reviewsData, error: reviewsError } = await withTimeout(supabase.from('product_reviews').select('*'), 30000, 'Home Fetch Reviews');

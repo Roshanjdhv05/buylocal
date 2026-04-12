@@ -9,7 +9,7 @@ import Navbar from '../../components/Navbar';
 import {
     ShoppingCart, Heart, Star, Store, ArrowLeft,
     Share2, MapPin, ShieldCheck, RefreshCcw, Truck,
-    ChevronRight, Info, MessageCircle, Clock, Camera,
+    ChevronRight, ChevronLeft, Info, MessageCircle, Clock, Camera,
     ChevronDown, ShieldAlert, Award
 } from 'lucide-react';
 import { useProduct } from '../../hooks/useProduct';
@@ -282,14 +282,33 @@ const ProductDetails = () => {
 
                     {/* COLUMN 2: HERO IMAGE */}
                     <div className="hero-column-wrapper">
-                        <div className="hero-column" onClick={() => setShowLightbox(true)} style={{ cursor: 'zoom-in' }}>
-                            <img src={images[selectedImageIndex]} alt={product.name} />
-                            <div className="hero-badges">
+                        <div className="hero-column" style={{ position: 'relative' }}>
+                            <img src={images[selectedImageIndex]} alt={product.name} onClick={() => setShowLightbox(true)} style={{ cursor: 'zoom-in', width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <div className="hero-badges" style={{ pointerEvents: 'none' }}>
                                 <span className="badge-fast">Fast Delivery</span>
                             </div>
                             <button className="btn-wishlist-top" onClick={handleToggleWishlist}>
                                 <Heart size={20} fill={isLiked ? "#ef4444" : "none"} color={isLiked ? "#ef4444" : "#1a1a1a"} />
                             </button>
+
+                            {images.length > 1 && (
+                                <>
+                                    <button 
+                                        className="slider-nav-btn prev"
+                                        onClick={(e) => { e.stopPropagation(); setSelectedImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1)); }}
+                                        style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', background: 'white', border: '1px solid #e2e8f0', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', cursor: 'pointer', zIndex: 5, color: '#0f172a' }}
+                                    >
+                                        <ChevronLeft size={20} />
+                                    </button>
+                                    <button 
+                                        className="slider-nav-btn next"
+                                        onClick={(e) => { e.stopPropagation(); setSelectedImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1)); }}
+                                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'white', border: '1px solid #e2e8f0', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.15)', cursor: 'pointer', zIndex: 5, color: '#0f172a' }}
+                                    >
+                                        <ChevronRight size={20} />
+                                    </button>
+                                </>
+                            )}
                         </div>
                         {images.length > 1 && (
                             <div className="mobile-pagination-dots desktop-hidden">

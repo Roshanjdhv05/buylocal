@@ -1,7 +1,7 @@
 import React from 'react';
 import { BarChart, ChevronLeft } from 'lucide-react';
 
-const InvoiceModal = ({ order, store, onClose }) => {
+const InvoiceModal = ({ order, store, productIdMap = {}, onClose }) => {
     if (!order || !store) return null;
 
     const calculateGST = (amount) => {
@@ -74,7 +74,7 @@ const InvoiceModal = ({ order, store, onClose }) => {
                                 return (
                                     <tr key={i}>
                                         <td>
-                                            <div className="item-name-sac">SAC: 998599 | PRD: {(item.id || item.product_id)?.slice(0, 6).toUpperCase() || 'N/A'}</div>
+                                            <div className="item-name-sac">SAC: 998599 | PRD: {productIdMap[item.id || item.product_id]?.replace('PRD-', '') || (item.id || item.product_id)?.slice(0, 6).toUpperCase() || 'N/A'}</div>
                                             <div className="item-full-name">{item.name}</div>
                                             <div className="igst-rate">IGST: 18.0 %</div>
                                         </td>

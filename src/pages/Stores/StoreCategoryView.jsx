@@ -42,7 +42,8 @@ const StoreCategoryView = () => {
                     const { data: productsData, error: productsError } = await supabase
                         .from('products')
                         .select('*')
-                        .eq('store_id', storeData.id);
+                        .eq('store_id', storeData.id)
+                        .order('created_at', { ascending: false });
 
                     if (productsError) throw productsError;
                     

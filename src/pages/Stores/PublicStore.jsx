@@ -25,6 +25,7 @@ const PublicStore = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isFollowing, setIsFollowing] = useState(false);
+    const [followersCount, setFollowersCount] = useState(0);
     const [followLoading, setFollowLoading] = useState(false);
     const [reviews, setReviews] = useState([]);
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -57,11 +58,28 @@ const PublicStore = () => {
         if (store?.id) {
             fetchReviews();
             fetchCustomCategories();
+            fetchFollowersCount();
             if (user) {
                 checkIfFollowing();
             }
         }
     }, [store?.id, user]);
+
+    const fetchFollowersCount = async () => {
+        if (!store?.id) return;
+        const { count, error } = await supabase
+            .from('store_follows')
+            .select('*', { count: 'exact', head: true })
+            .eq('store_id', store.id);
+        if (!error && count !== null) {
+            setFollowersCount(count);
+        }
+    };
+
+    const formatFollowers = (num) => {
+        if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+        return num;
+    };
 
     const fetchCustomCategories = async () => {
         if (!store?.id) return;
@@ -114,6 +132,7 @@ const PublicStore = () => {
                     .eq('user_id', user.id);
                 if (error) throw error;
                 setIsFollowing(false);
+                setFollowersCount(prev => Math.max(0, prev - 1));
             } else {
                 const { error } = await supabase
                     .from('store_follows')
@@ -121,6 +140,7 @@ const PublicStore = () => {
 
                 if (error) throw error;
                 setIsFollowing(true);
+                setFollowersCount(prev => prev + 1);
             }
         } catch (error) {
             console.error('Follow action failed:', error.message);
@@ -146,7 +166,8 @@ const PublicStore = () => {
                 const { data: productsData } = await withTimeout(supabase
                     .from('products')
                     .select('*')
-                    .eq('store_id', storeData.id), 30000, 'Public Store FetchProducts');
+                    .eq('store_id', storeData.id)
+                    .order('created_at', { ascending: false }), 30000, 'Public Store FetchProducts');
 
                 setProducts(productsData || []);
             }
@@ -304,7 +325,10 @@ const PublicStore = () => {
                              WhatsApp
                         </button>
                         <button className={`btn-action-pill btn-follow ${isFollowing ? 'following' : ''}`} onClick={toggleFollow} disabled={followLoading}>
-                            {isFollowing ? t('publicStore.following', 'Following') : t('publicStore.follow', 'Follow')}
+                            <span>{isFollowing ? t('publicStore.following', 'Following') : t('publicStore.follow', 'Follow')}</span>
+                            <span className="follower-count-badge" style={{ marginLeft: '6px', paddingLeft: '6px', borderLeft: '1px solid currentColor', fontSize: '0.85em', opacity: 0.9 }}>
+                                {formatFollowers(followersCount)}
+                            </span>
                         </button>
                         <button className="btn-action-pill btn-outline" onClick={() => {
                             if (store.location_url) window.open(store.location_url, '_blank');

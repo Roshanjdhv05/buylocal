@@ -269,6 +269,15 @@ const SellerDashboard = () => {
         };
     }, [orders]);
 
+    const productIdMap = React.useMemo(() => {
+        const map = {};
+        const sortedProducts = [...products].sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+        sortedProducts.forEach((p, idx) => {
+            map[p.id] = `PRD-${idx + 1}`;
+        });
+        return map;
+    }, [products]);
+
     const toggleSize = (size) => {
         setNewProduct(prev => ({
             ...prev,
@@ -770,30 +779,38 @@ const SellerDashboard = () => {
 
     const handleCreateCampaign = async (e) => {
         e.preventDefault();
-        if (!campaignFormData.banner_image || !store) return;
+        if (!(campaignFormData.banner_image || campaignFormData.mobile_banner_image) || !store) {
+            alert('Please upload at least one banner image (Desktop or Phone).');
+            return;
+        }
 
         setUploading(true);
         try {
             console.log('Campaign: Starting creation process...');
             // 1. Upload Desktop Banner
-            const dFile = campaignFormData.banner_image;
-            const dExt = dFile.name.split('.').pop();
-            const dName = `campaign_desktop_${Math.random()}.${dExt}`;
-            const dPath = `campaigns/${profile.id}/${dName}`;
+            let desktopUrl = null;
+            if (campaignFormData.banner_image) {
+                const dFile = campaignFormData.banner_image;
+                const dExt = dFile.name.split('.').pop();
+                const dName = `campaign_desktop_${Math.random()}.${dExt}`;
+                const dPath = `campaigns/${profile.id}/${dName}`;
 
-            console.log('Campaign: Uploading desktop banner...');
-            const { error: dUploadError } = await supabase.storage
-                .from('store-gallery')
-                .upload(dPath, dFile);
+                console.log('Campaign: Uploading desktop banner...');
+                const { error: dUploadError } = await supabase.storage
+                    .from('store-gallery')
+                    .upload(dPath, dFile);
 
-            if (dUploadError) {
-                console.error('Campaign: Desktop upload error:', dUploadError);
-                throw new Error(`Desktop banner upload failed: ${dUploadError.message}`);
+                if (dUploadError) {
+                    console.error('Campaign: Desktop upload error:', dUploadError);
+                    throw new Error(`Desktop banner upload failed: ${dUploadError.message}`);
+                }
+
+                const { data: { publicUrl } } = supabase.storage
+                    .from('store-gallery')
+                    .getPublicUrl(dPath);
+                
+                desktopUrl = publicUrl;
             }
-
-            const { data: { publicUrl: desktopUrl } } = supabase.storage
-                .from('store-gallery')
-                .getPublicUrl(dPath);
 
             // 2. Upload Mobile Banner (Optional)
             let mobileUrl = null;
@@ -1455,7 +1472,7 @@ const SellerDashboard = () => {
                                                               <span className={`status-dot ${(product.stock_quantity !== null && (product.stock_quantity || 0) <= 0) ? 'out-of-stock' : ''}`}>
                                                                 <span className="dot"></span> <span className="status-text">{(product.stock_quantity === null || (product.stock_quantity || 0) > 0) ? 'Active' : 'Out of Stock'}</span>
                                                             </span>
-                                                            <span className="product-id-pill">#PRD-{product.id?.slice(0, 6).toUpperCase()}</span>
+                                                            <span className="product-id-pill">#{productIdMap[product.id] || `PRD-${product.id?.slice(0, 6).toUpperCase()}`}</span>
                                                         </div>
                                                         <h3 className="pro-card-name" title={product.name}>{product.name}</h3>
                                                         {product.tags && product.tags.length > 0 && (
@@ -1618,7 +1635,7 @@ const SellerDashboard = () => {
                                                                     <div className="so-item-details">
                                                                         <h4 className="so-item-name">{item.name}</h4>
                                                                         <p className="so-item-meta">
-                                                                            ID: #PRD-{(item.id || item.product_id)?.slice(0, 6).toUpperCase() || 'N/A'} • Qty: {item.quantity}{item.size ? ` • Size: ${item.size}` : ''}
+                                                                            ID: #{productIdMap[item.id || item.product_id] || `PRD-${(item.id || item.product_id)?.slice(0, 6).toUpperCase() || 'N/A'}`} • Qty: {item.quantity}{item.size ? ` • Size: ${item.size}` : ''}
                                                                         </p>
                                                                     </div>
                                                                     <div className="so-item-price" style={{ display: 'none' }}>
@@ -1724,7 +1741,7 @@ const SellerDashboard = () => {
                                                                         </span>
                                                                     </div>
                                                                 )}
-                                                                <input type="file" hidden accept="image/*" onChange={(e) => handleCampaignImageChange(e, 'desktop')} required={!campaignPreview} />
+                                                                <input type="file" hidden accept="image/*" onChange={(e) => handleCampaignImageChange(e, 'desktop')} />
                                                             </label>
                                                         </div>
 
@@ -1737,7 +1754,7 @@ const SellerDashboard = () => {
                                                                     <div className="upload-placeholder">
                                                                         <ShoppingBag size={32} />
                                                                         <p>{t('marketing.uploadPlaceholder')}</p>
-                                                                        <span className="dimension-label">800 x 380px</span>
+                                                                        <span className="dimension-label">380 x 500px</span>
                                                                     </div>
                                                                 )}
                                                                 <input type="file" hidden accept="image/*" onChange={(e) => handleCampaignImageChange(e, 'mobile')} />
@@ -2426,6 +2443,7 @@ const SellerDashboard = () => {
                 <InvoiceModal
                     order={selectedOrderForInvoice}
                     store={store}
+                    productIdMap={productIdMap}
                     onClose={() => {
                         setIsInvoiceModalOpen(false);
                         setSelectedOrderForInvoice(null);
