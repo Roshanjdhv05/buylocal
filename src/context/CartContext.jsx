@@ -28,10 +28,13 @@ export const CartProvider = ({ children }) => {
             const { data, error } = await supabase
                 .from('cart_items')
                 .select(`
+                    id,
+                    variant_id,
                     quantity,
                     product:products(
                         *,
-                        stores(name, delivery_charges, free_delivery_threshold)
+                        stores(name, delivery_charges, free_delivery_threshold),
+                        product_variants(*)
                     )
                 `)
                 .eq('user_id', user.id);
@@ -43,7 +46,10 @@ export const CartProvider = ({ children }) => {
                     .filter(item => item.product) // Filter out items with deleted products
                     .map(item => ({
                         ...item.product,
+                        cartItemId: item.id,
                         quantity: item.quantity,
+                        variant_id: item.variant_id,
+                        selectedVariant: item.product.product_variants?.find(v => v.id === item.variant_id),
                         storeName: item.product.stores?.name || 'Local Store',
                         storeDeliveryCharges: item.product.stores?.delivery_charges || 0,
                         storeFreeThreshold: item.product.stores?.free_delivery_threshold || null
@@ -71,16 +77,23 @@ export const CartProvider = ({ children }) => {
         }
     }, [cart, user]);
 
-    const addToCart = async (product, quantity = 1) => {
+    const addToCart = async (product, quantity = 1, variant = null) => {
         if (user) {
             try {
-                // Check if item exists
-                const { data: existing } = await supabase
+                // Check if item exists with same variant
+                let query = supabase
                     .from('cart_items')
                     .select('id, quantity')
                     .eq('user_id', user.id)
-                    .eq('product_id', product.id)
-                    .single();
+                    .eq('product_id', product.id);
+                
+                if (variant) {
+                    query = query.eq('variant_id', variant.id);
+                } else {
+                    query = query.is('variant_id', null);
+                }
+
+                const { data: existing } = await query.single();
 
                 if (existing) {
                     await supabase
@@ -93,6 +106,7 @@ export const CartProvider = ({ children }) => {
                         .insert([{
                             user_id: user.id,
                             product_id: product.id,
+                            variant_id: variant?.id || null,
                             quantity
                         }]);
                 }
@@ -102,46 +116,77 @@ export const CartProvider = ({ children }) => {
             }
         } else {
             setCart(prevCart => {
-                const existingItem = prevCart.find(item => item.id === product.id);
+                const existingItem = prevCart.find(item => 
+                    item.id === product.id && 
+                    (variant ? item.variant_id === variant.id : !item.variant_id)
+                );
                 if (existingItem) {
                     return prevCart.map(item =>
-                        item.id === product.id
+                        (item.id === product.id && (variant ? item.variant_id === variant.id : !item.variant_id))
                             ? { ...item, quantity: item.quantity + quantity }
                             : item
                     );
                 }
-                return [...prevCart, { ...product, quantity }];
+                const cartItemId = `${product.id}-${variant?.id || 'base'}-${Date.now()}`;
+                return [...prevCart, { 
+                    ...product, 
+                    cartItemId,
+                    quantity, 
+                    variant_id: variant?.id || null, 
+                    selectedVariant: variant,
+                    storeName: product.stores?.name,
+                    storeDeliveryCharges: product.stores?.delivery_charges,
+                    storeFreeThreshold: product.stores?.free_delivery_threshold
+                }];
             });
         }
     };
 
-    const removeFromCart = async (productId) => {
+    const removeFromCart = async (productId, variantId = null) => {
         if (user) {
             try {
-                await supabase
+                let query = supabase
                     .from('cart_items')
                     .delete()
                     .eq('user_id', user.id)
                     .eq('product_id', productId);
+                
+                if (variantId) {
+                    query = query.eq('variant_id', variantId);
+                } else {
+                    query = query.is('variant_id', null);
+                }
+
+                await query;
                 fetchCart();
             } catch (err) {
                 console.error('Error removing from DB cart:', err.message);
             }
         } else {
-            setCart(prevCart => prevCart.filter(item => item.id !== productId));
+            setCart(prevCart => prevCart.filter(item => 
+                !(item.id === productId && (variantId ? item.variant_id === variantId : !item.variant_id))
+            ));
         }
     };
 
-    const updateQuantity = async (productId, quantity) => {
-        if (quantity < 1) return removeFromCart(productId);
+    const updateQuantity = async (productId, quantity, variantId = null) => {
+        if (quantity < 1) return removeFromCart(productId, variantId);
 
         if (user) {
             try {
-                await supabase
+                let query = supabase
                     .from('cart_items')
                     .update({ quantity })
                     .eq('user_id', user.id)
                     .eq('product_id', productId);
+                
+                if (variantId) {
+                    query = query.eq('variant_id', variantId);
+                } else {
+                    query = query.is('variant_id', null);
+                }
+
+                await query;
                 fetchCart();
             } catch (err) {
                 console.error('Error updating DB cart:', err.message);
@@ -149,7 +194,9 @@ export const CartProvider = ({ children }) => {
         } else {
             setCart(prevCart =>
                 prevCart.map(item =>
-                    item.id === productId ? { ...item, quantity } : item
+                    (item.id === productId && (variantId ? item.variant_id === variantId : !item.variant_id)) 
+                        ? { ...item, quantity } 
+                        : item
                 )
             );
         }
@@ -171,7 +218,10 @@ export const CartProvider = ({ children }) => {
         }
     };
 
-    const cartTotal = cart.reduce((total, item) => total + (item.online_price * item.quantity), 0);
+    const cartTotal = cart.reduce((total, item) => {
+        const price = item.selectedVariant?.price || item.online_price || item.price || 0;
+        return total + (price * item.quantity);
+    }, 0);
     const cartCount = cart.length; // Count distinct products (lines) to avoid confusion
 
     return (

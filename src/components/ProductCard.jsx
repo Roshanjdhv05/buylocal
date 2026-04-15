@@ -194,6 +194,11 @@ const ProductCard = ({ product }) => {
           {(product.mrp || product.offline_price) && parseFloat(product.mrp || product.offline_price) > parseFloat(product.online_price || product.price) && (
             <span className="luxury-old-price">₹{product.mrp || product.offline_price}</span>
           )}
+          {product.product_variants?.length > 1 && (
+            <div className="variant-indicator-luxury" style={{ color: 'var(--primary)', fontSize: '0.65rem', fontWeight: '600', marginLeft: 'auto' }}>
+              {product.product_variants.length} Variants
+            </div>
+          )}
         </div>
         
         <div className="luxury-card-footer">

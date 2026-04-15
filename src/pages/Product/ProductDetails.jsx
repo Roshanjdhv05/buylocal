@@ -44,6 +44,15 @@ const ProductDetails = () => {
     const [isLiked, setIsLiked] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('description');
+    
+    // Variant Selection State
+    const [selectedVariant, setSelectedVariant] = useState(null);
+    const [selection, setSelection] = useState({
+        color: null,
+        size: null,
+        design: null,
+        volume: null
+    });
 
     const checkWishlistStatus = async () => {
         if (!user || !product) return;
@@ -94,7 +103,49 @@ const ProductDetails = () => {
         if (user) checkWishlistStatus();
         addToRecentlyViewed(product);
         window.scrollTo(0, 0);
+
+        // Initialize selections if variants exist
+        if (product.product_variants?.length > 0) {
+            handleQuickVariantSelect(product.product_variants[0]);
+        }
     }, [product, user]);
+
+    // Derived variant lists
+    const variants = product?.product_variants || [];
+    const availableColors = [...new Set(variants.map(v => v.color).filter(Boolean))];
+    const availableSizes = [...new Set(variants.map(v => v.size).filter(Boolean))];
+    const availableDesigns = [...new Set(variants.map(v => v.design).filter(Boolean))];
+    const availableVolumes = [...new Set(variants.map(v => v.volume).filter(Boolean))];
+
+    const handleSelectOption = (type, value) => {
+        const newSelection = { ...selection, [type]: selection[type] === value ? null : value };
+        setSelection(newSelection);
+
+        // Find the matching variant
+        const exactMatch = variants.find(v => 
+            (v.color === (newSelection.color || null)) &&
+            (v.size === (newSelection.size || null)) &&
+            (v.design === (newSelection.design || null)) &&
+            (v.volume === (newSelection.volume || null))
+        );
+
+        if (exactMatch) {
+            setSelectedVariant(exactMatch);
+        } else {
+            setSelectedVariant(null);
+        }
+    };
+
+    const handleQuickVariantSelect = (variant) => {
+        const newSelection = {
+            color: variant.color || null,
+            size: variant.size || null,
+            design: variant.design || null,
+            volume: variant.volume || null
+        };
+        setSelection(newSelection);
+        setSelectedVariant(variant);
+    };
 
     // Review Actions Logic
     const [reviewForm, setReviewForm] = useState({ rating: 5, content: '', media: [] });
@@ -283,7 +334,12 @@ const ProductDetails = () => {
                     {/* COLUMN 2: HERO IMAGE */}
                     <div className="hero-column-wrapper">
                         <div className="hero-column" style={{ position: 'relative' }}>
-                            <img src={images[selectedImageIndex]} alt={product.name} onClick={() => setShowLightbox(true)} style={{ cursor: 'zoom-in', width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <img 
+                                src={selectedVariant?.image_url || images[selectedImageIndex]} 
+                                alt={product.name} 
+                                onClick={() => setShowLightbox(true)} 
+                                style={{ cursor: 'zoom-in', width: '100%', height: '100%', objectFit: 'cover' }} 
+                            />
                             <div className="hero-badges" style={{ pointerEvents: 'none' }}>
                                 <span className="badge-fast">Fast Delivery</span>
                             </div>
@@ -342,35 +398,165 @@ const ProductDetails = () => {
                         </div>
 
                         <div className="pricing-luxury">
-                            <span className="price-now">₹{product.online_price || product.price}</span>
-                            {product.mrp && <span className="price-mrp">₹{product.mrp}</span>}
+                            <span className="price-now">₹{selectedVariant?.price || (product.online_price || product.price)}</span>
+                            {(selectedVariant?.market_price || product.mrp) && (
+                                <span className="price-mrp">₹{selectedVariant?.market_price || product.mrp}</span>
+                            )}
                         </div>
                         <p className="tax-disclaimer">Inclusive of all taxes and duties</p>
 
                         <div className="stock-status-luxury">
-                            <div className={`stock-indicator ${isOutOfStock ? 'red' : 'green'}`}></div>
-                            <span>{isOutOfStock ? 'OUT OF STOCK' : 'IN STOCK — READY TO SHIP'}</span>
+                            <div className={`stock-indicator ${(selectedVariant ? selectedVariant.stock_quantity <= 0 : isOutOfStock) ? 'red' : 'green'}`}></div>
+                            <span>{(selectedVariant ? selectedVariant.stock_quantity <= 0 : isOutOfStock) ? 'OUT OF STOCK' : 'IN STOCK — READY TO SHIP'}</span>
+                            {selectedVariant && selectedVariant.stock_quantity > 0 && selectedVariant.stock_quantity < 5 && (
+                                <span style={{ color: '#ef4444', marginLeft: '8px', fontWeight: '700' }}>Only {selectedVariant.stock_quantity} left!</span>
+                            )}
                         </div>
+
+                        {/* VISUAL VARIANT GALLERY */}
+                        {variants.length > 0 && variants.some(v => v.image_url) && (
+                            <div className="visual-variant-gallery" style={{ marginTop: '1.5rem' }}>
+                                <label style={{ fontSize: '0.8rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'block' }}>Styles Available</label>
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                    {[...new Map(variants.filter(v => v.image_url).map(v => [v.image_url, v])).values()].map((v, i) => {
+                                        const isSelected = selectedVariant?.id === v.id || 
+                                            (selectedVariant && selectedVariant.image_url === v.image_url);
+                                        
+                                        return (
+                                            <div 
+                                                key={v.id || i}
+                                                onClick={() => handleQuickVariantSelect(v)}
+                                                style={{ 
+                                                    width: '56px', 
+                                                    height: '56px', 
+                                                    borderRadius: '10px', 
+                                                    overflow: 'hidden', 
+                                                    cursor: 'pointer',
+                                                    border: `2px solid ${isSelected ? 'var(--primary)' : '#e2e8f0'}`,
+                                                    boxShadow: isSelected ? '0 0 0 2px rgba(124, 58, 237, 0.2)' : 'none',
+                                                    transition: 'all 0.2s ease',
+                                                    padding: '2px',
+                                                    background: 'white'
+                                                }}
+                                            >
+                                                <img src={v.image_url} alt="variant style" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }} />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* VARIANT SELECTION UI */}
+                        {variants.length > 0 && (
+                            <div className="variant-selection-container" style={{ margin: '1.5rem 0', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                                {availableColors.length > 0 && (
+                                    <div className="selection-group">
+                                        <label style={{ fontSize: '0.8rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'block' }}>Color: <span style={{ color: '#000' }}>{selection.color || 'Select'}</span></label>
+                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                            {availableColors.map(c => (
+                                                <button 
+                                                    key={c}
+                                                    onClick={() => handleSelectOption('color', c)}
+                                                    className={`selection-chip ${selection.color === c ? 'active' : ''}`}
+                                                    style={{ 
+                                                        padding: '8px 16px', 
+                                                        borderRadius: '8px', 
+                                                        border: `2px solid ${selection.color === c ? 'var(--primary)' : '#e2e8f0'}`,
+                                                        background: selection.color === c ? '#f5f3ff' : 'white',
+                                                        fontWeight: '700',
+                                                        fontSize: '0.85rem',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                >
+                                                    {c}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {availableSizes.length > 0 && (
+                                    <div className="selection-group">
+                                        <label style={{ fontSize: '0.8rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'block' }}>Size: <span style={{ color: '#000' }}>{selection.size || 'Select'}</span></label>
+                                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                            {availableSizes.map(s => (
+                                                <button 
+                                                    key={s}
+                                                    onClick={() => handleSelectOption('size', s)}
+                                                    className={`selection-chip ${selection.size === s ? 'active' : ''}`}
+                                                    style={{ 
+                                                        padding: '8px 16px', 
+                                                        borderRadius: '30px', 
+                                                        border: `2px solid ${selection.size === s ? 'var(--primary)' : '#e2e8f0'}`,
+                                                        background: selection.size === s ? '#f5f3ff' : 'white',
+                                                        fontWeight: '700',
+                                                        minWidth: '60px'
+                                                    }}
+                                                >
+                                                    {s}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {(availableDesigns.length > 0 || availableVolumes.length > 0) && (
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                        {availableDesigns.length > 0 && (
+                                            <div className="selection-group">
+                                                <label style={{ fontSize: '0.7rem', fontWeight: '800', color: '#64748b' }}>Design</label>
+                                                <select 
+                                                    value={selection.design || ''} 
+                                                    onChange={(e) => handleSelectOption('design', e.target.value)}
+                                                    style={{ width: '100%', height: '40px', borderRadius: '8px', border: '1.5px solid #e2e8f0', padding: '0 8px' }}
+                                                >
+                                                    <option value="">Select Design</option>
+                                                    {availableDesigns.map(d => <option key={d} value={d}>{d}</option>)}
+                                                </select>
+                                            </div>
+                                        )}
+                                        {availableVolumes.length > 0 && (
+                                            <div className="selection-group">
+                                                <label style={{ fontSize: '0.7rem', fontWeight: '800', color: '#64748b' }}>Volume</label>
+                                                <select 
+                                                    value={selection.volume || ''} 
+                                                    onChange={(e) => handleSelectOption('volume', e.target.value)}
+                                                    style={{ width: '100%', height: '40px', borderRadius: '8px', border: '1.5px solid #e2e8f0', padding: '0 8px' }}
+                                                >
+                                                    <option value="">Select Volume</option>
+                                                    {availableVolumes.map(v => <option key={v} value={v}>{v}</option>)}
+                                                </select>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <div className="action-buttons-luxury mobile-hidden">
                             <button 
-                                className={`btn-buy-now ${isOutOfStock ? 'disabled' : ''}`}
-                                disabled={isOutOfStock}
+                                className={`btn-buy-now ${(isOutOfStock || (variants.length > 0 && !selectedVariant) || (selectedVariant && selectedVariant.stock_quantity <= 0)) ? 'disabled' : ''}`}
+                                disabled={isOutOfStock || (variants.length > 0 && !selectedVariant) || (selectedVariant && selectedVariant.stock_quantity <= 0)}
                                 onClick={() => {
+                                    if (variants.length > 0 && !selectedVariant) return alert('Please select a variant first.');
+                                    if (selectedVariant && selectedVariant.stock_quantity <= 0) return alert('This variant is out of stock.');
                                     if (!isOutOfStock) {
-                                        addToCart(product);
+                                        addToCart({ ...product, stores: store }, 1, selectedVariant);
                                         navigate('/cart');
                                     }
                                 }}
                             >
-                                Buy It Now
+                                {variants.length > 0 && !selectedVariant ? 'Select Variant' : 'Buy It Now'}
                             </button>
                             <button 
-                                className={`btn-add-bag ${isOutOfStock ? 'disabled' : ''}`}
-                                disabled={isOutOfStock}
+                                className={`btn-add-bag ${(isOutOfStock || (variants.length > 0 && !selectedVariant) || (selectedVariant && selectedVariant.stock_quantity <= 0)) ? 'disabled' : ''}`}
+                                disabled={isOutOfStock || (variants.length > 0 && !selectedVariant) || (selectedVariant && selectedVariant.stock_quantity <= 0)}
                                 onClick={() => {
+                                    if (variants.length > 0 && !selectedVariant) return alert('Please select a variant first.');
+                                    if (selectedVariant && selectedVariant.stock_quantity <= 0) return alert('This variant is out of stock.');
                                     if (!isOutOfStock) {
-                                        addToCart(product);
+                                        addToCart({ ...product, stores: store }, 1, selectedVariant);
                                         alert('Added to Bag!');
                                     }
                                 }}
@@ -550,11 +736,13 @@ const ProductDetails = () => {
             <div className="sticky-action-bar mobile-only desktop-hidden">
                 <div className="action-inner">
                     <button 
-                        className={`btn-outline-purple ${isOutOfStock ? 'disabled' : ''}`}
-                        disabled={isOutOfStock}
+                        className={`btn-outline-purple ${(isOutOfStock || (variants.length > 0 && !selectedVariant) || (selectedVariant && selectedVariant.stock_quantity <= 0)) ? 'disabled' : ''}`}
+                        disabled={isOutOfStock || (variants.length > 0 && !selectedVariant) || (selectedVariant && selectedVariant.stock_quantity <= 0)}
                         onClick={() => {
+                            if (variants.length > 0 && !selectedVariant) return alert('Please select a variant first.');
+                            if (selectedVariant && selectedVariant.stock_quantity <= 0) return alert('This variant is out of stock.');
                             if (!isOutOfStock) {
-                                addToCart(product);
+                                addToCart({ ...product, stores: store }, 1, selectedVariant);
                                 alert('Added to Bag!');
                             }
                         }}
@@ -562,11 +750,13 @@ const ProductDetails = () => {
                         Add to Bag
                     </button>
                     <button 
-                        className={`btn-solid-purple ${isOutOfStock ? 'disabled' : ''}`}
-                        disabled={isOutOfStock}
+                        className={`btn-solid-purple ${(isOutOfStock || (variants.length > 0 && !selectedVariant) || (selectedVariant && selectedVariant.stock_quantity <= 0)) ? 'disabled' : ''}`}
+                        disabled={isOutOfStock || (variants.length > 0 && !selectedVariant) || (selectedVariant && selectedVariant.stock_quantity <= 0)}
                         onClick={() => {
+                            if (variants.length > 0 && !selectedVariant) return alert('Please select a variant first.');
+                            if (selectedVariant && selectedVariant.stock_quantity <= 0) return alert('This variant is out of stock.');
                             if (!isOutOfStock) {
-                                addToCart(product);
+                                addToCart({ ...product, stores: store }, 1, selectedVariant);
                                 navigate('/cart');
                             }
                         }}

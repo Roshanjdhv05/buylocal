@@ -147,12 +147,31 @@ const SellerDashboard = () => {
 
             if (storeData) {
                 console.log('Dashboard: Store found:', storeData.name);
+                
+                // Self-healing: Generate display_id if it doesn't exist yet
+                if (!storeData.display_id) {
+                    const newDisplayId = `ST-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+                    console.log('Dashboard: Auto-generating missing Store ID:', newDisplayId);
+                    
+                    // Update locally first for immediate UI feedback
+                    storeData.display_id = newDisplayId;
+                    
+                    // Update database in background
+                    supabase
+                        .from('stores')
+                        .update({ display_id: newDisplayId })
+                        .eq('id', storeData.id)
+                        .then(({ error }) => {
+                            if (error) console.error('Dashboard: Error saving auto-generated Store ID:', error);
+                        });
+                }
+
                 setStore(storeData);
 
                 // Fetch Products
                 const { data: productsData, error: productsError } = await withTimeout(supabase
                     .from('products')
-                    .select('*')
+                    .select('*, product_variants(*)')
                     .eq('store_id', storeData.id));
 
                 if (productsError) throw productsError;
@@ -344,7 +363,9 @@ const SellerDashboard = () => {
         }
 
         const onlinePriceVal = productData.online_price || productData.onlinePrice;
-        if (!onlinePriceVal) {
+        const hasVariants = productData.hasVariants && productData.variants?.length > 0;
+
+        if (!onlinePriceVal && !hasVariants) {
             alert('Please enter an online price.');
             return;
         }
@@ -375,13 +396,25 @@ const SellerDashboard = () => {
             }
 
             // 2. Prepare Product Object
-            const onlinePrice = parseFloat(onlinePriceVal);
+            let onlinePrice = parseFloat(onlinePriceVal);
+            let totalStock = productData.trackStock ? parseInt(productData.stock || 0) : null;
+
+            // If variants are present, use the first variant's price as the baseline online_price
+            // and sum up the stock for the main product record.
+            let marketPrice = productData.offline_price ? parseFloat(productData.offline_price) : (productData.marketPrice ? parseFloat(productData.marketPrice) : null);
+            
+            if (productData.hasVariants && productData.variants?.length > 0) {
+                onlinePrice = parseFloat(productData.variants[0].price);
+                marketPrice = productData.variants[0].marketPrice ? parseFloat(productData.variants[0].marketPrice) : marketPrice;
+                totalStock = productData.variants.reduce((sum, v) => sum + parseInt(v.stock || 0), 0);
+            }
+
             const productToSave = {
                 name: productData.name,
                 category: productData.category,
                 section: productData.section,
                 online_price: onlinePrice,
-                offline_price: productData.offline_price ? parseFloat(productData.offline_price) : (productData.marketPrice ? parseFloat(productData.marketPrice) : null),
+                offline_price: marketPrice,
                 description: productData.description,
                 sizes: productData.sizes,
                 age_group: productData.age_group || productData.ageGroup || 'Adults',
@@ -391,7 +424,7 @@ const SellerDashboard = () => {
                 store_id: store.id,
                 images: imageUrls,
                 tags: productData.tags || [],
-                stock_quantity: productData.trackStock ? parseInt(productData.stock || 0) : null
+                stock_quantity: totalStock
             };
 
             let result;
@@ -410,15 +443,70 @@ const SellerDashboard = () => {
                     .select();
             }
 
-            const { data, error } = result;
+            const { data, error: productError } = result;
+            if (productError) throw productError;
 
-            if (error) throw error;
+            const savedProduct = data[0];
 
+            // 3. Handle Variants
+            if (productData.hasVariants && productData.variants?.length > 0) {
+                console.log('handleAddProduct: Saving manual variants for product:', savedProduct.id);
+                
+                let totalStock = 0;
+                const processedVariants = [];
+
+                for (const v of productData.variants) {
+                    let variantImageUrl = v.image;
+                    
+                    if (v.image instanceof File) {
+                        variantImageUrl = await uploadImage(v.image);
+                    } else if (typeof v.image === 'string' && v.image.startsWith('blob:')) {
+                        const response = await fetch(v.image);
+                        const blob = await response.blob();
+                        const file = new File([blob], "variant_image.jpg", { type: "image/jpeg" });
+                        variantImageUrl = await uploadImage(file);
+                    }
+
+                    processedVariants.push({
+                        product_id: savedProduct.id,
+                        color: v.color || null,
+                        size: v.size || null,
+                        design: v.design || null,
+                        volume: v.volume || null,
+                        price: parseFloat(v.price),
+                        market_price: v.marketPrice ? parseFloat(v.marketPrice) : null,
+                        stock_quantity: parseInt(v.stock || 0),
+                        image_url: variantImageUrl || (imageUrls[0] || null),
+                        sku: v.sku || ''
+                    });
+
+                    totalStock += parseInt(v.stock || 0);
+                }
+
+                // Delete existing variants for this product if we are updating
+                if (productData.id) {
+                    await supabase
+                        .from('product_variants')
+                        .delete()
+                        .eq('product_id', savedProduct.id);
+                }
+
+                const { error: variantsError } = await supabase
+                    .from('product_variants')
+                    .insert(processedVariants);
+
+                if (variantsError) {
+                    console.error('Error saving variants:', variantsError);
+                    alert('Product saved, but there was an error saving variants: ' + variantsError.message);
+                }
+            }
+
+            // Refresh all data to ensure dashboard has the latest product + variant data
+            await fetchStoreData();
+            
             if (productData.id) {
-                setProducts(products.map(p => p.id === productData.id ? data[0] : p));
                 alert('Product updated successfully!');
             } else {
-                setProducts([...products, data[0]]);
                 alert('Product added successfully!');
             }
 
@@ -2043,9 +2131,35 @@ const SellerDashboard = () => {
                                     {/* Left Column: Profile & Branding */}
                                     <div className="settings-left-col">
                                         <div className="settings-card-pro">
-                                            <div class="card-header-pro">
-                                                <div class="card-icon"><User size={24} /></div>
-                                                <h3>Store Profile</h3>
+                                            <div className="card-header-pro" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                    <div className="card-icon"><User size={24} /></div>
+                                                    <h3>Store Profile</h3>
+                                                </div>
+                                                <div className="store-id-badge" style={{ 
+                                                    background: '#f1f5f9', 
+                                                    padding: '6px 12px', 
+                                                    borderRadius: '8px', 
+                                                    fontSize: '0.75rem', 
+                                                    fontWeight: '700', 
+                                                    color: '#475569',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '8px',
+                                                    border: '1px solid #e2e8f0'
+                                                }}>
+                                                    <span style={{ color: '#94a3b8', fontWeight: '500' }}>STORE ID:</span> {store?.display_id || 'Generating...'}
+                                                    <Copy 
+                                                        size={14} 
+                                                        style={{ cursor: 'pointer', color: 'var(--primary)' }} 
+                                                        onClick={() => {
+                                                            if (store?.display_id) {
+                                                                navigator.clipboard.writeText(store.display_id);
+                                                                alert('Store ID copied to clipboard!');
+                                                            }
+                                                        }} 
+                                                    />
+                                                </div>
                                             </div>
 
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '1.5rem', paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)' }}>

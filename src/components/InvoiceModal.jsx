@@ -29,7 +29,7 @@ const InvoiceModal = ({ order, store, productIdMap = {}, onClose }) => {
 
                     <div className="invoice-top-section">
                         <div className="sold-by">
-                            <p><strong>Sold By:</strong> {store.name} ,</p>
+                            <p><strong>Sold By:</strong> {store.name} {store.display_id && `(${store.display_id})`} ,</p>
                             <p className="ship-from">Ship-from Address:</p>
                             <p className="store-addr-small">{store.address}, {store.city}, {store.state}</p>
                             <p className="gstin"><strong>GSTIN -</strong> {store.gst_number || 'N/A'}</p>

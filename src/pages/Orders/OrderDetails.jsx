@@ -149,14 +149,24 @@ const OrderDetails = () => {
                                 {order.items?.map((item, i) => (
                                     <div key={i} className="detail-item-row">
                                         <div className="item-img-box">
-                                            <img src={(Array.isArray(item.images) ? item.images[0] : item.image) || 'https://via.placeholder.com/80'} alt={item.name} />
+                                            <img src={item.image || (Array.isArray(item.images) ? item.images[0] : item.image) || 'https://via.placeholder.com/80'} alt={item.name} />
                                         </div>
                                         <div className="item-info-main">
                                             <h4>{getLocalizedName(item.name, i18n.language)}</h4>
+                                            {item.variant_details && (
+                                                <p className="item-variant-meta" style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '4px', fontWeight: '600' }}>
+                                                    {[
+                                                        item.variant_details.color,
+                                                        item.variant_details.size,
+                                                        item.variant_details.design,
+                                                        item.variant_details.volume
+                                                    ].filter(Boolean).join(' / ')}
+                                                </p>
+                                            )}
                                             <p className="item-qty-price">{t('orderDetails.quantity')}: {item.quantity} × ₹{item.online_price || item.price}</p>
                                         </div>
                                         <div className="item-subtotal">
-                                            ₹{(item.online_price * item.quantity).toFixed(2)}
+                                            ₹{((item.online_price || item.price) * item.quantity).toFixed(2)}
                                         </div>
                                     </div>
                                 ))}

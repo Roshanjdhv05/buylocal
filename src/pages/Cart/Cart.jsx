@@ -31,14 +31,19 @@ const Cart = () => {
         if (orderForm.delivery_type === 'Self-pick') return { total: 0, byStore: {} };
 
         const storesTotal = {};
-        const stores = [...new Set(cart.map(item => item.store_id))];
+        // Use cart directly to avoid string conversion issues from Object.keys later
+        const uniqueStoreIds = [...new Set(cart.map(item => item.store_id).filter(Boolean))];
 
-        stores.forEach(storeId => {
+        uniqueStoreIds.forEach(storeId => {
             const storeItems = cart.filter(item => item.store_id === storeId);
-            const subtotal = storeItems.reduce((acc, item) => acc + (item.online_price * item.quantity), 0);
+            const subtotal = storeItems.reduce((acc, item) => {
+                const itemPrice = item.selectedVariant?.price || item.online_price || item.price || 0;
+                return acc + (itemPrice * item.quantity);
+            }, 0);
+            
             const firstItem = storeItems[0];
-            const threshold = parseFloat(firstItem.storeFreeThreshold);
-            const standardCharge = parseFloat(firstItem.storeDeliveryCharges || 0);
+            const threshold = parseFloat(firstItem.storeFreeThreshold || firstItem.stores?.free_delivery_threshold || 0);
+            const standardCharge = parseFloat(firstItem.storeDeliveryCharges || firstItem.stores?.delivery_charges || 0);
 
             let charge = standardCharge;
             let neededForFree = 0;
@@ -52,10 +57,11 @@ const Cart = () => {
             }
 
             storesTotal[storeId] = {
+                storeId, // Keep original ID
                 charge,
                 subtotal,
                 neededForFree,
-                storeName: firstItem.storeName,
+                storeName: firstItem.storeName || firstItem.stores?.name || 'Local Store',
                 isFree: charge === 0 && threshold > 0
             };
         });
@@ -88,9 +94,9 @@ const Cart = () => {
 
             let currentCount = (todayCount || 0) + 1;
 
-            for (const storeId of storesInCart) {
+            for (const storeData of Object.values(deliveryInfo.byStore)) {
+                const storeId = storeData.storeId;
                 const storeItems = cart.filter(item => item.store_id === storeId);
-                const storeData = deliveryInfo.byStore[storeId];
                 const customOrderId = `${dateStr}${currentCount}`;
                 const fullAddress = `${orderForm.address_line1}, ${orderForm.address_line2 ? orderForm.address_line2 + ', ' : ''}${orderForm.city}, ${orderForm.state} - ${orderForm.pincode} (Landmark: ${orderForm.landmark})`;
 
@@ -99,7 +105,22 @@ const Cart = () => {
                     .insert([{
                         buyer_id: user.id,
                         store_id: storeId,
-                        items: storeItems,
+                        items: storeItems.map(item => ({
+                            id: item.id,
+                            name: item.name,
+                            quantity: item.quantity,
+                            online_price: item.selectedVariant ? item.selectedVariant.price : item.online_price,
+                            price: item.selectedVariant ? item.selectedVariant.price : item.online_price,
+                            image: item.selectedVariant?.image_url || item.images?.[0] || item.image,
+                            variant_id: item.variant_id,
+                            variant_details: item.selectedVariant ? {
+                                color: item.selectedVariant.color,
+                                size: item.selectedVariant.size,
+                                design: item.selectedVariant.design,
+                                volume: item.selectedVariant.volume
+                            } : null,
+                            store_id: item.store_id
+                        })),
                         total_amount: storeData.subtotal + storeData.charge,
                         delivery_charges: storeData.charge,
                         display_id: customOrderId,
@@ -158,12 +179,11 @@ const Cart = () => {
                             </div>
                         ) : (
                             <div className="items-list">
-                                {Object.keys(deliveryInfo.byStore).map(storeId => {
-                                    const storeData = deliveryInfo.byStore[storeId];
-                                    const storeItems = cart.filter(item => item.store_id === storeId);
+                                {Object.values(deliveryInfo.byStore).map(storeData => {
+                                    const storeItems = cart.filter(item => item.store_id === storeData.storeId);
                                     
                                     return (
-                                        <div key={storeId} className="store-group" style={{ marginBottom: '2rem' }}>
+                                        <div key={storeData.storeId} className="store-group" style={{ marginBottom: '2rem' }}>
                                             <div className="store-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', padding: '0.5rem', background: '#f8fafc', borderRadius: '8px' }}>
                                                 <h3 style={{ fontSize: '1rem', fontWeight: '800' }}>{storeData.storeName}</h3>
                                                 {storeData.neededForFree > 0 ? (
@@ -176,22 +196,32 @@ const Cart = () => {
                                                     </span>
                                                 ) : null}
                                             </div>
-                                            {storeItems.map(item => (
-                                                <div key={item.id} className="cart-item">
+                                            {storeItems.map((item) => (
+                                                <div key={item.cartItemId || `${item.id}-${item.variant_id}`} className="cart-item">
                                                     <Link to={`/product/${item.id}`} className="item-info-link">
-                                                        <img src={item.images?.[0] || item.image} alt={item.name} className="item-img" />
+                                                        <img src={item.selectedVariant?.image_url || item.images?.[0] || item.image} alt={item.name} className="item-img" />
                                                         <div className="item-details">
                                                             <h3>{getLocalizedName(item.name, i18n.language)}</h3>
-                                                            <p className="item-price">₹{item.online_price}</p>
+                                                            {item.selectedVariant && (
+                                                                <p className="item-variant" style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '2px', fontWeight: '600' }}>
+                                                                    {[
+                                                                        item.selectedVariant.color, 
+                                                                        item.selectedVariant.size, 
+                                                                        item.selectedVariant.design, 
+                                                                        item.selectedVariant.volume
+                                                                    ].filter(Boolean).join(' / ')}
+                                                                </p>
+                                                            )}
+                                                            <p className="item-price">₹{item.selectedVariant ? item.selectedVariant.price : item.online_price}</p>
                                                         </div>
                                                     </Link>
                                                     <div className="item-controls">
                                                         <div className="quantity-toggle">
-                                                            <button onClick={() => updateQuantity(item.id, item.quantity - 1)}><Minus size={16} /></button>
+                                                            <button onClick={() => updateQuantity(item.id, item.quantity - 1, item.variant_id)}><Minus size={16} /></button>
                                                             <span>{item.quantity}</span>
-                                                            <button onClick={() => updateQuantity(item.id, item.quantity + 1)}><Plus size={16} /></button>
+                                                            <button onClick={() => updateQuantity(item.id, item.quantity + 1, item.variant_id)}><Plus size={16} /></button>
                                                         </div>
-                                                        <button className="remove-btn" onClick={() => removeFromCart(item.id)}>
+                                                        <button className="remove-btn" onClick={() => removeFromCart(item.id, item.variant_id)}>
                                                             <Trash2 size={18} />
                                                         </button>
                                                     </div>

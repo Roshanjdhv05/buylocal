@@ -271,14 +271,24 @@ const Orders = () => {
                                                     <div key={i} className="order-item-mobile">
                                                         <div className="item-image-wrapper">
                                                             <img
-                                                                src={(Array.isArray(item.images) ? item.images[0] : item.image) || 'https://via.placeholder.com/80'}
+                                                                src={item.image || (Array.isArray(item.images) ? item.images[0] : item.image) || 'https://via.placeholder.com/80'}
                                                                 alt={item.name}
                                                             />
                                                         </div>
                                                         <div className="item-info-mobile">
                                                             <h4>{getLocalizedName(item.name, i18n.language)}</h4>
+                                                            {item.variant_details && (
+                                                                <p className="item-variant-mobile" style={{ fontSize: '0.75rem', color: '#8c71a3', fontWeight: '700', marginBottom: '4px' }}>
+                                                                    {[
+                                                                        item.variant_details.color,
+                                                                        item.variant_details.size,
+                                                                        item.variant_details.design,
+                                                                        item.variant_details.volume
+                                                                    ].filter(Boolean).join(' • ')}
+                                                                </p>
+                                                            )}
                                                             <p className="item-meta-mobile">Qty: {item.quantity} • {order.delivery_type === 'Self-pick' ? 'Self-pickup' : 'Home Delivery'}</p>
-                                                            <div className="item-price-mobile">₹{item.online_price}</div>
+                                                            <div className="item-price-mobile">₹{item.online_price || item.price}</div>
                                                         </div>
                                                     </div>
                                                 ))}

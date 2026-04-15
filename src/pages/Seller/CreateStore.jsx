@@ -83,6 +83,8 @@ const CreateStore = () => {
                 galleryUrls.push(url);
             }
 
+            const displayId = `ST-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
             console.log('CreateStore: Files uploaded, inserting store row...');
             const { error: storeError } = await withTimeout(supabase
                 .from('stores')
@@ -90,7 +92,8 @@ const CreateStore = () => {
                     ...formData,
                     owner_id: user.id,
                     banner_url: bannerUrl,
-                    gallery_urls: galleryUrls
+                    gallery_urls: galleryUrls,
+                    display_id: displayId
                 }]));
 
             if (storeError) throw storeError;

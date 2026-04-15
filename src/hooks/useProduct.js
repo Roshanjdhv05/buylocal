@@ -32,7 +32,7 @@ export const useProduct = (productId) => {
                 const { data: productData, error: productError } = await withTimeout(
                     supabase
                         .from('products')
-                        .select('*')
+                        .select('*, product_variants(*)')
                         .eq(queryColumn, productId)
                         .single()
                 );
