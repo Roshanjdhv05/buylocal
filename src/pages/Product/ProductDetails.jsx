@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { getLocalizedName } from '../../utils/productTranslations';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import ImageLightbox from '../../components/ImageLightbox/ImageLightbox';
+import { getProductImage, PLACEHOLDERS } from '../../utils/imageUtils';
 import './ProductDetails.css';
 
 const ProductDetails = () => {
@@ -230,12 +231,21 @@ const ProductDetails = () => {
         }
     };
 
+    const [imageErrors, setImageErrors] = useState({});
+
+    const handleImageError = (index) => {
+        setImageErrors(prev => ({ ...prev, [index]: true }));
+    };
+
     const getImages = () => {
         if (!product) return [];
-        if (Array.isArray(product.images) && product.images.length > 0) return product.images;
-        if (Array.isArray(product.image_urls) && product.image_urls.length > 0) return product.image_urls;
-        if (typeof product.image === 'string') return [product.image];
-        return ['https://via.placeholder.com/600x600?text=No+Image'];
+        let baseImages = [];
+        if (Array.isArray(product.images) && product.images.length > 0) baseImages = product.images;
+        else if (Array.isArray(product.image_urls) && product.image_urls.length > 0) baseImages = product.image_urls;
+        else if (typeof product.image === 'string') baseImages = [product.image];
+        else baseImages = [PLACEHOLDERS.PRODUCT];
+
+        return baseImages.map((img, idx) => imageErrors[idx] ? PLACEHOLDERS.PRODUCT : img);
     };
 
     const images = getImages();
@@ -325,7 +335,11 @@ const ProductDetails = () => {
                                     className={`thumb-box ${idx === selectedImageIndex ? 'active' : ''}`}
                                     onClick={() => setSelectedImageIndex(idx)}
                                 >
-                                    <img src={img} alt={`thumbnail ${idx}`} />
+                                    <img 
+                                        src={img} 
+                                        alt={`thumbnail ${idx}`} 
+                                        onError={() => handleImageError(idx)}
+                                    />
                                 </div>
                             ))}
                         </div>
@@ -338,6 +352,14 @@ const ProductDetails = () => {
                                 src={selectedVariant?.image_url || images[selectedImageIndex]} 
                                 alt={product.name} 
                                 onClick={() => setShowLightbox(true)} 
+                                onError={(e) => {
+                                    if (selectedVariant?.image_url) {
+                                        // If variant image fails, fallback to main gallery
+                                        e.target.src = images[selectedImageIndex];
+                                    } else {
+                                        handleImageError(selectedImageIndex);
+                                    }
+                                }}
                                 style={{ cursor: 'zoom-in', width: '100%', height: '100%', objectFit: 'cover' }} 
                             />
                             <div className="hero-badges" style={{ pointerEvents: 'none' }}>

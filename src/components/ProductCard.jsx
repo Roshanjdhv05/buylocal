@@ -7,6 +7,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { getLocalizedName } from '../utils/productTranslations';
 
+import { getProductImage, PLACEHOLDERS } from '../utils/imageUtils';
+
 const ProductCard = ({ product }) => {
   const { t, i18n } = useTranslation();
   const { addToCart } = useCart();
@@ -18,6 +20,7 @@ const ProductCard = ({ product }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
   const [rating, setRating] = useState({ avg: 0, count: 0 });
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -90,10 +93,11 @@ const ProductCard = ({ product }) => {
 
   // Handle image arrays or single strings
   const getImages = () => {
+    if (imageError) return [PLACEHOLDERS.PRODUCT];
     if (Array.isArray(product.images) && product.images.length > 0) return product.images;
     if (Array.isArray(product.image_urls) && product.image_urls.length > 0) return product.image_urls;
     if (typeof product.image === 'string') return [product.image];
-    return ['https://via.placeholder.com/300x300?text=No+Image'];
+    return [PLACEHOLDERS.PRODUCT];
   };
 
   const images = getImages();
@@ -157,7 +161,12 @@ const ProductCard = ({ product }) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="luxury-card-image-wrap">
-        <img src={images[currentImageIndex]} alt={product.name} className="luxury-product-img" />
+        <img 
+          src={images[currentImageIndex]} 
+          alt={product.name} 
+          className="luxury-product-img" 
+          onError={() => setImageError(true)}
+        />
         
         {/* Badges */}
         <div className="luxury-badges-top">

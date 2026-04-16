@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase, withTimeout } from '../../services/supabase';
+import { PLACEHOLDERS } from '../../utils/imageUtils';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useTranslation } from 'react-i18next';
@@ -1710,15 +1711,13 @@ const SellerDashboard = () => {
                                                             {order.items?.map((item, i) => (
                                                                 <div key={i} className="so-item-row">
                                                                      <div className="so-item-icon">
-                                                                         {(item.image || item.image_url || (item.images && item.images[0])) ? (
-                                                                             <img 
-                                                                                 src={item.image || item.image_url || item.images[0]} 
-                                                                                 alt={item.name} 
-                                                                                 className="so-item-img"
-                                                                             />
-                                                                         ) : (
-                                                                             <Package size={20} color="#6d28d9" strokeWidth={2.5} />
-                                                                         )}
+                                                                         <img 
+                                                                             src={(item.image || item.image_url || (item.images && item.images[0])) || PLACEHOLDERS.PRODUCT} 
+                                                                             alt={item.name} 
+                                                                             className="so-item-img"
+                                                                             onError={(e) => e.target.src = PLACEHOLDERS.PRODUCT}
+                                                                         />
+
                                                                      </div>
                                                                     <div className="so-item-details">
                                                                         <h4 className="so-item-name">{item.name}</h4>

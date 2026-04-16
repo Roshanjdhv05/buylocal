@@ -13,6 +13,7 @@ import SEO from '../../components/SEO';
 import { useTranslation } from 'react-i18next';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import { getLocalizedName } from '../../utils/productTranslations';
+import { PLACEHOLDERS } from '../../utils/imageUtils';
 
 const PublicStore = () => {
     const { t, i18n } = useTranslation();
@@ -284,22 +285,24 @@ const PublicStore = () => {
             {/* LUXURY HERO SECTION */}
             <div className="luxury-hero">
                 <div className="hero-banner-wrap">
-                    {store.banner_url ? (
-                        <img src={store.banner_url} alt={store.name} className="hero-banner-img" />
-                    ) : (
-                        <div className="hero-banner-placeholder"></div>
-                    )}
+                    <img 
+                        src={store.banner_url || PLACEHOLDERS.BANNER} 
+                        alt={store.name} 
+                        className="hero-banner-img" 
+                        onError={(e) => e.target.src = PLACEHOLDERS.BANNER}
+                    />
+
                     <div className="hero-overlay"></div>
                 </div>
 
                 <div className="hero-content container">
                     <div className="luxury-header-left">
                         <div className="luxury-logo-side">
-                            {store.profile_picture_url ? (
-                                <img src={store.profile_picture_url} alt={store.name} />
-                            ) : (
-                                <Store size={40} />
-                            )}
+                                <img 
+                                    src={store.profile_picture_url || PLACEHOLDERS.STORE_LOGO} 
+                                    alt={store.name} 
+                                    onError={(e) => e.target.src = PLACEHOLDERS.STORE_LOGO}
+                                />
                         </div>
                         
                         <div className="luxury-info-side">
@@ -349,19 +352,9 @@ const PublicStore = () => {
                 <div className="category-boxes-wrap">
                     <div className="category-boxes-scroll">
                         {customCategories.map((cat, idx) => (
-                            <div 
-                                key={cat.id || idx} 
-                                className="category-box-card"
-                                onClick={() => navigate(`/${encodeURIComponent(store.name)}/category/${encodeURIComponent(cat.name)}`)}
-                                style={{ cursor: 'pointer' }}
-                            >
-                                <div className="category-box-img-wrap">
-                                    <img src={cat.image_url} alt={cat.name} />
-                                    <div className="category-box-overlay"></div>
-                                    <span className="category-box-name">{cat.name.toUpperCase()}</span>
-                                </div>
-                            </div>
+                            <CategoryBox key={cat.id || idx} cat={cat} storeName={store.name} navigate={navigate} />
                         ))}
+
                     </div>
                 </div>
             )}
@@ -1063,6 +1056,28 @@ const PublicStore = () => {
                     .lightbox-close { top: 1rem; right: 1rem; }
                 }
             `}</style>
+        </div>
+    );
+};
+
+const CategoryBox = ({ cat, storeName, navigate }) => {
+    const [imgError, setImgError] = useState(false);
+    
+    return (
+        <div 
+            className="category-box-card"
+            onClick={() => navigate(`/${encodeURIComponent(storeName)}/category/${encodeURIComponent(cat.name)}`)}
+            style={{ cursor: 'pointer' }}
+        >
+            <div className="category-box-img-wrap">
+                <img 
+                    src={imgError ? PLACEHOLDERS.CATEGORY : cat.image_url} 
+                    alt={cat.name} 
+                    onError={() => setImgError(true)}
+                />
+                <div className="category-box-overlay"></div>
+                <span className="category-box-name">{cat.name.toUpperCase()}</span>
+            </div>
         </div>
     );
 };

@@ -21,10 +21,30 @@ export const usePageCache = ({
     const saveTimeout = useRef(null);
     const hasRestoredScroll = useRef(false);
 
-    // Load initial state from cache or fallback to initialArg
+    // Load initial state from cache or fallback to initialArg.
+    // We MERGE cached data with initialState so that any new keys added
+    // to initialState are always present, and stale/partial cache doesn't
+    // leave fields as `undefined` (which causes .length crashes).
     const [pageState, setPageState] = useState(() => {
         const cached = loadPageState(cacheKey);
-        return cached ? cached.data : initialState;
+        if (!cached) return initialState;
+        // Deep merge: initialState provides safe defaults, cached data overrides
+        const merged = { ...initialState };
+        if (cached.data && typeof cached.data === 'object') {
+            for (const key of Object.keys(initialState)) {
+                const cachedVal = cached.data[key];
+                // Only use cached value if it's the same type as the initial value
+                if (cachedVal !== undefined && cachedVal !== null) {
+                    // For arrays, ensure it's actually an array
+                    if (Array.isArray(initialState[key])) {
+                        merged[key] = Array.isArray(cachedVal) ? cachedVal : initialState[key];
+                    } else {
+                        merged[key] = cachedVal;
+                    }
+                }
+            }
+        }
+        return merged;
     });
 
     // Helper to update state and trigger save

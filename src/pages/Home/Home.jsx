@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import SplashScreen from '../../components/SplashScreen/SplashScreen';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import { usePageCache } from '../../hooks/usePageCache';
+import { resolveImageUrl, PLACEHOLDERS } from '../../utils/imageUtils';
 
 const Home = () => {
     const { t } = useTranslation();
@@ -38,19 +39,19 @@ const Home = () => {
         }
     });
 
-    const [products, setProducts] = useState(pageState.products);
-    const [stores, setStores] = useState(pageState.stores);
+    const [products, setProducts] = useState(pageState.products || []);
+    const [stores, setStores] = useState(pageState.stores || []);
     const [recentlyViewed, setRecentlyViewed] = useState([]);
-    const [loading, setLoading] = useState(pageState.products.length === 0);
+    const [loading, setLoading] = useState((pageState.products || []).length === 0);
     const { location } = useLocation();
-    const [reviews, setReviews] = useState(pageState.reviews);
+    const [reviews, setReviews] = useState(pageState.reviews || []);
     const [activeCategory, setActiveCategory] = useState(t('home.trending'));
-    const [campaigns, setCampaigns] = useState(pageState.campaigns);
+    const [campaigns, setCampaigns] = useState(pageState.campaigns || []);
     const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-    const [dbCategories, setDbCategories] = useState(pageState.dbCategories);
-    const [homeCategories, setHomeCategories] = useState(pageState.homeCategories);
+    const [dbCategories, setDbCategories] = useState(pageState.dbCategories || []);
+    const [homeCategories, setHomeCategories] = useState(pageState.homeCategories || []);
 
     // Filter states for search results
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -229,8 +230,13 @@ const Home = () => {
         return () => { mounted = false; };
     }, [profile]);
 
+    // Safe arrays - guard against undefined state during auth transitions
+    const safeProducts = Array.isArray(products) ? products : [];
+    const safeStores = Array.isArray(stores) ? stores : [];
+    const safeReviews = Array.isArray(reviews) ? reviews : [];
+
     // Process Data
-    const nearestStores = stores
+    const nearestStores = safeStores
         .map(store => {
             const distance = location ? calculateDistance(location, { lat: store.lat, lng: store.lng }) : Infinity;
             return {
@@ -256,13 +262,13 @@ const Home = () => {
     const isAnyStoreNear = nearestStores.some(s => s.distance <= 10); // 10km radius
 
     const enrichProduct = (product) => {
-        const store = stores.find(s => s.id === product.store_id);
+        const store = safeStores.find(s => s.id === product.store_id);
         const distance = location && store
             ? calculateDistance(location, { lat: store.lat, lng: store.lng })
             : Infinity;
 
         // Calculate rating
-        const productReviews = reviews.filter(r => r.product_id === product.id);
+        const productReviews = safeReviews.filter(r => r.product_id === product.id);
         const avgRating = productReviews.length > 0
             ? productReviews.reduce((acc, r) => acc + r.rating, 0) / productReviews.length
             : 0;
@@ -270,7 +276,7 @@ const Home = () => {
         return { ...product, distance, storeName: store?.name, avgRating, reviewCount: productReviews.length };
     };
 
-    const enrichedProducts = products.map(enrichProduct);
+    const enrichedProducts = safeProducts.map(enrichProduct);
 
     // Search Logic
     const searchResults = searchQuery ? enrichedProducts.filter(p => {
@@ -775,21 +781,9 @@ const Home = () => {
             <div className="container category-nav-container">
                 <div className="category-minimal-grid">
                     {homeCategories.map(cat => (
-                        <Link
-                            key={cat.id}
-                            to={`/?search=${encodeURIComponent(cat.name)}`}
-                            className="category-icon-item"
-                        >
-                            <div className="category-base">
-                                {cat.image_url ? (
-                                    <img src={cat.image_url} alt={cat.name} className="cat-nav-img" />
-                                ) : (
-                                    <span style={{ fontSize: '24px' }}>{cat.icon || '📦'}</span>
-                                )}
-                            </div>
-                            <span className="category-label">{cat.name}</span>
-                        </Link>
+                        <CategoryIconItem key={cat.id} cat={cat} />
                     ))}
+
                     {homeCategories.length === 0 && (
                         <p style={{ gridColumn: '1 / -1', textAlign: 'center', opacity: 0.5, fontSize: '0.8rem', padding: '1rem' }}>
                             No categories available
@@ -827,7 +821,11 @@ const Home = () => {
                             nearestStores.map(store => (
                                 <Link to={`/${encodeURIComponent(store.name)}`} key={store.id} className="store-premium-card">
                                     <div className="store-card-image">
-                                        <img src={store.banner_url || 'https://via.placeholder.com/150'} alt={store.name} />
+                                        <img 
+                                            src={store.banner_url || PLACEHOLDERS.BANNER} 
+                                            alt={store.name} 
+                                            onError={(e) => e.target.src = PLACEHOLDERS.BANNER}
+                                        />
                                         {store.distance !== Infinity && (
                                             <span className="store-dist-badge">{store.distance.toFixed(1)} km</span>
                                         )}
@@ -1572,6 +1570,31 @@ const Home = () => {
             .cat-nav-img { width: 100%; height: 100%; object-fit: cover; }
       `}</style>
         </div>
+    );
+};
+
+const CategoryIconItem = ({ cat }) => {
+    const [imgError, setImgError] = useState(false);
+    
+    return (
+        <Link
+            to={`/?search=${encodeURIComponent(cat.name)}`}
+            className="category-icon-item"
+        >
+            <div className="category-base">
+                {cat.image_url && !imgError ? (
+                    <img 
+                        src={cat.image_url} 
+                        alt={cat.name} 
+                        className="cat-nav-img" 
+                        onError={() => setImgError(true)}
+                    />
+                ) : (
+                    <span style={{ fontSize: '24px' }}>{cat.icon || '📦'}</span>
+                )}
+            </div>
+            <span className="category-label">{cat.name}</span>
+        </Link>
     );
 };
 
