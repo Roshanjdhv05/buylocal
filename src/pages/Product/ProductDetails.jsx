@@ -152,6 +152,8 @@ const ProductDetails = () => {
     const [reviewForm, setReviewForm] = useState({ rating: 5, content: '', media: [] });
     const [submittingReview, setSubmittingReview] = useState(false);
     const [reviewMediaPreviews, setReviewMediaPreviews] = useState([]);
+    // imageErrors must be declared here (before early returns) to satisfy Rules of Hooks
+    const [imageErrors, setImageErrors] = useState({});
 
     if (loading) return <LoadingSpinner fullPage />;
     if (!product && !loading) return <ProductNotFound />;
@@ -230,8 +232,6 @@ const ProductDetails = () => {
             setSubmittingReview(false);
         }
     };
-
-    const [imageErrors, setImageErrors] = useState({});
 
     const handleImageError = (index) => {
         setImageErrors(prev => ({ ...prev, [index]: true }));
