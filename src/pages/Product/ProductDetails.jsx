@@ -417,7 +417,7 @@ const ProductDetails = () => {
                     {/* COLUMN 3: INFO & ACTION */}
                     <div className="info-column">
                         <div className="brand-header">
-                            <span className="product-brand-info">{product.category} / PREMIUM</span>
+                            <span className="product-brand-info">{product.category}</span>
                             <h1 className="product-title-luxury">{getLocalizedName(product.name, i18n.language)}</h1>
                         </div>
 
@@ -481,10 +481,27 @@ const ProductDetails = () => {
                         )}
 
 
-                        <div className="pricing-luxury">
-                            <span className="price-now">₹{selectedVariant?.price || (product.online_price || product.price)}</span>
-                            {(selectedVariant?.market_price || product.mrp) && (
-                                <span className="price-mrp">₹{selectedVariant?.market_price || product.mrp}</span>
+                        <div className="pricing-luxury" style={{ display: 'flex', alignItems: 'baseline', gap: '1rem', margin: '0.5rem 0 1.5rem' }}>
+                            <span className="price-now" style={{ fontSize: '2.5rem', fontWeight: '800', color: '#000' }}>
+                                ₹{selectedVariant?.price || (product.online_price || product.price)}
+                            </span>
+                            {(selectedVariant?.market_price || product.offline_price || product.mrp) && (
+                                <span className="price-mrp" style={{ fontSize: '1.25rem', color: '#64748b', textDecoration: 'line-through' }}>
+                                    ₹{selectedVariant?.market_price || product.offline_price || product.mrp}
+                                </span>
+                            )}
+                            {Math.round((( (selectedVariant?.market_price || product.offline_price || product.mrp) - (selectedVariant?.price || (product.online_price || product.price)) ) / (selectedVariant?.market_price || product.offline_price || product.mrp)) * 100) > 0 && (
+                                <span style={{ 
+                                    background: '#f0fdf4', 
+                                    color: '#16a34a', 
+                                    padding: '4px 10px', 
+                                    borderRadius: '8px', 
+                                    fontSize: '0.8rem', 
+                                    fontWeight: '800',
+                                    border: '1px solid #dcfce7'
+                                }}>
+                                    {Math.round((( (selectedVariant?.market_price || product.offline_price || product.mrp) - (selectedVariant?.price || (product.online_price || product.price)) ) / (selectedVariant?.market_price || product.offline_price || product.mrp)) * 100)}% OFF
+                                </span>
                             )}
                         </div>
                         <p className="tax-disclaimer">Inclusive of all taxes and duties</p>
