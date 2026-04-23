@@ -318,7 +318,12 @@ const PublicStore = () => {
 
                     <div className="luxury-action-scroll">
                         <button className="btn-action-pill btn-instagram" onClick={() => {
-                            if (store.instagram_url) window.open(store.instagram_url, '_blank');
+                            if (store.instagram) {
+                                const url = store.instagram.startsWith('http') 
+                                    ? store.instagram 
+                                    : `https://instagram.com/${store.instagram.replace('@', '')}`;
+                                window.open(url, '_blank');
+                            }
                         }}>
                              Instagram
                         </button>
