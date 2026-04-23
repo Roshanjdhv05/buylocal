@@ -620,6 +620,11 @@
     .tabs-nav {
         gap: 1.5rem;
         overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    .tabs-nav::-webkit-scrollbar {
+        display: none;
     }
     .product-title-luxury {
         font-size: 1.75rem;

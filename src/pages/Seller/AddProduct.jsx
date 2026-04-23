@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Save, Eye, Upload, Check, Info, Plus, CloudUpload, X, Tag, ChevronRight, Package, AlertCircle } from 'lucide-react';
-import VariantManager from './VariantManager';
+import { ArrowLeft, Info, Plus, CloudUpload, X, ChevronRight } from 'lucide-react';
 import { supabase } from '../../services/supabase';
 import './DashboardStyles.css';
 
@@ -20,9 +19,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
         section: '',
         tags: [],
         stock: '0',
-        trackStock: false,
-        hasVariants: false,
-        variants: []
+        trackStock: false
     });
 
     const [step, setStep] = useState(1);
@@ -46,14 +43,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                 section: initialData.section || '',
                 tags: initialData.tags || [],
                 stock: initialData.stock_quantity || '0',
-                trackStock: initialData.stock_quantity !== null && initialData.stock_quantity !== undefined,
-                hasVariants: initialData.product_variants?.length > 0 || false,
-                variants: (initialData.product_variants || []).map(v => ({
-                    ...v,
-                    image: v.image_url,
-                    marketPrice: v.market_price,
-                    stock: v.stock_quantity?.toString() || '0'
-                }))
+                trackStock: initialData.stock_quantity !== null && initialData.stock_quantity !== undefined
             });
         }
     }, [initialData]);
@@ -123,31 +113,14 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
     };
 
     const nextStep = () => {
-        if (step === 2 && formData.hasVariants) {
-            setStep(4);
-        } else if (step === 4 && formData.hasVariants) {
-            // Automatically set the first variant image as the primary product cover
-            const firstVariantImage = formData.variants[0]?.preview || formData.variants[0]?.image;
-            if (firstVariantImage) {
-                setFormData(prev => {
-                    const otherImages = prev.images.filter(img => img !== firstVariantImage);
-                    return {
-                        ...prev,
-                        images: [firstVariantImage, ...otherImages]
-                    };
-                });
-            }
-            setStep(5);
-        } else if (step < 5) {
+        if (step < 4) {
             setStep(step + 1);
         }
         window.scrollTo(0, 0);
     };
 
     const prevStep = () => {
-        if (step === 4 && formData.hasVariants) {
-            setStep(2);
-        } else if (step > 1) {
+        if (step > 1) {
             setStep(step - 1);
         } else {
             onBack();
@@ -178,12 +151,12 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                 </div>
                 <div className="step-indicator-wrapper">
                     <div className="step-progress-bar">
-                        {[1, 2, 3, 4, 5].map(s => (
+                        {[1, 2, 3, 4].map(s => (
                             <div
                                 key={s}
                                 className="step-progress-fill"
                                 style={{
-                                    width: '20%',
+                                    width: '25%',
                                     background: s <= step ? 'var(--primary)' : '#f1f5f9',
                                     borderRadius: '10px'
                                 }}
@@ -197,7 +170,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                 {step === 1 && (
                     <div className="step-view">
                         <div className="step-headline">
-                            <span>Step 1 of 5</span>
+                            <span>Step 1 of 4</span>
                             <h2>Basic Information</h2>
                         </div>
 
@@ -309,21 +282,6 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                 </label>
                             </div>
 
-                            <div className="toggle-group-mobile" style={{ marginBottom: '1.5rem', border: '1px solid #e2e8f0', padding: '1rem', borderRadius: '12px', background: '#f0f9ff' }}>
-                                <div className="toggle-info">
-                                    <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700' }}>Product Has Variants</h4>
-                                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: '#0284c7' }}>E.g. Multiple colors, sizes, or designs</p>
-                                </div>
-                                <label className="switch">
-                                    <input
-                                        type="checkbox"
-                                        checked={formData.hasVariants}
-                                        onChange={e => setFormData({ ...formData, hasVariants: e.target.checked })}
-                                    />
-                                    <span className="slider round"></span>
-                                </label>
-                            </div>
-
                             {formData.trackStock && (
                                 <div className="form-group-mobile animate-in">
                                     <label>Stock Quantity</label>
@@ -395,7 +353,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                 {step === 2 && (
                     <div className="step-view">
                         <div className="step-headline">
-                            <span>Step 2 of 5</span>
+                            <span>Step 2 of 4</span>
                             <h2>Delivery Details</h2>
                         </div>
 
@@ -465,21 +423,9 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                 {step === 3 && (
                     <div className="step-view">
                         <div className="step-headline">
-                            <span>Step 3 of 5</span>
+                            <span>Step 3 of 4</span>
                             <h2>Pricing & Earnings</h2>
                         </div>
-                        
-                        {formData.hasVariants && (
-                            <div className="add-product-card" style={{ background: '#fefce8', border: '1px solid #fef08a', display: 'flex', gap: '12px', marginBottom: '1.5rem' }}>
-                                <AlertCircle size={18} color="#a16207" />
-                                <div>
-                                    <p style={{ fontSize: '0.85rem', color: '#854d0e', fontWeight: '700', margin: 0 }}>Variants Enabled</p>
-                                    <p style={{ fontSize: '0.75rem', color: '#a16207', margin: '2px 0 0 0' }}>
-                                        Individual prices set in Step 4 will be used instead of this price.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
 
                         <div className="add-product-card">
                             <div className="form-group-mobile">
@@ -489,9 +435,8 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                     <input
                                         type="number"
                                         className="price-input"
-                                        style={{ paddingLeft: '2.5rem', color: '#000000', fontWeight: '700', opacity: formData.hasVariants ? 0.5 : 1 }}
+                                        style={{ paddingLeft: '2.5rem', color: '#000000', fontWeight: '700' }}
                                         value={formData.onlinePrice}
-                                        disabled={formData.hasVariants}
                                         onChange={e => setFormData({ ...formData, onlinePrice: e.target.value })}
                                     />
                                 </div>
@@ -503,9 +448,8 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                     <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', fontWeight: '700', color: '#64748b' }}>₹</span>
                                     <input
                                         type="number"
-                                        style={{ paddingLeft: '2.5rem', opacity: formData.hasVariants ? 0.5 : 1 }}
+                                        style={{ paddingLeft: '2.5rem' }}
                                         value={formData.marketPrice}
-                                        disabled={formData.hasVariants}
                                         onChange={e => setFormData({ ...formData, marketPrice: e.target.value })}
                                     />
                                 </div>
@@ -559,42 +503,12 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                     </div>
                 )}
 
+
+
                 {step === 4 && (
                     <div className="step-view">
                         <div className="step-headline">
-                            <span>Step 4 of 5</span>
-                            <h2>Product Variants</h2>
-                        </div>
-                        
-                        {!formData.hasVariants ? (
-                            <div className="add-product-card" style={{ textAlign: 'center', padding: '3rem 1rem' }}>
-                                <Package size={48} color="#94a3b8" style={{ marginBottom: '1rem' }} />
-                                <h3>Variants Disabled</h3>
-                                <p style={{ color: '#64748b', fontSize: '0.9rem', maxWidth: '300px', margin: '0.5rem auto' }}>
-                                    This product will be sold as a single item with no variations. 
-                                    You can enable variants in Step 1.
-                                </p>
-                                <button 
-                                    onClick={() => setStep(1)}
-                                    className="btn-mobile-footer secondary"
-                                    style={{ marginTop: '1.5rem', width: 'auto', display: 'inline-flex' }}
-                                >
-                                    Enable Variants
-                                </button>
-                            </div>
-                        ) : (
-                            <VariantManager 
-                                formData={formData} 
-                                setFormData={setFormData}
-                            />
-                        )}
-                    </div>
-                )}
-
-                {step === 5 && (
-                    <div className="step-view">
-                        <div className="step-headline">
-                            <span>Step 5 of 5</span>
+                            <span>Step 4 of 4</span>
                             <h2>Product Images</h2>
                         </div>
 
@@ -637,14 +551,14 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                                         bottom: 0, 
                                                         left: 0, 
                                                         right: 0, 
-                                                        background: formData.hasVariants ? '#64748b' : 'var(--primary)', 
+                                                        background: 'var(--primary)', 
                                                         color: 'white', 
                                                         fontSize: '0.6rem', 
                                                         fontWeight: '800', 
                                                         textAlign: 'center', 
                                                         padding: '2px 0' 
                                                     }}>
-                                                        {formData.hasVariants ? 'VARIANT COVER' : 'COVER'}
+                                                        COVER
                                                     </div>
                                                 )}
                                             </div>
@@ -707,7 +621,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                 <button className="btn-mobile-footer secondary" onClick={prevStep}>
                     {step === 1 ? 'Save Draft' : 'Back'}
                 </button>
-                {step < 5 ? (
+                {step < 4 ? (
                     <button className="btn-mobile-footer primary" onClick={nextStep}>
                         Next Step
                     </button>

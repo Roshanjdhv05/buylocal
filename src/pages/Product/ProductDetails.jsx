@@ -45,6 +45,7 @@ const ProductDetails = () => {
     const [isLiked, setIsLiked] = useState(false);
     const [wishlistLoading, setWishlistLoading] = useState(false);
     const [activeTab, setActiveTab] = useState('description');
+    const [groupedSiblings, setGroupedSiblings] = useState([]); // products in same group
     
     // Variant Selection State
     const [selectedVariant, setSelectedVariant] = useState(null);
@@ -104,6 +105,18 @@ const ProductDetails = () => {
         if (user) checkWishlistStatus();
         addToRecentlyViewed(product);
         window.scrollTo(0, 0);
+
+        // Fetch grouped sibling products
+        if (product.product_group_id) {
+            supabase
+                .from('products')
+                .select('id, name, images, online_price, group_display_order, is_group_cover')
+                .eq('product_group_id', product.product_group_id)
+                .order('group_display_order', { ascending: true })
+                .then(({ data }) => setGroupedSiblings(data || []));
+        } else {
+            setGroupedSiblings([]);
+        }
 
         // Initialize selections if variants exist
         if (product.product_variants?.length > 0) {
@@ -408,16 +421,65 @@ const ProductDetails = () => {
                             <h1 className="product-title-luxury">{getLocalizedName(product.name, i18n.language)}</h1>
                         </div>
 
-                        <div className="rating-row">
-                            <div className="stars-group">
-                                {[...Array(5)].map((_, i) => (
-                                    <Star key={i} size={16} fill={i < Math.round(Number(avgRating)) ? "#7c3aed" : "none"} color="#7c3aed" />
-                                ))}
+                        {/* Styles Available (Grouped Products) — moved above price */}
+                        {groupedSiblings.length > 1 && (
+                            <div className="styles-available-section" style={{ marginBottom: '1.5rem' }}>
+                                <label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#1e293b', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'block', letterSpacing: '0.05em' }}>Styles Available</label>
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                    {groupedSiblings.map(sibling => {
+                                        const isActive = sibling.id === product.id;
+                                        const thumb = Array.isArray(sibling.images) ? sibling.images[0] : null;
+                                        return (
+                                            <div
+                                                key={sibling.id}
+                                                title={sibling.name}
+                                                onClick={() => !isActive && navigate(`/product/${sibling.id}`)}
+                                                style={{
+                                                    width: '58px', height: '58px', borderRadius: '12px', overflow: 'hidden',
+                                                    cursor: isActive ? 'default' : 'pointer',
+                                                    border: `2.5px solid ${isActive ? '#7c3aed' : '#e2e8f0'}`,
+                                                    boxShadow: isActive ? '0 0 0 3px rgba(124,58,237,0.1)' : 'none',
+                                                    transition: 'all 0.2s ease', padding: '2px', background: 'white',
+                                                    flexShrink: 0, position: 'relative'
+                                                }}
+                                            >
+                                                {thumb
+                                                    ? <img src={thumb} alt={sibling.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                                                    : <div style={{ width: '100%', height: '100%', background: '#f1f5f9', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: '#94a3b8', fontWeight: '700', textAlign: 'center', padding: '4px' }}>{sibling.name?.slice(0, 8)}</div>
+                                                }
+                                                {sibling.is_group_cover && (
+                                                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, textAlign: 'center', fontSize: '0.45rem', fontWeight: '900', color: '#7c3aed', background: 'rgba(255,255,255,0.95)', padding: '2px 0' }}>COVER</div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                            <span className="rating-text">{avgRating > 0 ? `${avgRating} (${reviews.length} reviews)` : 'No reviews yet'}</span>
-                            <span className="breadcrumb-divider">|</span>
-                            <Link to={`/${encodeURIComponent(store?.name)}`} className="sold-by-badge">Sold by {store?.name || 'Local Store'}</Link>
-                        </div>
+                        )}
+
+                        {/* Styles Available (Legacy Variants fallback) — moved above price */}
+                        {variants.length > 0 && variants.some(v => v.image_url) && !groupedSiblings.length && (
+                            <div className="styles-available-section" style={{ marginBottom: '1.5rem' }}>
+                                <label style={{ fontSize: '0.75rem', fontWeight: '800', color: '#1e293b', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'block', letterSpacing: '0.05em' }}>Styles Available</label>
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                    {[...new Map(variants.filter(v => v.image_url).map(v => [v.image_url, v])).values()].map((v, i) => {
+                                        const isSelected = selectedVariant?.id === v.id || (selectedVariant && selectedVariant.image_url === v.image_url);
+                                        return (
+                                            <div key={v.id || i} onClick={() => handleQuickVariantSelect(v)}
+                                                style={{ width: '56px', height: '56px', borderRadius: '12px', overflow: 'hidden', cursor: 'pointer',
+                                                    border: `2px solid ${isSelected ? '#7c3aed' : '#e2e8f0'}`,
+                                                    boxShadow: isSelected ? '0 0 0 2px rgba(124,58,237,0.1)' : 'none',
+                                                    transition: 'all 0.2s ease', padding: '2px', background: 'white'
+                                                }}
+                                            >
+                                                <img src={v.image_url} alt="variant style" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
 
                         <div className="pricing-luxury">
                             <span className="price-now">₹{selectedVariant?.price || (product.online_price || product.price)}</span>
@@ -435,39 +497,6 @@ const ProductDetails = () => {
                             )}
                         </div>
 
-                        {/* VISUAL VARIANT GALLERY */}
-                        {variants.length > 0 && variants.some(v => v.image_url) && (
-                            <div className="visual-variant-gallery" style={{ marginTop: '1.5rem' }}>
-                                <label style={{ fontSize: '0.8rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'block' }}>Styles Available</label>
-                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                    {[...new Map(variants.filter(v => v.image_url).map(v => [v.image_url, v])).values()].map((v, i) => {
-                                        const isSelected = selectedVariant?.id === v.id || 
-                                            (selectedVariant && selectedVariant.image_url === v.image_url);
-                                        
-                                        return (
-                                            <div 
-                                                key={v.id || i}
-                                                onClick={() => handleQuickVariantSelect(v)}
-                                                style={{ 
-                                                    width: '56px', 
-                                                    height: '56px', 
-                                                    borderRadius: '10px', 
-                                                    overflow: 'hidden', 
-                                                    cursor: 'pointer',
-                                                    border: `2px solid ${isSelected ? 'var(--primary)' : '#e2e8f0'}`,
-                                                    boxShadow: isSelected ? '0 0 0 2px rgba(124, 58, 237, 0.2)' : 'none',
-                                                    transition: 'all 0.2s ease',
-                                                    padding: '2px',
-                                                    background: 'white'
-                                                }}
-                                            >
-                                                <img src={v.image_url} alt="variant style" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }} />
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
 
                         {/* VARIANT SELECTION UI */}
                         {variants.length > 0 && (
@@ -587,16 +616,37 @@ const ProductDetails = () => {
                             </button>
                         </div>
 
-                        {store?.custom_highlights && store.custom_highlights.length > 0 && (
-                            <div className="store-highlights-tags">
-                                {store.custom_highlights.map((h, idx) => (
-                                    <div key={idx} className="highlight-tag">
-                                        <Award size={16} />
-                                        <span>{h}</span>
-                                    </div>
-                                ))}
+                        {/* PRODUCT TRUST & VARIANTS SECTION */}
+                        <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid #f1f5f9' }}>
+                            {/* Trust Badges */}
+                            <div className="product-trust-highlights" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+                                <div className="trust-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: '700', color: '#475569' }}>
+                                    <Award size={16} color="#7c3aed" /> <span>Quality Product</span>
+                                </div>
+                                <div className="trust-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: '700', color: '#475569' }}>
+                                    <Truck size={16} color="#7c3aed" /> <span>COD Available</span>
+                                </div>
+                                <div className="trust-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: '700', color: '#475569' }}>
+                                    <Clock size={16} color="#7c3aed" /> <span>Fast Delivery</span>
+                                </div>
+                                <div className="trust-badge" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem', fontWeight: '700', color: '#475569' }}>
+                                    <ShieldCheck size={16} color="#7c3aed" /> <span>No Return Policy</span>
+                                </div>
                             </div>
-                        )}
+
+                            {/* Rating Row */}
+                            <div className="rating-row" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                                <div className="stars-group" style={{ display: 'flex', gap: '2px' }}>
+                                    {[...Array(5)].map((_, i) => (
+                                        <Star key={i} size={14} fill={i < Math.round(Number(avgRating)) ? "#7c3aed" : "none"} color="#7c3aed" />
+                                    ))}
+                                </div>
+                                <span className="rating-text" style={{ fontSize: '0.8rem', fontWeight: '600', color: '#94a3b8' }}>
+                                    {avgRating > 0 ? `${avgRating} (${reviews.length} reviews)` : 'No reviews yet'}
+                                </span>
+                            </div>
+
+                        </div>
                     </div>
                 </main>
 
@@ -612,23 +662,7 @@ const ProductDetails = () => {
                         <div className="tab-main-content">
                             {activeTab === 'description' && (
                                 <div className="description-hero">
-                                    <h2>Engineering Meets Local Excellence</h2>
-                                    <p>{getLocalizedName(product.description, i18n.language) || "No description provided by the seller."}</p>
-                                    
-                                    <div className="feature-cards-row">
-                                        <div className="feature-card">
-                                            <h5>THE CRAFT</h5>
-                                            <p>Proprietary techniques used by local masters to provide superior quality and longevity.</p>
-                                        </div>
-                                        <div className="feature-card">
-                                            <h5>THE DETAIL</h5>
-                                            <p>Every element is inspected to ensure it meet the premium standards of BuyLocal.</p>
-                                        </div>
-                                    </div>
-
-                                    <button className="view-more-details">
-                                        Read more <ChevronDown size={14} />
-                                    </button>
+                                    <p style={{ whiteSpace: 'pre-line' }}>{getLocalizedName(product.description, i18n.language) || "No description provided by the seller."}</p>
                                 </div>
                             )}
 

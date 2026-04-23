@@ -72,6 +72,10 @@ const SellerDashboard = () => {
     const [productSortOrder, setProductSortOrder] = useState('newest');
     const [productStockFilter, setProductStockFilter] = useState('all');
 
+    // Group Products feature
+    const [isGroupingProducts, setIsGroupingProducts] = useState(false);
+    const [selectedForGroup, setSelectedForGroup] = useState([]); // array of product ids, first = cover
+
     // Order filter states
     const [orderStatusTab, setOrderStatusTab] = useState('all');
     const [orderSearch, setOrderSearch] = useState('');
@@ -1103,6 +1107,59 @@ const SellerDashboard = () => {
         }
     };
 
+    const handleGroupProducts = async () => {
+        if (selectedForGroup.length < 2) {
+            alert('Please select at least 2 products to group.');
+            return;
+        }
+        try {
+            const groupId = crypto.randomUUID();
+            const updates = selectedForGroup.map((productId, idx) =>
+                supabase
+                    .from('products')
+                    .update({
+                        product_group_id: groupId,
+                        group_display_order: idx,
+                        is_group_cover: idx === 0
+                    })
+                    .eq('id', productId)
+            );
+            await Promise.all(updates);
+            alert(`${selectedForGroup.length} products grouped successfully! The first product is the cover.`);
+            setIsGroupingProducts(false);
+            setSelectedForGroup([]);
+            await fetchStoreData();
+        } catch (error) {
+            alert('Error grouping products: ' + error.message);
+        }
+    };
+
+    const handleUngroupProduct = async (productId) => {
+        if (!window.confirm('Remove this product from its group?')) return;
+        try {
+            const product = products.find(p => p.id === productId);
+            const groupId = product?.product_group_id;
+            // Clear this product's group
+            await supabase
+                .from('products')
+                .update({ product_group_id: null, group_display_order: 0, is_group_cover: false })
+                .eq('id', productId);
+            // If only 1 product remains in group, ungroup it too
+            if (groupId) {
+                const remaining = products.filter(p => p.product_group_id === groupId && p.id !== productId);
+                if (remaining.length === 1) {
+                    await supabase
+                        .from('products')
+                        .update({ product_group_id: null, group_display_order: 0, is_group_cover: false })
+                        .eq('id', remaining[0].id);
+                }
+            }
+            await fetchStoreData();
+        } catch (error) {
+            alert('Error ungrouping product: ' + error.message);
+        }
+    };
+
     const handlePrintInvoice = () => {
         window.print();
     };
@@ -1413,26 +1470,107 @@ const SellerDashboard = () => {
                         {/* Existing Tabs Content (Preserved) */}
                         {activeTab === 'products' && (
                             <div className="products-tab-pro">
+                                {isGroupingProducts && (
+                                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+                                        <div style={{ background: 'white', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: '600px', maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                                            {/* Modal Header */}
+                                            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div>
+                                                    <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800' }}>Group Products</h3>
+                                                    <p style={{ margin: '2px 0 0 0', fontSize: '0.75rem', color: '#64748b' }}>Select 2+ products. First selected = Cover product.</p>
+                                                </div>
+                                                <button onClick={() => { setIsGroupingProducts(false); setSelectedForGroup([]); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', fontSize: '1.25rem', lineHeight: 1 }}><X size={20} /></button>
+                                            </div>
+                                            {/* Selection counter */}
+                                            <div style={{ padding: '0.75rem 1.5rem', background: selectedForGroup.length >= 2 ? '#f0fdf4' : '#fafafa', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: '600', color: selectedForGroup.length >= 2 ? '#16a34a' : '#94a3b8' }}>
+                                                    {selectedForGroup.length === 0 ? 'No products selected' : `${selectedForGroup.length} selected — ${selectedForGroup.length >= 2 ? 'Ready to group!' : 'Select at least 2'}`}
+                                                </span>
+                                                <button
+                                                    onClick={handleGroupProducts}
+                                                    disabled={selectedForGroup.length < 2}
+                                                    style={{ background: selectedForGroup.length >= 2 ? '#6366f1' : '#e2e8f0', color: selectedForGroup.length >= 2 ? 'white' : '#94a3b8', border: 'none', borderRadius: '8px', padding: '0.5rem 1.25rem', fontWeight: '700', fontSize: '0.85rem', cursor: selectedForGroup.length >= 2 ? 'pointer' : 'not-allowed' }}
+                                                >
+                                                    Create Group
+                                                </button>
+                                            </div>
+                                            {/* Product list */}
+                                            <div style={{ overflowY: 'auto', padding: '1rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                                {products.filter(p => !p.product_group_id).map((product, idx) => {
+                                                    const selIdx = selectedForGroup.indexOf(product.id);
+                                                    const isSelected = selIdx !== -1;
+                                                    return (
+                                                        <div
+                                                            key={product.id}
+                                                            onClick={() => {
+                                                                if (isSelected) {
+                                                                    setSelectedForGroup(prev => prev.filter(id => id !== product.id));
+                                                                } else {
+                                                                    setSelectedForGroup(prev => [...prev, product.id]);
+                                                                }
+                                                            }}
+                                                            style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', borderRadius: '12px', border: `2px solid ${isSelected ? '#6366f1' : '#e2e8f0'}`, background: isSelected ? '#f5f3ff' : 'white', cursor: 'pointer', transition: 'all 0.2s' }}
+                                                        >
+                                                            {/* Thumbnail */}
+                                                            <div style={{ width: '52px', height: '52px', borderRadius: '8px', overflow: 'hidden', background: '#f8fafc', flexShrink: 0 }}>
+                                                                {product.images?.[0]
+                                                                    ? <img src={product.images[0]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                                    : <Package size={28} color="#cbd5e1" style={{ margin: '12px' }} />}
+                                                            </div>
+                                                            {/* Info */}
+                                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                                <div style={{ fontWeight: '700', fontSize: '0.9rem', color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.name}</div>
+                                                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>₹{product.online_price} · {product.category}</div>
+                                                            </div>
+                                                            {/* Cover badge or order */}
+                                                            {isSelected && (
+                                                                <div style={{ background: selIdx === 0 ? '#6366f1' : '#e0e7ff', color: selIdx === 0 ? 'white' : '#4f46e5', padding: '3px 10px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: '800', whiteSpace: 'nowrap' }}>
+                                                                    {selIdx === 0 ? 'COVER' : `#${selIdx + 1}`}
+                                                                </div>
+                                                            )}
+                                                            {/* Check circle */}
+                                                            <div style={{ width: '22px', height: '22px', borderRadius: '50%', border: `2px solid ${isSelected ? '#6366f1' : '#cbd5e1'}`, background: isSelected ? '#6366f1' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                                                {isSelected && <Check size={13} color="white" />}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                                {products.filter(p => !p.product_group_id).length === 0 && (
+                                                    <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>All products are already grouped.</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Header */}
                                 <div className="product-page-header">
                                     <div className="page-title">
                                         <h2>Product Management</h2>
                                         <p>Add, edit, and organize your storefront inventory.</p>
                                     </div>
-                                    <button
-                                        className={`btn-add-product ${products.length >= (store?.product_limit || 50) ? 'disabled' : ''}`}
-                                        onClick={() => {
-                                            if (products.length >= (store?.product_limit || 50)) {
-                                                alert(`Product limit reached (${products.length}/${store?.product_limit || 50}).`);
-                                            } else {
-                                                setIsAddingProduct(true);
-                                            }
-                                        }}
-                                        disabled={products.length >= (store?.product_limit || 50)}
-                                    >
-                                        <Plus size={20} /> Add Product ({products.length}/${store?.product_limit || 50})
-                                    </button>
-                                </div>                                {/* Toolbar */}
+                                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                        <button
+                                            onClick={() => { setIsGroupingProducts(true); setSelectedForGroup([]); }}
+                                            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.6rem 1rem', borderRadius: '10px', border: '1.5px solid #6366f1', background: 'white', color: '#6366f1', fontWeight: '700', fontSize: '0.85rem', cursor: 'pointer' }}
+                                        >
+                                            <Copy size={16} /> Group Products
+                                        </button>
+                                        <button
+                                            className={`btn-add-product ${products.length >= (store?.product_limit || 50) ? 'disabled' : ''}`}
+                                            onClick={() => {
+                                                if (products.length >= (store?.product_limit || 50)) {
+                                                    alert(`Product limit reached (${products.length}/${store?.product_limit || 50}).`);
+                                                } else {
+                                                    setIsAddingProduct(true);
+                                                }
+                                            }}
+                                            disabled={products.length >= (store?.product_limit || 50)}
+                                        >
+                                            <Plus size={20} /> Add Product ({products.length}/{store?.product_limit || 50})
+                                        </button>
+                                    </div>
+                                </div>
                                 <div className="products-toolbar">
                                     <div className="toolbar-left">
                                         <div className="search-wrapper" style={{ position: 'relative' }}>
@@ -1535,7 +1673,7 @@ const SellerDashboard = () => {
 
                                             <div className="products-grid-pro">
                                                 {filtered.map(product => (
-                                                    <div key={product.id} className="product-card-pro">
+                                                    <div key={product.id} className="product-card-pro" style={product.product_group_id ? { outline: '2px solid #a5b4fc', outlineOffset: '2px' } : {}}>
                                                         <div className="pro-card-image">
                                                             {product.images?.[0] ? (
                                                                 <img src={product.images[0]} alt={product.name} />
@@ -1550,6 +1688,10 @@ const SellerDashboard = () => {
                                                                     <Trash2 size={16} />
                                                                 </button>
                                                             </div>
+                                                            {/* Group cover badge */}
+                                                            {product.is_group_cover && (
+                                                                <div style={{ position: 'absolute', top: '6px', left: '6px', background: '#6366f1', color: 'white', fontSize: '0.55rem', fontWeight: '800', padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.05em' }}>COVER</div>
+                                                            )}
                                                         </div>
                                                         <div className="pro-card-meta">
                                                             <span className="category-pill">{product.category || 'General'}</span>
@@ -1578,6 +1720,13 @@ const SellerDashboard = () => {
                                                             <span className="pro-price">₹{product.online_price}</span>
                                                             <span className="pro-stock">{product.stock_quantity !== null ? `${product.stock_quantity} in stock` : 'Infinite stock'}</span>
                                                         </div>
+                                                        {/* Grouped badge with ungroup option */}
+                                                        {product.product_group_id && (
+                                                            <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f5f3ff', borderRadius: '8px', padding: '4px 8px' }}>
+                                                                <span style={{ fontSize: '0.65rem', color: '#7c3aed', fontWeight: '800' }}>● GROUPED</span>
+                                                                <button onClick={() => handleUngroupProduct(product.id)} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.6rem', fontWeight: '700', cursor: 'pointer', padding: '2px 4px' }}>Ungroup</button>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
