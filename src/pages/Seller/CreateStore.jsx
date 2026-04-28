@@ -83,7 +83,14 @@ const CreateStore = () => {
                 galleryUrls.push(url);
             }
 
-            const displayId = `ST-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+            // Improved Display ID: ST- followed by 6 random alphanumeric characters
+            // Using a more reliable random string generation
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Avoid ambiguous chars
+            let randomPart = '';
+            for (let i = 0; i < 6; i++) {
+                randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            const displayId = `ST-${randomPart}`;
 
             console.log('CreateStore: Files uploaded, inserting store row...');
             const { error: storeError } = await withTimeout(supabase
@@ -96,11 +103,21 @@ const CreateStore = () => {
                     display_id: displayId
                 }]));
 
-            if (storeError) throw storeError;
+            if (storeError) {
+                console.error('CreateStore: Insert error:', storeError);
+                
+                // Specific handling for 'column does not exist' which might be the "scheme" error
+                if (storeError.message?.includes('display_id') || storeError.code === '42703') {
+                    throw new Error('Database schema mismatch: The "display_id" column is missing. Please run the migration script (migration_v10_store_id.sql) in your Supabase SQL editor.');
+                }
+                
+                throw storeError;
+            }
 
             navigate('/seller/dashboard');
         } catch (err) {
-            setError(err.message);
+            console.error('CreateStore: caught error:', err);
+            setError(err.message || 'An unexpected error occurred while creating your store.');
         } finally {
             setLoading(false);
         }

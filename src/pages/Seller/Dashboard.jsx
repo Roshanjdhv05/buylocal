@@ -155,7 +155,12 @@ const SellerDashboard = () => {
                 
                 // Self-healing: Generate display_id if it doesn't exist yet
                 if (!storeData.display_id) {
-                    const newDisplayId = `ST-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+                    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                    let randomPart = '';
+                    for (let i = 0; i < 6; i++) {
+                        randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    const newDisplayId = `ST-${randomPart}`;
                     console.log('Dashboard: Auto-generating missing Store ID:', newDisplayId);
                     
                     // Update locally first for immediate UI feedback
@@ -167,7 +172,10 @@ const SellerDashboard = () => {
                         .update({ display_id: newDisplayId })
                         .eq('id', storeData.id)
                         .then(({ error }) => {
-                            if (error) console.error('Dashboard: Error saving auto-generated Store ID:', error);
+                            if (error) {
+                                console.error('Dashboard: Error saving auto-generated Store ID:', error.message);
+                                // If column is missing, this will fail. We log it for debugging.
+                            }
                         });
                 }
 
