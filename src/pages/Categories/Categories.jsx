@@ -122,16 +122,18 @@ const Categories = () => {
 
     // Helper to get icon component or emoji
     const getCategoryIcon = (iconNameOrUrl, size = 24, isImageUrl = false) => {
+        const sizeValue = typeof size === 'number' ? `${size}px` : size;
+        
         if (isImageUrl && iconNameOrUrl) {
             return (
-                <div className="cat-img-mini" style={{ width: size, height: size }}>
-                    <img src={iconNameOrUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} />
+                <div className="cat-img-mini" style={{ width: sizeValue, height: sizeValue }}>
+                    <img src={iconNameOrUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
             );
         }
         if (!iconNameOrUrl) return <Package size={size} />;
         // If it's an emoji (single character roughly) or a URL starting with http
-        if (iconNameOrUrl.length < 3) return <span style={{ fontSize: `${size}px` }}>{iconNameOrUrl}</span>;
+        if (iconNameOrUrl.length < 3) return <span style={{ fontSize: sizeValue }}>{iconNameOrUrl}</span>;
         
         // Map common lucide names if needed, or just default to Package
         const iconMap = {
@@ -320,7 +322,7 @@ const Categories = () => {
                                         }}>
                                             <div className="subcategory-card" style={{ backgroundColor: '#f8fafc', opacity: isAvailable ? 1 : 0.6 }}>
                                                 <div className="subcategory-icon">
-                                                    {getCategoryIcon(sub.image_url || sub.icon, 48, !!sub.image_url)}
+                                                    {getCategoryIcon(sub.image_url || sub.icon, '100%', !!sub.image_url)}
                                                 </div>
                                                 {!isAvailable && (
                                                     <div className="availability-overlay" style={{
@@ -729,6 +731,7 @@ const Categories = () => {
                         display: grid;
                         grid-template-columns: repeat(2, 1fr);
                         gap: 1.5rem 1rem;
+                        align-items: start;
                     }
                     .subcategory-card-wrapper {
                         display: flex;
@@ -738,15 +741,22 @@ const Categories = () => {
                     }
                     .subcategory-card {
                         width: 100%;
-                        aspect-ratio: 1;
+                        aspect-ratio: 1 / 1;
                         border-radius: 12px;
                         position: relative;
+                        background: #f8fafc;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+                        overflow: hidden;
+                    }
+                    .subcategory-icon {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-                    }
-                    .subcategory-icon {
                         font-size: 2.5rem;
                     }
                     .count-badge {
