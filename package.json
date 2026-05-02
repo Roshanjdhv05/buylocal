@@ -13,6 +13,7 @@
     "@prerenderer/rollup-plugin": "^0.3.12",
     "@vitejs/plugin-react": "^6.0.1",
     "dotenv": "^17.4.1",
+    "esbuild": "^0.28.0",
     "puppeteer": "^24.40.0",
     "sitemap": "^9.0.1",
     "vite": "^8.0.8"
