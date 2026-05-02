@@ -46,8 +46,8 @@ self.addEventListener('push', (event) => {
 
     const options = {
         body: data.body,
-        icon: '/favicon.png?v=2', // Fallback to PWA icon
-        badge: '/favicon.png?v=2',  // Small monochrome icon
+        icon: '/favicon.png?v=3', // Fallback to PWA icon
+        badge: '/favicon.png?v=3',  // Small monochrome icon
         vibrate: [100, 50, 100],
         data: {
             url: data.url || '/'
