@@ -316,8 +316,8 @@ const ProductDetails = () => {
     return (
         <div className="pro-details-luxury">
             <SEO 
-               title={`${product.name} - Buy online in ${store?.city || 'India'} | BuyLocal`}
-               description={product.description || `Shop ${product.name} from local stores near you with fast delivery.`}
+               title={`${product?.name || 'Loading...'} - Buy online in ${store?.city || 'India'} | BuyLocal`}
+               description={product?.description || `Shop ${product?.name || 'Product'} from local stores near you with fast delivery.`}
                canonicalUrl={typeof window !== 'undefined' ? window.location.href : ''}
                ogImage={images[0]}
                schema={[productSchema, breadcrumbSchema]}
@@ -335,9 +335,13 @@ const ProductDetails = () => {
                     <nav className="breadcrumb-nav">
                         <Link to="/">{t('nav.home')}</Link>
                         <span className="breadcrumb-divider">/</span>
-                        <Link to={`/category/${product.category}`}>{product.category}</Link>
-                        <span className="breadcrumb-divider">/</span>
-                        <span className="active">{product.name}</span>
+                        {product?.category && (
+                            <>
+                                <Link to={`/category/${product.category}`}>{product.category}</Link>
+                                <span className="breadcrumb-divider">/</span>
+                            </>
+                        )}
+                        <span className="active">{product?.name || '...'}</span>
                     </nav>
                 )}
 
@@ -438,8 +442,8 @@ const ProductDetails = () => {
                                 </>
                             ) : (
                                 <>
-                                    <span className="product-brand-info">{product.category}</span>
-                                    <h1 className="product-title-luxury">{getLocalizedName(product.name, i18n.language)}</h1>
+                                    <span className="product-brand-info">{product?.category || '...'}</span>
+                                    <h1 className="product-title-luxury">{product ? getLocalizedName(product.name, i18n.language) : '...'}</h1>
                                 </>
                             )}
                         </div>
@@ -714,7 +718,7 @@ const ProductDetails = () => {
                         <div className="tab-main-content">
                             {activeTab === 'description' && (
                                 <div className="description-hero">
-                                    <p style={{ whiteSpace: 'pre-line' }}>{getLocalizedName(product.description, i18n.language) || "No description provided by the seller."}</p>
+                                    <p style={{ whiteSpace: 'pre-line' }}>{product ? (getLocalizedName(product.description, i18n.language) || "No description provided by the seller.") : '...'}</p>
                                 </div>
                             )}
 
