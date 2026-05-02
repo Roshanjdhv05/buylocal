@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { getLocalizedName } from '../utils/productTranslations';
 
 import { getProductImage, PLACEHOLDERS } from '../utils/imageUtils';
+import LazyImage from './LazyImage/LazyImage';
 
 const ProductCard = ({ product }) => {
   const { t, i18n } = useTranslation();
@@ -161,7 +162,7 @@ const ProductCard = ({ product }) => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="luxury-card-image-wrap">
-        <img 
+        <LazyImage 
           src={images[currentImageIndex]} 
           alt={product.name} 
           className="luxury-product-img" 

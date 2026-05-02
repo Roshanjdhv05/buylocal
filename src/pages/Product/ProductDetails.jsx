@@ -19,7 +19,10 @@ import { useTranslation } from 'react-i18next';
 import { getLocalizedName } from '../../utils/productTranslations';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import ImageLightbox from '../../components/ImageLightbox/ImageLightbox';
-import { getProductImage, PLACEHOLDERS } from '../../utils/imageUtils';
+import { getProductImage, PLACEHOLDERS, resolveImageUrl } from '../../utils/imageUtils';
+import Skeleton from '../../components/Skeleton/Skeleton';
+import LazyImage from '../../components/LazyImage/LazyImage';
+import SkeletonProductCard from '../../components/Skeleton/SkeletonProductCard';
 import './ProductDetails.css';
 
 const ProductDetails = () => {
@@ -168,7 +171,7 @@ const ProductDetails = () => {
     // imageErrors must be declared here (before early returns) to satisfy Rules of Hooks
     const [imageErrors, setImageErrors] = useState({});
 
-    if (loading) return <LoadingSpinner fullPage />;
+    // if (loading) return <LoadingSpinner fullPage />;
     if (!product && !loading) return <ProductNotFound />;
 
     const handleToggleWishlist = async () => {
@@ -268,14 +271,14 @@ const ProductDetails = () => {
     
     // Derived values
     const discount = product && product.mrp ? Math.round(((product.mrp - (product.online_price || product.price)) / product.mrp) * 100) : 0;
-    const isOutOfStock = product.stock_quantity !== null && product.stock_quantity !== undefined && product.stock_quantity <= 0;
+    const isOutOfStock = product?.stock_quantity !== null && product?.stock_quantity !== undefined && product?.stock_quantity <= 0;
 
     const productSchema = {
         "@context": "https://schema.org/",
         "@type": "Product",
-        "name": product.name,
+        "name": product?.name || 'Product',
         "image": images,
-        "description": product.description || `Buy ${product.name} from local stores near you.`,
+        "description": product?.description || `Buy ${product?.name || 'Product'} from local stores near you.`,
         "brand": {
             "@type": "Brand",
             "name": store?.name || 'BuyLocal'
@@ -284,7 +287,7 @@ const ProductDetails = () => {
             "@type": "Offer",
             "url": typeof window !== 'undefined' ? window.location.href : '',
             "priceCurrency": "INR",
-            "price": product.online_price || product.price,
+            "price": product?.online_price || product?.price || 0,
             "availability": isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
             "seller": {
                 "@type": "Organization",
@@ -305,8 +308,8 @@ const ProductDetails = () => {
         "@type": "BreadcrumbList",
         "itemListElement": [
             { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://buylocal.in/" },
-            { "@type": "ListItem", "position": 2, "name": product.category || "Category", "item": `https://buylocal.in/category/${product.category}` },
-            { "@type": "ListItem", "position": 3, "name": product.name }
+            { "@type": "ListItem", "position": 2, "name": product?.category || "Category", "item": `https://buylocal.in/category/${product?.category}` },
+            { "@type": "ListItem", "position": 3, "name": product?.name || 'Product' }
         ]
     };
 
@@ -342,39 +345,50 @@ const ProductDetails = () => {
                     {/* COLUMN 1: VERTICAL THUMBNAILS */}
                     <div className="gallery-column">
                         <div className="gallery-thumbnails">
-                            {images.map((img, idx) => (
-                                <div
-                                    key={idx}
-                                    className={`thumb-box ${idx === selectedImageIndex ? 'active' : ''}`}
-                                    onClick={() => setSelectedImageIndex(idx)}
-                                >
-                                    <img 
-                                        src={img} 
-                                        alt={`thumbnail ${idx}`} 
-                                        onError={() => handleImageError(idx)}
-                                    />
-                                </div>
-                            ))}
+                            {loading ? (
+                                [...Array(4)].map((_, idx) => (
+                                    <div key={idx} className="thumb-box">
+                                        <Skeleton variant="rect" width="100%" height="100%" />
+                                    </div>
+                                ))
+                            ) : (
+                                images.map((img, idx) => (
+                                    <div
+                                        key={idx}
+                                        className={`thumb-box ${idx === selectedImageIndex ? 'active' : ''}`}
+                                        onClick={() => setSelectedImageIndex(idx)}
+                                    >
+                                        <LazyImage 
+                                            src={img} 
+                                            alt={`thumbnail ${idx}`} 
+                                            onError={() => handleImageError(idx)}
+                                        />
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
 
                     {/* COLUMN 2: HERO IMAGE */}
                     <div className="hero-column-wrapper">
                         <div className="hero-column" style={{ position: 'relative' }}>
-                            <img 
-                                src={selectedVariant?.image_url || images[selectedImageIndex]} 
-                                alt={product.name} 
-                                onClick={() => setShowLightbox(true)} 
-                                onError={(e) => {
-                                    if (selectedVariant?.image_url) {
-                                        // If variant image fails, fallback to main gallery
-                                        e.target.src = images[selectedImageIndex];
-                                    } else {
-                                        handleImageError(selectedImageIndex);
-                                    }
-                                }}
-                                style={{ cursor: 'zoom-in', width: '100%', height: '100%', objectFit: 'cover' }} 
-                            />
+                            {loading ? (
+                                <Skeleton variant="rect" width="100%" height="100%" />
+                            ) : (
+                                <LazyImage 
+                                    src={selectedVariant?.image_url || images[selectedImageIndex]} 
+                                    alt={product?.name} 
+                                    onClick={() => setShowLightbox(true)} 
+                                    onError={(e) => {
+                                        if (selectedVariant?.image_url) {
+                                            e.target.src = images[selectedImageIndex];
+                                        } else {
+                                            handleImageError(selectedImageIndex);
+                                        }
+                                    }}
+                                    style={{ cursor: 'zoom-in', width: '100%', height: '100%', objectFit: 'cover' }} 
+                                />
+                            )}
                             <div className="hero-badges" style={{ pointerEvents: 'none' }}>
                                 <span className="badge-fast">Fast Delivery</span>
                             </div>
@@ -417,8 +431,17 @@ const ProductDetails = () => {
                     {/* COLUMN 3: INFO & ACTION */}
                     <div className="info-column">
                         <div className="brand-header">
-                            <span className="product-brand-info">{product.category}</span>
-                            <h1 className="product-title-luxury">{getLocalizedName(product.name, i18n.language)}</h1>
+                            {loading ? (
+                                <>
+                                    <Skeleton variant="text" width="100px" />
+                                    <Skeleton variant="text" width="80%" height="2rem" />
+                                </>
+                            ) : (
+                                <>
+                                    <span className="product-brand-info">{product.category}</span>
+                                    <h1 className="product-title-luxury">{getLocalizedName(product.name, i18n.language)}</h1>
+                                </>
+                            )}
                         </div>
 
                         {/* Styles Available (Grouped Products) — moved above price */}
@@ -482,35 +505,47 @@ const ProductDetails = () => {
 
 
                         <div className="pricing-luxury" style={{ display: 'flex', alignItems: 'baseline', gap: '1rem', margin: '0.5rem 0 1.5rem' }}>
-                            <span className="price-now" style={{ fontSize: '2.5rem', fontWeight: '800', color: '#000' }}>
-                                ₹{selectedVariant?.price || (product.online_price || product.price)}
-                            </span>
-                            {(selectedVariant?.market_price || product.offline_price || product.mrp) && (
-                                <span className="price-mrp" style={{ fontSize: '1.25rem', color: '#64748b', textDecoration: 'line-through' }}>
-                                    ₹{selectedVariant?.market_price || product.offline_price || product.mrp}
-                                </span>
-                            )}
-                            {Math.round((( (selectedVariant?.market_price || product.offline_price || product.mrp) - (selectedVariant?.price || (product.online_price || product.price)) ) / (selectedVariant?.market_price || product.offline_price || product.mrp)) * 100) > 0 && (
-                                <span style={{ 
-                                    background: '#f0fdf4', 
-                                    color: '#16a34a', 
-                                    padding: '4px 10px', 
-                                    borderRadius: '8px', 
-                                    fontSize: '0.8rem', 
-                                    fontWeight: '800',
-                                    border: '1px solid #dcfce7'
-                                }}>
-                                    {Math.round((( (selectedVariant?.market_price || product.offline_price || product.mrp) - (selectedVariant?.price || (product.online_price || product.price)) ) / (selectedVariant?.market_price || product.offline_price || product.mrp)) * 100)}% OFF
-                                </span>
+                            {loading ? (
+                                <Skeleton variant="text" width="150px" height="3rem" />
+                            ) : (
+                                <>
+                                    <span className="price-now" style={{ fontSize: '2.5rem', fontWeight: '800', color: '#000' }}>
+                                        ₹{selectedVariant?.price || (product?.online_price || product?.price)}
+                                    </span>
+                                    {(selectedVariant?.market_price || product?.offline_price || product?.mrp) && (
+                                        <span className="price-mrp" style={{ fontSize: '1.25rem', color: '#64748b', textDecoration: 'line-through' }}>
+                                            ₹{selectedVariant?.market_price || product?.offline_price || product?.mrp}
+                                        </span>
+                                    )}
+                                    {Math.round((( (selectedVariant?.market_price || product?.offline_price || product?.mrp) - (selectedVariant?.price || (product?.online_price || product?.price)) ) / (selectedVariant?.market_price || product?.offline_price || product?.mrp)) * 100) > 0 && (
+                                        <span style={{ 
+                                            background: '#f0fdf4', 
+                                            color: '#16a34a', 
+                                            padding: '4px 10px', 
+                                            borderRadius: '8px', 
+                                            fontSize: '0.8rem', 
+                                            fontWeight: '800',
+                                            border: '1px solid #dcfce7'
+                                        }}>
+                                            {Math.round((( (selectedVariant?.market_price || product?.offline_price || product?.mrp) - (selectedVariant?.price || (product?.online_price || product?.price)) ) / (selectedVariant?.market_price || product?.offline_price || product?.mrp)) * 100)}% OFF
+                                        </span>
+                                    )}
+                                </>
                             )}
                         </div>
                         <p className="tax-disclaimer">Inclusive of all taxes and duties</p>
 
                         <div className="stock-status-luxury">
-                            <div className={`stock-indicator ${(selectedVariant ? selectedVariant.stock_quantity <= 0 : isOutOfStock) ? 'red' : 'green'}`}></div>
-                            <span>{(selectedVariant ? selectedVariant.stock_quantity <= 0 : isOutOfStock) ? 'OUT OF STOCK' : 'IN STOCK — READY TO SHIP'}</span>
-                            {selectedVariant && selectedVariant.stock_quantity > 0 && selectedVariant.stock_quantity < 5 && (
-                                <span style={{ color: '#ef4444', marginLeft: '8px', fontWeight: '700' }}>Only {selectedVariant.stock_quantity} left!</span>
+                            {loading ? (
+                                <Skeleton variant="text" width="200px" />
+                            ) : (
+                                <>
+                                    <div className={`stock-indicator ${(selectedVariant ? selectedVariant.stock_quantity <= 0 : isOutOfStock) ? 'red' : 'green'}`}></div>
+                                    <span>{(selectedVariant ? selectedVariant.stock_quantity <= 0 : isOutOfStock) ? 'OUT OF STOCK' : 'IN STOCK — READY TO SHIP'}</span>
+                                    {selectedVariant && selectedVariant.stock_quantity > 0 && selectedVariant.stock_quantity < 5 && (
+                                        <span style={{ color: '#ef4444', marginLeft: '8px', fontWeight: '700' }}>Only {selectedVariant.stock_quantity} left!</span>
+                                    )}
+                                </>
                             )}
                         </div>
 
@@ -789,7 +824,7 @@ const ProductDetails = () => {
                 </section>
 
                 {/* SIMILAR PRODUCTS */}
-                {relatedProducts.length > 0 && (
+                {(loading || relatedProducts.length > 0) && (
                     <section className="similar-masterpieces">
                         <span className="curated-label">Curated for you</span>
                         <div className="similar-header">
@@ -797,9 +832,15 @@ const ProductDetails = () => {
                             <Link to="/search" className="explore-all-link">Explore All</Link>
                         </div>
                         <div className="similar-grid">
-                            {relatedProducts.map(p => (
-                                <ProductCard key={p.id} product={p} />
-                            ))}
+                            {loading ? (
+                                [...Array(4)].map((_, i) => (
+                                    <SkeletonProductCard key={i} />
+                                ))
+                            ) : (
+                                relatedProducts.map(p => (
+                                    <ProductCard key={p.id} product={p} />
+                                ))
+                            )}
                         </div>
                     </section>
                 )}

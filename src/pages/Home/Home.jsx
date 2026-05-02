@@ -15,6 +15,9 @@ import SplashScreen from '../../components/SplashScreen/SplashScreen';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import { usePageCache } from '../../hooks/usePageCache';
 import { resolveImageUrl, PLACEHOLDERS } from '../../utils/imageUtils';
+import SkeletonProductCard from '../../components/Skeleton/SkeletonProductCard';
+import LazyImage from '../../components/LazyImage/LazyImage';
+import Skeleton from '../../components/Skeleton/Skeleton';
 
 const Home = () => {
     const { t } = useTranslation();
@@ -360,9 +363,11 @@ const Home = () => {
         );
     }
 
+    /* 
     if (loading) {
         return <LoadingSpinner fullPage />;
     }
+    */
 
     const categoryIcons = {
         'Men': (
@@ -482,7 +487,13 @@ const Home = () => {
                         </div>
                     )}
 
-                    {filteredSearchResults.length > 0 ? (
+                    {loading && filteredSearchResults.length === 0 ? (
+                        <div className="products-grid">
+                            {[...Array(8)].map((_, i) => (
+                                <SkeletonProductCard key={i} />
+                            ))}
+                        </div>
+                    ) : filteredSearchResults.length > 0 ? (
                         <div className="products-grid">
                             {filteredSearchResults.map(product => (
                                 <ProductCard key={product.id} product={product} />
@@ -895,9 +906,15 @@ const Home = () => {
                         <Link to="/trending" className="view-all">{t('home.viewAll')}</Link>
                     </div>
                     <div className="products-grid products-slider">
-                        {trendingProducts.map(product => (
-                            <ProductCard key={product.id} product={product} />
-                        ))}
+                        {loading && trendingProducts.length === 0 ? (
+                            [...Array(4)].map((_, i) => (
+                                <SkeletonProductCard key={i} />
+                            ))
+                        ) : (
+                            trendingProducts.map(product => (
+                                <ProductCard key={product.id} product={product} />
+                            ))
+                        )}
                     </div>
                 </section>
 
@@ -937,9 +954,15 @@ const Home = () => {
                         </div>
                     </div>
                     <div className="products-grid">
-                        {enrichedProducts.map(product => (
-                            <ProductCard key={product.id} product={product} />
-                        ))}
+                        {loading && enrichedProducts.length === 0 ? (
+                            [...Array(8)].map((_, i) => (
+                                <SkeletonProductCard key={i} />
+                            ))
+                        ) : (
+                            enrichedProducts.map(product => (
+                                <ProductCard key={product.id} product={product} />
+                            ))
+                        )}
                     </div>
                 </section>
             </main>

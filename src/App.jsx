@@ -1,45 +1,47 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate, useLocation as useRouteLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 
-// Pages
-import Login from './pages/Auth/Login';
-import Signup from './pages/Auth/Signup';
-import Home from './pages/Home/Home';
-import ForgotPassword from './pages/Auth/ForgotPassword';
-import UpdatePassword from './pages/Auth/UpdatePassword';
-import Categories from './pages/Categories/Categories';
-import Cart from './pages/Cart/Cart';
-import Orders from './pages/Orders/Orders';
-import CreateStore from './pages/Seller/CreateStore';
-import Search from './pages/Search/Search';
-import SellerDashboard from './pages/Seller/Dashboard';
-import Stores from './pages/Stores/Stores';
-import PublicStore from './pages/Stores/PublicStore';
-import TrendingProducts from './pages/Products/TrendingProducts';
-import StoreSection from './pages/Stores/StoreSection';
-import StoreCategoryView from './pages/Stores/StoreCategoryView';
-import ProductDetails from './pages/Product/ProductDetails';
-import FollowedStores from './pages/Stores/FollowedStores';
-import Profile from './pages/Profile/Profile';
-import Wishlist from './pages/Wishlist/Wishlist';
-import OrderDetails from './pages/Orders/OrderDetails';
-import AdminLogin from './pages/Admin/AdminLogin';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import Subscription from './pages/Seller/Subscription';
+// Pages - Lazy Loaded
+const Login = lazy(() => import('./pages/Auth/Login'));
+const Signup = lazy(() => import('./pages/Auth/Signup'));
+const Home = lazy(() => import('./pages/Home/Home'));
+const ForgotPassword = lazy(() => import('./pages/Auth/ForgotPassword'));
+const UpdatePassword = lazy(() => import('./pages/Auth/UpdatePassword'));
+const Categories = lazy(() => import('./pages/Categories/Categories'));
+const Cart = lazy(() => import('./pages/Cart/Cart'));
+const Orders = lazy(() => import('./pages/Orders/Orders'));
+const CreateStore = lazy(() => import('./pages/Seller/CreateStore'));
+const Search = lazy(() => import('./pages/Search/Search'));
+const SellerDashboard = lazy(() => import('./pages/Seller/Dashboard'));
+const Stores = lazy(() => import('./pages/Stores/Stores'));
+const PublicStore = lazy(() => import('./pages/Stores/PublicStore'));
+const TrendingProducts = lazy(() => import('./pages/Products/TrendingProducts'));
+const StoreSection = lazy(() => import('./pages/Stores/StoreSection'));
+const StoreCategoryView = lazy(() => import('./pages/Stores/StoreCategoryView'));
+const ProductDetails = lazy(() => import('./pages/Product/ProductDetails'));
+const FollowedStores = lazy(() => import('./pages/Stores/FollowedStores'));
+const Profile = lazy(() => import('./pages/Profile/Profile'));
+const Wishlist = lazy(() => import('./pages/Wishlist/Wishlist'));
+const OrderDetails = lazy(() => import('./pages/Orders/OrderDetails'));
+const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin'));
+const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
+const Subscription = lazy(() => import('./pages/Seller/Subscription'));
+
+// Components
 import LocationOnboarding from './components/LocationOnboarding';
 import Toast from './components/Toast';
 import LoadingSpinner from './components/LoadingSpinner/LoadingSpinner';
 import PageTransitionLoader from './components/PageTransitionLoader';
 
-// Legal Pages
-import Terms from './pages/Legal/Terms';
-import Privacy from './pages/Legal/Privacy';
-import Refunds from './pages/Legal/Refunds';
+// Legal Pages - Lazy Loaded
+const Terms = lazy(() => import('./pages/Legal/Terms'));
+const Privacy = lazy(() => import('./pages/Legal/Privacy'));
+const Refunds = lazy(() => import('./pages/Legal/Refunds'));
 
 // Fallback Page
-import NotFound from './components/NotFound';
+const NotFound = lazy(() => import('./components/NotFound'));
 
 const ProtectedRoute = ({ children, role }) => {
     const { user, profile, loading } = useAuth();
@@ -153,98 +155,99 @@ const AppContent = () => {
         <>
             {isPageChanging && <PageTransitionLoader />}
             <AuthRedirectHandler />
-            <Routes>
+            <Suspense fallback={<LoadingSpinner fullPage />}>
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/search" element={<Search />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/update-password" element={<UpdatePassword />} />
+                    <Route path="/categories" element={<Categories />} />
+                    <Route path="/category/:categoryName" element={<Categories />} />
+                    <Route path="/trending" element={<TrendingProducts />} />
+                    <Route path="/stores" element={<Stores />} />
+                    <Route path="/product/:productId" element={<ProductDetails />} />
+                    <Route path="/price-filter/:maxPrice" element={<PriceFilter />} />
+                    <Route path="/cart" element={
+                        <ProtectedRoute>
+                            <Cart />
+                        </ProtectedRoute>
+                    } />
 
-                <Route path="/" element={<Home />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/update-password" element={<UpdatePassword />} />
-                <Route path="/categories" element={<Categories />} />
-                <Route path="/category/:categoryName" element={<Categories />} />
-                <Route path="/trending" element={<TrendingProducts />} />
-                <Route path="/stores" element={<Stores />} />
-                <Route path="/product/:productId" element={<ProductDetails />} />
-                <Route path="/price-filter/:maxPrice" element={<PriceFilter />} />
-                <Route path="/cart" element={
-                    <ProtectedRoute>
-                        <Cart />
-                    </ProtectedRoute>
-                } />
+                    <Route path="/orders" element={
+                        <ProtectedRoute>
+                            <Orders />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/orders/:orderId" element={
+                        <ProtectedRoute>
+                            <OrderDetails />
+                        </ProtectedRoute>
+                    } />
 
-                <Route path="/orders" element={
-                    <ProtectedRoute>
-                        <Orders />
-                    </ProtectedRoute>
-                } />
-                <Route path="/orders/:orderId" element={
-                    <ProtectedRoute>
-                        <OrderDetails />
-                    </ProtectedRoute>
-                } />
+                    <Route path="/followed-stores" element={
+                        <ProtectedRoute>
+                            <FollowedStores />
+                        </ProtectedRoute>
+                    } />
 
-                <Route path="/followed-stores" element={
-                    <ProtectedRoute>
-                        <FollowedStores />
-                    </ProtectedRoute>
-                } />
+                    <Route path="/wishlist" element={
+                        <ProtectedRoute>
+                            <Wishlist />
+                        </ProtectedRoute>
+                    } />
 
-                <Route path="/wishlist" element={
-                    <ProtectedRoute>
-                        <Wishlist />
-                    </ProtectedRoute>
-                } />
+                    {/* Seller Routes */}
+                    <Route path="/seller/signup" element={
+                        <ProtectedRoute>
+                            <Signup /> {/* Reuse signup or dedicated route */}
+                        </ProtectedRoute>
+                    } />
 
-                {/* Seller Routes */}
-                <Route path="/seller/signup" element={
-                    <ProtectedRoute>
-                        <Signup /> {/* Reuse signup or dedicated route */}
-                    </ProtectedRoute>
-                } />
+                    <Route path="/profile" element={
+                        <ProtectedRoute>
+                            <Profile />
+                        </ProtectedRoute>
+                    } />
 
-                <Route path="/profile" element={
-                    <ProtectedRoute>
-                        <Profile />
-                    </ProtectedRoute>
-                } />
+                    <Route path="/seller/create-store" element={
+                        <ProtectedRoute role="seller">
+                            <CreateStore />
+                        </ProtectedRoute>
+                    } />
 
-                <Route path="/seller/create-store" element={
-                    <ProtectedRoute role="seller">
-                        <CreateStore />
-                    </ProtectedRoute>
-                } />
+                    <Route path="/seller/dashboard" element={
+                        <ProtectedRoute role="seller">
+                            <SellerDashboard />
+                        </ProtectedRoute>
+                    } />
 
-                <Route path="/seller/dashboard" element={
-                    <ProtectedRoute role="seller">
-                        <SellerDashboard />
-                    </ProtectedRoute>
-                } />
+                    <Route path="/seller/subscription" element={
+                        <ProtectedRoute role="seller">
+                            <Subscription />
+                        </ProtectedRoute>
+                    } />
 
-                <Route path="/seller/subscription" element={
-                    <ProtectedRoute role="seller">
-                        <Subscription />
-                    </ProtectedRoute>
-                } />
-
-                {/* Admin Routes */}
-                <Route path="/admin" element={
-                    <AdminRouteHandler />
-                } />
+                    {/* Admin Routes */}
+                    <Route path="/admin" element={
+                        <AdminRouteHandler />
+                    } />
 
 
-                <Route path="/:storeName" element={<PublicStore />} />
-                <Route path="/:storeName/section/:sectionName" element={<StoreSection />} />
-                <Route path="/:storeName/category/:categoryName" element={<StoreCategoryView />} />
-                
-                {/* Legal Routes */}
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="/refunds" element={<Refunds />} />
+                    <Route path="/:storeName" element={<PublicStore />} />
+                    <Route path="/:storeName/section/:sectionName" element={<StoreSection />} />
+                    <Route path="/:storeName/category/:categoryName" element={<StoreCategoryView />} />
+                    
+                    {/* Legal Routes */}
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/refunds" element={<Refunds />} />
 
-                {/* Fallback */}
-                <Route path="*" element={<NotFound />} />
-            </Routes>
+                    {/* Fallback */}
+                    <Route path="*" element={<NotFound />} />
+                </Routes>
+            </Suspense>
             <LocationOnboarding />
             <LocationFAB />
             <InstallPWA />
