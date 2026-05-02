@@ -20,9 +20,9 @@ import { getLocalizedName } from '../../utils/productTranslations';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import ImageLightbox from '../../components/ImageLightbox/ImageLightbox';
 import { getProductImage, PLACEHOLDERS, resolveImageUrl } from '../../utils/imageUtils';
-import Skeleton from '../../components/Skeleton/Skeleton';
-import LazyImage from '../../components/LazyImage/LazyImage';
-import SkeletonProductCard from '../../components/Skeleton/SkeletonProductCard';
+import Skeleton from '../../components/Skeleton/Skeleton.jsx';
+import LazyImage from '../../components/LazyImage/LazyImage.jsx';
+import SkeletonProductCard from '../../components/Skeleton/SkeletonProductCard.jsx';
 import './ProductDetails.css';
 
 const ProductDetails = () => {

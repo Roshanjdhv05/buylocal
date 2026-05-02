@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import Skeleton from '../Skeleton/Skeleton';
+import Skeleton from '../Skeleton/Skeleton.jsx';
 
 const LazyImage = ({ 
     src, 

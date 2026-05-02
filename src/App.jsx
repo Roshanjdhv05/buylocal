@@ -4,30 +4,30 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 
 // Pages - Lazy Loaded
-const Login = lazy(() => import('./pages/Auth/Login'));
-const Signup = lazy(() => import('./pages/Auth/Signup'));
-const Home = lazy(() => import('./pages/Home/Home'));
-const ForgotPassword = lazy(() => import('./pages/Auth/ForgotPassword'));
-const UpdatePassword = lazy(() => import('./pages/Auth/UpdatePassword'));
-const Categories = lazy(() => import('./pages/Categories/Categories'));
-const Cart = lazy(() => import('./pages/Cart/Cart'));
-const Orders = lazy(() => import('./pages/Orders/Orders'));
-const CreateStore = lazy(() => import('./pages/Seller/CreateStore'));
-const Search = lazy(() => import('./pages/Search/Search'));
-const SellerDashboard = lazy(() => import('./pages/Seller/Dashboard'));
-const Stores = lazy(() => import('./pages/Stores/Stores'));
-const PublicStore = lazy(() => import('./pages/Stores/PublicStore'));
-const TrendingProducts = lazy(() => import('./pages/Products/TrendingProducts'));
-const StoreSection = lazy(() => import('./pages/Stores/StoreSection'));
-const StoreCategoryView = lazy(() => import('./pages/Stores/StoreCategoryView'));
-const ProductDetails = lazy(() => import('./pages/Product/ProductDetails'));
-const FollowedStores = lazy(() => import('./pages/Stores/FollowedStores'));
-const Profile = lazy(() => import('./pages/Profile/Profile'));
-const Wishlist = lazy(() => import('./pages/Wishlist/Wishlist'));
-const OrderDetails = lazy(() => import('./pages/Orders/OrderDetails'));
-const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin'));
-const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard'));
-const Subscription = lazy(() => import('./pages/Seller/Subscription'));
+const Login = lazy(() => import('./pages/Auth/Login.jsx'));
+const Signup = lazy(() => import('./pages/Auth/Signup.jsx'));
+const Home = lazy(() => import('./pages/Home/Home.jsx'));
+const ForgotPassword = lazy(() => import('./pages/Auth/ForgotPassword.jsx'));
+const UpdatePassword = lazy(() => import('./pages/Auth/UpdatePassword.jsx'));
+const Categories = lazy(() => import('./pages/Categories/Categories.jsx'));
+const Cart = lazy(() => import('./pages/Cart/Cart.jsx'));
+const Orders = lazy(() => import('./pages/Orders/Orders.jsx'));
+const CreateStore = lazy(() => import('./pages/Seller/CreateStore.jsx'));
+const Search = lazy(() => import('./pages/Search/Search.jsx'));
+const SellerDashboard = lazy(() => import('./pages/Seller/Dashboard.jsx'));
+const Stores = lazy(() => import('./pages/Stores/Stores.jsx'));
+const PublicStore = lazy(() => import('./pages/Stores/PublicStore.jsx'));
+const TrendingProducts = lazy(() => import('./pages/Products/TrendingProducts.jsx'));
+const StoreSection = lazy(() => import('./pages/Stores/StoreSection.jsx'));
+const StoreCategoryView = lazy(() => import('./pages/Stores/StoreCategoryView.jsx'));
+const ProductDetails = lazy(() => import('./pages/Product/ProductDetails.jsx'));
+const FollowedStores = lazy(() => import('./pages/Stores/FollowedStores.jsx'));
+const Profile = lazy(() => import('./pages/Profile/Profile.jsx'));
+const Wishlist = lazy(() => import('./pages/Wishlist/Wishlist.jsx'));
+const OrderDetails = lazy(() => import('./pages/Orders/OrderDetails.jsx'));
+const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin.jsx'));
+const AdminDashboard = lazy(() => import('./pages/Admin/AdminDashboard.jsx'));
+const Subscription = lazy(() => import('./pages/Seller/Subscription.jsx'));
 
 // Components
 import LocationOnboarding from './components/LocationOnboarding';
@@ -36,12 +36,12 @@ import LoadingSpinner from './components/LoadingSpinner/LoadingSpinner';
 import PageTransitionLoader from './components/PageTransitionLoader';
 
 // Legal Pages - Lazy Loaded
-const Terms = lazy(() => import('./pages/Legal/Terms'));
-const Privacy = lazy(() => import('./pages/Legal/Privacy'));
-const Refunds = lazy(() => import('./pages/Legal/Refunds'));
+const Terms = lazy(() => import('./pages/Legal/Terms.jsx'));
+const Privacy = lazy(() => import('./pages/Legal/Privacy.jsx'));
+const Refunds = lazy(() => import('./pages/Legal/Refunds.jsx'));
 
 // Fallback Page
-const NotFound = lazy(() => import('./components/NotFound'));
+const NotFound = lazy(() => import('./components/NotFound.jsx'));
 
 const ProtectedRoute = ({ children, role }) => {
     const { user, profile, loading } = useAuth();

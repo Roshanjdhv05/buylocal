@@ -15,9 +15,9 @@ import SplashScreen from '../../components/SplashScreen/SplashScreen';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
 import { usePageCache } from '../../hooks/usePageCache';
 import { resolveImageUrl, PLACEHOLDERS } from '../../utils/imageUtils';
-import SkeletonProductCard from '../../components/Skeleton/SkeletonProductCard';
-import LazyImage from '../../components/LazyImage/LazyImage';
-import Skeleton from '../../components/Skeleton/Skeleton';
+import SkeletonProductCard from '../../components/Skeleton/SkeletonProductCard.jsx';
+import LazyImage from '../../components/LazyImage/LazyImage.jsx';
+import Skeleton from '../../components/Skeleton/Skeleton.jsx';
 
 const Home = () => {
     const { t } = useTranslation();
