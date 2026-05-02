@@ -1,15 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
 const isLocal = window.location.hostname === 'localhost';
-const supabaseUrl = isLocal 
-  ? (import.meta.env.VITE_SUPABASE_URL?.trim() || '') 
-  : window.location.origin + '/api/supabase';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_PROXY_URL?.trim() || import.meta.env.VITE_SUPABASE_URL?.trim() || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase URL or Anon Key is missing. Check your .env file.');
+  console.warn('Supabase URL or Anon Key is missing. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your Vercel Environment Variables.');
 } else {
-  console.log('Supabase Initialized with:', isLocal ? 'Direct (Local)' : 'Netlify Proxy');
+  console.log('Supabase Initialized with:', supabaseUrl.includes('workers.dev') ? 'Cloudflare Proxy' : 'Direct connection');
 }
 
 export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
