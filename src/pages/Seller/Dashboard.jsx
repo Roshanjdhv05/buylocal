@@ -356,8 +356,12 @@ const SellerDashboard = () => {
             .from('store-gallery')
             .getPublicUrl(filePath);
 
-        console.log('uploadImage: Successfully uploaded, URL:', publicUrl);
-        return publicUrl;
+        // Ensure we always return the direct Supabase URL for images
+        // This makes images "visible" even if the proxy is down or slow
+        const directUrl = publicUrl.replace(/https:\/\/[^\/]+\/storage\/v1/, 'https://ohnumyohkpwlkcogwotj.supabase.co/storage/v1');
+        
+        console.log('uploadImage: Successfully uploaded, Direct URL:', directUrl);
+        return directUrl;
     };
 
     const handleAddProduct = async (productData = newProduct) => {
@@ -646,13 +650,15 @@ const SellerDashboard = () => {
                 .from('store-gallery')
                 .getPublicUrl(filePath);
 
+            const directUrl = publicUrl.replace(/https:\/\/[^\/]+\/storage\/v1/, 'https://ohnumyohkpwlkcogwotj.supabase.co/storage/v1');
+
             const { error: updateError } = await supabase
                 .from('stores')
-                .update({ banner_url: publicUrl })
+                .update({ banner_url: directUrl })
                 .eq('id', store.id);
 
             if (updateError) throw updateError;
-            setStore({ ...store, banner_url: publicUrl });
+            setStore({ ...store, banner_url: directUrl });
             alert('Banner updated successfully!');
         } catch (error) {
             alert(error.message);
@@ -682,7 +688,7 @@ const SellerDashboard = () => {
                     .from('store-gallery')
                     .getPublicUrl(filePath);
 
-                return publicUrl;
+                return publicUrl.replace(/https:\/\/[^\/]+\/storage\/v1/, 'https://ohnumyohkpwlkcogwotj.supabase.co/storage/v1');
             });
 
             const newPublicUrls = await Promise.all(uploadPromises);
@@ -751,7 +757,9 @@ const SellerDashboard = () => {
                 .from('store-gallery')
                 .getPublicUrl(filePath);
 
-            const updatedVideos = [...currentVideos, publicUrl];
+            const directUrl = publicUrl.replace(/https:\/\/[^\/]+\/storage\/v1/, 'https://ohnumyohkpwlkcogwotj.supabase.co/storage/v1');
+
+            const updatedVideos = [...currentVideos, directUrl];
             
             // Update local state and DB immediately for videos
             const { error: updateError } = await supabase

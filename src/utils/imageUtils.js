@@ -12,7 +12,33 @@ export const PLACEHOLDERS = {
 // We intercept and rewrite the URLs back to the raw Supabase URL to restore all images instantly.
 const fixProxyUrl = (url) => {
     if (!url || typeof url !== 'string') return url;
-    return url.replace('https://bylocal.netlify.app/api/supabase', 'https://ohnumyohkpwlkcogwotj.supabase.co');
+    
+    // Direct Supabase host for reliable image serving
+    const SUPABASE_HOST = 'ohnumyohkpwlkcogwotj.supabase.co';
+    
+    // If the URL is already direct or isn't a proxy URL, return as is
+    if (url.includes(SUPABASE_HOST)) return url;
+
+    // List of known proxy origins to strip away for images
+    const PROXIES = [
+        'bylocal.netlify.app/api/supabase',
+        'buylocal-supabase-proxy.workers.dev',
+        'vercel.app/api/supabase',
+        window.location.host + '/api/supabase'
+    ];
+
+    let fixedUrl = url;
+    PROXIES.forEach(proxy => {
+        if (fixedUrl.includes(proxy)) {
+            // Extract the path after the proxy (e.g. /storage/v1/object/public/...)
+            const parts = fixedUrl.split(proxy);
+            if (parts.length > 1) {
+                fixedUrl = `https://${SUPABASE_HOST}${parts[1]}`;
+            }
+        }
+    });
+
+    return fixedUrl;
 };
 
 /**

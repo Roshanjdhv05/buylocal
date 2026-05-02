@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Info, Plus, CloudUpload, X, ChevronRight } from 'lucide-react';
 import { supabase } from '../../services/supabase';
+import VariantManager from './VariantManager';
 import './DashboardStyles.css';
 
 const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = null, customCategories = [], defaultDeliveryCharges = '50' }) => {
@@ -19,7 +20,9 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
         section: '',
         tags: [],
         stock: '0',
-        trackStock: false
+        trackStock: false,
+        hasVariants: false,
+        variants: []
     });
 
     const [step, setStep] = useState(1);
@@ -100,16 +103,21 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
     const handleImageUpload = (e) => {
         if (e.target.files) {
             const files = Array.from(e.target.files);
-            const newImages = files.map(file => URL.createObjectURL(file));
-            setFormData(prev => ({ ...prev, images: [...prev.images, ...newImages] }));
+            // Store actual File objects for reliable uploading
+            setFormData(prev => ({ ...prev, images: [...prev.images, ...files] }));
         }
     };
 
     const removeImage = (index) => {
-        setFormData(prev => ({
-            ...prev,
-            images: prev.images.filter((_, i) => i !== index)
-        }));
+        setFormData(prev => {
+            const newImages = prev.images.filter((_, i) => i !== index);
+            // Revoke the blob URL if it was a preview
+            const img = prev.images[index];
+            if (typeof img === 'string' && img.startsWith('blob:')) {
+                URL.revokeObjectURL(img);
+            }
+            return { ...prev, images: newImages };
+        });
     };
 
     const nextStep = () => {
@@ -282,7 +290,7 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                 </label>
                             </div>
 
-                            {formData.trackStock && (
+                            {formData.trackStock && !formData.hasVariants && (
                                 <div className="form-group-mobile animate-in">
                                     <label>Stock Quantity</label>
                                     <input
@@ -294,6 +302,27 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                     <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem' }}>
                                         How many units are available for sale?
                                     </p>
+                                </div>
+                            )}
+
+                            <div className="toggle-group-mobile" style={{ marginBottom: '1.5rem', border: '1px solid #e2e8f0', padding: '1rem', borderRadius: '12px', background: '#f0f9ff' }}>
+                                <div className="toggle-info">
+                                    <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700', color: '#0369a1' }}>Enable Product Variants</h4>
+                                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.75rem', color: '#0c4a6e' }}>Add multiple colors, sizes or designs</p>
+                                </div>
+                                <label className="switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.hasVariants}
+                                        onChange={e => setFormData({ ...formData, hasVariants: e.target.checked })}
+                                    />
+                                    <span className="slider round"></span>
+                                </label>
+                            </div>
+
+                            {formData.hasVariants && (
+                                <div className="animate-in">
+                                    <VariantManager formData={formData} setFormData={setFormData} />
                                 </div>
                             )}
 
@@ -539,30 +568,33 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
                                         <button style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: '700', background: 'none', border: 'none' }}>Rearrange</button>
                                     </div>
                                     <div className="uploaded-images-slider">
-                                        {formData.images.map((img, idx) => (
-                                            <div key={idx} className="image-preview-card">
-                                                <img src={img} alt={`Preview ${idx}`} />
-                                                <button className="remove-image-btn" onClick={() => removeImage(idx)} style={{ background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                    <X size={12} />
-                                                </button>
-                                                {idx === 0 && (
-                                                    <div style={{ 
-                                                        position: 'absolute', 
-                                                        bottom: 0, 
-                                                        left: 0, 
-                                                        right: 0, 
-                                                        background: 'var(--primary)', 
-                                                        color: 'white', 
-                                                        fontSize: '0.6rem', 
-                                                        fontWeight: '800', 
-                                                        textAlign: 'center', 
-                                                        padding: '2px 0' 
-                                                    }}>
-                                                        COVER
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
+                                        {formData.images.map((img, idx) => {
+                                            const previewUrl = img instanceof File ? URL.createObjectURL(img) : img;
+                                            return (
+                                                <div key={idx} className="image-preview-card">
+                                                    <img src={previewUrl} alt={`Preview ${idx}`} />
+                                                    <button className="remove-image-btn" onClick={() => removeImage(idx)} style={{ background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'absolute', top: '4px', right: '4px' }}>
+                                                        <X size={14} />
+                                                    </button>
+                                                    {idx === 0 && (
+                                                        <div style={{ 
+                                                            position: 'absolute', 
+                                                            bottom: 0, 
+                                                            left: 0, 
+                                                            right: 0, 
+                                                            background: 'var(--primary)', 
+                                                            color: 'white', 
+                                                            fontSize: '0.6rem', 
+                                                            fontWeight: '800', 
+                                                            textAlign: 'center', 
+                                                            padding: '2px 0' 
+                                                        }}>
+                                                            COVER
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
@@ -576,7 +608,15 @@ const AddProduct = ({ onBack, onAdd, uploading, sections = [], initialData = nul
 
                             <div style={{ display: 'flex', gap: '12px', background: '#f8fafc', padding: '12px', borderRadius: '12px' }}>
                                 <div style={{ width: '60px', height: '60px', borderRadius: '8px', background: 'white', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
-                                    {formData.images[0] ? <img src={formData.images[0]} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Review preview" /> : <div style={{ width: '100%', height: '100%', background: '#f1f5f9' }} />}
+                                    {formData.images[0] ? (
+                                        <img 
+                                            src={formData.images[0] instanceof File ? URL.createObjectURL(formData.images[0]) : formData.images[0]} 
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                            alt="Review preview" 
+                                        />
+                                    ) : (
+                                        <div style={{ width: '100%', height: '100%', background: '#f1f5f9' }} />
+                                    )}
                                 </div>
                                 <div style={{ flex: 1 }}>
                                     <h5 style={{ fontSize: '0.9rem', fontWeight: '800', marginBottom: '2px' }}>{formData.name || 'Untitled Product'}</h5>
