@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "node scripts/generate-sitemap.js && vite build",
-    "preview": "vite preview"
+    "preview": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.35.0",
     "@prerenderer/renderer-jsdom": "^1.1.9",
     "@prerenderer/rollup-plugin": "^0.3.12",
     "@vitejs/plugin-react": "^6.0.1",
@@ -16,7 +18,8 @@
     "esbuild": "^0.28.0",
     "puppeteer": "^24.40.0",
     "sitemap": "^9.0.1",
-    "vite": "^8.0.8"
+    "vite": "^8.0.8",
+    "wrangler": "^4.87.0"
   },
   "dependencies": {
     "@radix-ui/react-dropdown-menu": "^2.1.16",

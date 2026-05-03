@@ -78,6 +78,7 @@ export default {
                     
                     // Rewrite redirect_uri in OAuth flows so Google redirects back to the proxy
                     // We need this because Google Console has the Proxy URL registered
+                    /* 
                     if (location.includes("redirect_uri=")) {
                         const supUrlObj = new URL(SUPABASE_URL);
                         const proxUrlObj = new URL(PROXY_URL);
@@ -86,6 +87,7 @@ export default {
                         location = location.replace(new RegExp(encodeURIComponent(supUrlObj.origin), 'g'), encodeURIComponent(proxUrlObj.origin));
                         location = location.replace(new RegExp(supUrlObj.origin, 'g'), proxUrlObj.origin);
                     }
+                    */
                     
                     console.log(`Proxy Redirect: Rewritten Location = ${location}`);
                     responseHeaders.set("Location", location);
