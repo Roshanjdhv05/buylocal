@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import Navbar from '../../components/Navbar';
 import { supabase, withTimeout } from '../../services/supabase';
 import { PLACEHOLDERS } from '../../utils/imageUtils';
 import { useAuth } from '../../context/AuthContext';
@@ -30,11 +31,12 @@ const SellerDashboard = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
-    const [activeTab, setActiveTab] = useState('overview');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeTab = searchParams.get('tab') || 'overview';
+    const setActiveTab = (tab) => setSearchParams({ tab });
     const [isAddingProduct, setIsAddingProduct] = useState(false);
     const [editingProduct, setEditingProduct] = useState(null);
     const [isEditingStore, setIsEditingStore] = useState(false);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [bannerUpdating, setBannerUpdating] = useState(false);
     const [editedStore, setEditedStore] = useState({
         name: '', description: '', address: '', phone: '', city: '', state: '',
@@ -1206,75 +1208,10 @@ const SellerDashboard = () => {
 
     return (
         <div className="dashboard-wrapper">
-            {/* Mobile Menu Overlay */}
-            {isMobileMenuOpen && (
-                <div
-                    className="mobile-menu-overlay"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                />
-            )}
-
-            {/* Sidebar Navigation */}
-            <aside className={`dashboard-sidebar ${isMobileMenuOpen ? 'active' : ''}`}>
-                <div className="sidebar-header-mobile">
-                    <Link to="/" className="sidebar-branding">
-                        <div className="brand-icon"><ShoppingBag size={20} /></div>
-                        <span className="brand-text">BuyLocal</span>
-                    </Link>
-                    <button className="close-sidebar-btn" onClick={() => setIsMobileMenuOpen(false)}>
-                        <X size={24} />
-                    </button>
-                </div>
-
-                <nav className="sidebar-nav">
-                    <Link to="/" className="nav-item">
-                        <Home size={18} /> <span>Home</span>
-                    </Link>
-                    <button onClick={() => { setActiveTab('overview'); setIsMobileMenuOpen(false); }} className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}>
-                        <LayoutDashboard size={18} /> <span>Overview</span>
-                    </button>
-                    <button onClick={() => { setActiveTab('products'); setIsMobileMenuOpen(false); }} className={`nav-item ${activeTab === 'products' ? 'active' : ''}`}>
-                        <Package size={18} /> <span>Products</span>
-                    </button>
-                    <button onClick={() => { setActiveTab('orders'); setIsMobileMenuOpen(false); }} className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}>
-                        <ShoppingCart size={18} /> <span>Orders</span>
-                    </button>
-                    <button onClick={() => { setActiveTab('marketing'); setIsMobileMenuOpen(false); }} className={`nav-item ${activeTab === 'marketing' ? 'active' : ''}`}>
-                        <Megaphone size={18} /> <span>{t('nav.marketing')}</span>
-                    </button>
-                    <button onClick={() => { setActiveTab('categories'); setIsMobileMenuOpen(false); }} className={`nav-item ${activeTab === 'categories' ? 'active' : ''}`}>
-                        <Filter size={18} /> <span>Store Categories</span>
-                    </button>
-                    <button onClick={() => { setActiveTab('settings'); setIsMobileMenuOpen(false); }} className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`}>
-                        <Settings size={18} /> <span>Store Settings</span>
-                    </button>
-                    <button 
-                        onClick={() => { setActiveTab('analytics'); setIsMobileMenuOpen(false); }} 
-                        className={`nav-item nav-analytics ${activeTab === 'analytics' ? 'active' : ''}`}
-                    >
-                        <BarChart size={18} /> <span>Analytics</span>
-                    </button>
-                </nav>
-
-                <div className="sidebar-footer">
-                    <div className={`pro-card ${store?.subscription_tier === 'premium' ? 'premium' : ''}`}>
-                        <div className="pro-label">PLAN: {store?.subscription_tier === 'premium' ? 'PREMIUM' : 'FREE'}</div>
-                        <p className="pro-text">
-                            {store?.subscription_tier === 'premium' ? (
-                                <>Valid until {formatDate(store.subscription_end_date)} ({calculateDaysRemaining(store.subscription_end_date)} days left)</>
-                            ) : (
-                                <>Upgrade to list more products and reach more customers.</>
-                            )}
-                        </p>
-                        <button className="btn-upgrade" onClick={() => navigate('/seller/subscription')}>
-                            {store?.subscription_tier === 'premium' ? 'Manage Plan' : 'Upgrade Plan'}
-                        </button>
-                    </div>
-                </div>
-            </aside>
+            <Navbar />
 
             {/* Main Content */}
-            <main className="dashboard-main">
+            <main className="dashboard-main-unified container">
                 {isAddingProduct ? (
                     <AddProduct
                         onBack={() => {
@@ -1290,47 +1227,20 @@ const SellerDashboard = () => {
                     />
                 ) : (
                     <>
-                        {/* Header */}
-                        <header className="dashboard-header-new">
-                            <div className="header-left-group">
-                                <button
-                                    className="mobile-menu-btn"
-                                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                                >
-                                    <Menu size={24} />
-                                </button>
-                                <h1 className="header-title">Seller Dashboard</h1>
-                                {store?.subscription_tier === 'premium' && (
-                                    <div className="header-badge premium-timer">
-                                        <Zap size={14} fill="currentColor" />
-                                        <span>Premium until {formatDate(store.subscription_end_date)} ({calculateDaysRemaining(store.subscription_end_date)} days left)</span>
-                                    </div>
-                                )}
+                        {/* Unified Header */}
+                        <div className="unified-dashboard-header">
+                            <div className="header-info">
+                                <h1>{t('nav.dashboard')}</h1>
+                                <p className="store-name-sub">{store?.name}</p>
                             </div>
-
-                            <div className="header-actions">
-                                <div className="store-selector">
-                                    <div className="store-avatar"></div>
-                                    <span className="store-name">{store?.name || 'Loading...'}</span>
-                                    <ChevronRight size={16} style={{ rotate: '90deg' }} />
+                            
+                            {store?.subscription_tier === 'premium' && (
+                                <div className="header-badge premium-timer desktop-only">
+                                    <Zap size={14} fill="currentColor" />
+                                    <span>Premium until {formatDate(store.subscription_end_date)} ({calculateDaysRemaining(store.subscription_end_date)} days left)</span>
                                 </div>
-
-                                <Link to="/profile" className="user-profile-header" style={{ textDecoration: 'none', color: 'inherit' }}>
-                                    <div className="user-info-text">
-                                        <span className="user-name">{profile?.username || 'User'}</span>
-                                    </div>
-                                    <div className="user-avatar-small">
-                                        {profile?.username ? (
-                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#6366f1', color: 'white', fontWeight: 'bold' }}>
-                                                {profile.username.charAt(0)}
-                                            </div>
-                                        ) : (
-                                            <img src="https://via.placeholder.com/40" alt="Profile" />
-                                        )}
-                                    </div>
-                                </Link>
-                            </div>
-                        </header>
+                            )}
+                        </div>
 
                         {/* Dashboard Content Swapper */}
                         {activeTab === 'overview' && (

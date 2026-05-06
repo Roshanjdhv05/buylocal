@@ -6,7 +6,29 @@ import LoadingSpinner from './LoadingSpinner/LoadingSpinner';
 const LocationFAB = () => {
     const { location, loading, detectLocation } = useLocation();
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isIdle, setIsIdle] = useState(false);
     const panelRef = useRef(null);
+    const idleTimerRef = useRef(null);
+
+    const resetIdleTimer = () => {
+        setIsIdle(false);
+        if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+        idleTimerRef.current = setTimeout(() => {
+            // Only go idle if not expanded
+            if (!isExpanded) setIsIdle(true);
+        }, 30000);
+    };
+
+    useEffect(() => {
+        resetIdleTimer();
+        const events = ['scroll', 'mousemove', 'touchstart', 'click'];
+        events.forEach(event => window.addEventListener(event, resetIdleTimer));
+        
+        return () => {
+            if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+            events.forEach(event => window.removeEventListener(event, resetIdleTimer));
+        };
+    }, [isExpanded]);
 
     // Close panel when clicking outside
     useEffect(() => {
@@ -24,15 +46,22 @@ const LocationFAB = () => {
         };
     }, [isExpanded]);
 
-    const handleToggle = () => setIsExpanded(!isExpanded);
+    const handleToggle = () => {
+        setIsExpanded(!isExpanded);
+        resetIdleTimer();
+    };
 
     const handleDetect = () => {
         detectLocation();
-        // Keep expanded to show progress or auto-close on success if preferred
+        resetIdleTimer();
     };
 
     return (
-        <div className="location-fab-container" ref={panelRef}>
+        <div 
+            className={`location-fab-container ${isIdle ? 'idle' : ''}`} 
+            ref={panelRef}
+            onMouseEnter={resetIdleTimer}
+        >
             {isExpanded && (
                 <div className="location-panel glass-card">
                     <div className="panel-header">
@@ -86,11 +115,20 @@ const LocationFAB = () => {
                     flex-direction: column;
                     align-items: flex-end;
                     gap: 1rem;
+                    transition: opacity 0.5s ease, transform 0.3s ease;
+                }
+
+                .location-fab-container.idle {
+                    opacity: 0.35;
+                }
+
+                .location-fab-container.idle:hover {
+                    opacity: 1;
                 }
 
                 .fab-trigger {
-                    width: 48px;
-                    height: 48px;
+                    width: 56px;
+                    height: 56px;
                     border-radius: 50%;
                     background: #4285F4; /* Google Blue */
                     color: white;
@@ -103,7 +141,7 @@ const LocationFAB = () => {
                 }
 
                 .fab-trigger:hover {
-                    transform: scale(1.1);
+                    transform: scale(1.05);
                     box-shadow: 0 6px 16px rgba(66, 133, 244, 0.5);
                 }
 
@@ -114,7 +152,7 @@ const LocationFAB = () => {
 
                 .fab-city-tag {
                     position: absolute;
-                    right: 58px;
+                    right: 68px;
                     background: white;
                     color: #1e293b;
                     padding: 0.4rem 0.75rem;
@@ -204,10 +242,10 @@ const LocationFAB = () => {
 
                 .detect-btn-fab:disabled { opacity: 0.7; cursor: not-allowed; }
 
-                @media (max-width: 640px) {
+                @media (max-width: 768px) {
                     .location-fab-container {
-                        right: 1.25rem;
-                        bottom: 1.25rem;
+                        right: 1rem;
+                        bottom: 85px; /* Positioned above the 65px bottom nav */
                     }
                     .location-panel {
                         width: calc(100vw - 2.5rem);
@@ -215,6 +253,10 @@ const LocationFAB = () => {
                     }
                     .fab-city-tag {
                         display: none; /* Hide tag on mobile to avoid clutter */
+                    }
+                    .fab-trigger {
+                        width: 48px;
+                        height: 48px;
                     }
                 }
             `}</style>

@@ -11,6 +11,11 @@
     "signUp": "Sign Up",
     "dashboard": "Dashboard",
     "becomeSeller": "Become Seller",
+    "sellerPanel": "Seller Panel",
+    "help": "Help",
+    "favourite": "Favourite",
+    "store": "Store",
+    "account": "Account",
     "searchPlaceholder": "Search for local products, brands, or shops...",
     "marketing": "Marketing"
   },

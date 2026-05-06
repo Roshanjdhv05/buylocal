@@ -384,17 +384,15 @@ const PublicStore = () => {
                         </div>
                     )}
                     
-                    {/* Render Custom Highlights - Defensive Implementation */}
-                    {store.custom_highlights && Array.isArray(store.custom_highlights) && store.custom_highlights.length > 0 ? (
+                    {/* Render Custom Highlights */}
+                    {store.custom_highlights && Array.isArray(store.custom_highlights) && store.custom_highlights.length > 0 &&
                         store.custom_highlights.map((h, idx) => (
                             <div key={`custom-h-${idx}`} className="stat-item-minimal" style={{ border: '1px solid #bc8a5f33' }}>
                                 <Award size={14} style={{ color: '#bc8a5f' }} />
                                 <span>{h}</span>
                             </div>
                         ))
-                    ) : (
-                        process.env.NODE_ENV === 'development' && <span style={{fontSize: '10px', color: '#ccc'}}>No custom highlights data</span>
-                    )}
+                    }
                     
                     {/* Hidden debug log for developer console */}
                     {process.env.NODE_ENV === 'development' && console.log('Store Highlights Data:', store.custom_highlights)}

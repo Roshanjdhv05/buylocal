@@ -257,3 +257,69 @@ textarea:focus {
   transform: translateY(0);
   transition: opacity 300ms, transform 300ms;
 }
+
+/* Visibility Utilities */
+@media (min-width: 769px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+  
+  body {
+    padding-bottom: 80px; /* Space for bottom navigation */
+  }
+}
+
+/* Unified Dashboard Layout */
+.dashboard-main-unified {
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+  min-height: 80vh;
+}
+
+.unified-dashboard-header {
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.unified-dashboard-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.store-name-sub {
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-main-unified {
+    padding-top: 1rem;
+  }
+  
+  .unified-dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .unified-dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+}
