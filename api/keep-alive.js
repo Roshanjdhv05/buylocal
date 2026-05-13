@@ -4,7 +4,11 @@ export default async function handler(request, response) {
   // Authorization check for Vercel Cron Jobs
   // Reference: https://vercel.com/docs/cron-jobs#securing-cron-jobs
   const authHeader = request.headers['authorization'];
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const cronSecret = process.env.CRON_SECRET;
+
+  // Only enforce authorization if CRON_SECRET is configured in Vercel.
+  // This ensures the keep-alive works out-of-the-box while remaining secure if configured.
+  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
     return response.status(401).json({ error: 'Unauthorized' });
   }
 
