@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 export default async function handler(request, response) {
   // Authorization check for Vercel Cron Jobs
   // Reference: https://vercel.com/docs/cron-jobs#securing-cron-jobs
-  const authHeader = request.headers.get('authorization');
+  const authHeader = request.headers['authorization'];
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return response.status(401).json({ error: 'Unauthorized' });
   }
