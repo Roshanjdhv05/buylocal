@@ -6,7 +6,7 @@ import { useLocation as useUserLocation } from '../context/LocationContext';
 import { useTranslation } from 'react-i18next';
 import {
     Menu, X, ShoppingCart, User, Home, MapPin,
-    Layers, Package, LogOut, Store, Globe, Heart, LayoutDashboard, Search as SearchIcon, ChevronDown, LifeBuoy
+    Layers, Package, LogOut, Store, Globe, Heart, LayoutDashboard, Search as SearchIcon, ChevronDown, ChevronUp, LifeBuoy
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -23,6 +23,11 @@ const Navbar = () => {
     const locationPath = useRouterLocation(); // To avoid collision with location context
     const currentPath = locationPath.pathname;
     const isSellerDashboard = currentPath.startsWith('/seller/dashboard');
+    const [isSellerMenuExpanded, setIsSellerMenuExpanded] = useState(isSellerDashboard);
+
+    React.useEffect(() => {
+        setIsSellerMenuExpanded(isSellerDashboard);
+    }, [isSellerDashboard]);
 
     const changeLanguage = (lng) => {
         i18n.changeLanguage(lng);
@@ -238,11 +243,19 @@ const Navbar = () => {
 
                         {user && profile?.role === 'seller' && (
                             <div className="seller-panel-section">
-                                <Link to="/seller/dashboard" onClick={toggleMenu} className="seller-panel-link">
-                                    <LayoutDashboard size={20} /> {t('nav.sellerPanel')}
-                                </Link>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                    <Link to="/seller/dashboard" onClick={toggleMenu} className="seller-panel-link" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '1rem', color: 'var(--text-main)' }}>
+                                        <LayoutDashboard size={20} /> {t('nav.sellerPanel')}
+                                    </Link>
+                                    <button 
+                                        onClick={() => setIsSellerMenuExpanded(!isSellerMenuExpanded)}
+                                        style={{ background: 'none', border: 'none', padding: '0.5rem', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--text-muted)' }}
+                                    >
+                                        {isSellerMenuExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                    </button>
+                                </div>
                                 
-                                {isSellerDashboard && (
+                                {isSellerMenuExpanded && (
                                     <div className="seller-submenu">
                                         <Link to="/seller/dashboard?tab=overview" onClick={toggleMenu} className={currentPath === '/seller/dashboard' && !window.location.search.includes('tab=products') ? 'active' : ''}>Overview</Link>
                                         <Link to="/seller/dashboard?tab=products" onClick={toggleMenu}>Products</Link>

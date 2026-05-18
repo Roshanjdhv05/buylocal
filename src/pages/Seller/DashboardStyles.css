@@ -3856,3 +3856,8 @@ input:checked+.slider:before {
         height: 10px;
     }
 }
+
+
+/* Fix for Unified Dashboard Layout */
+.dashboard-wrapper { flex-direction: column !important; }
+.dashboard-main-unified { flex: 1; padding: 2rem; width: 100%; max-width: 1400px; margin: 0 auto; box-sizing: border-box; }

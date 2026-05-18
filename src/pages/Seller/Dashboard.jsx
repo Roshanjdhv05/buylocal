@@ -14,7 +14,7 @@ import {
     Archive, DollarSign, LogOut, User, Home,
     LayoutDashboard, BarChart, ShoppingBag, PlusCircle, ExternalLink, Edit, Clock, Truck,
     Filter, MoreHorizontal, ChevronLeft, Search, MapPin, Zap, Menu, BookOpen,
-    Megaphone, Calendar, Play, Pause, Trash, Copy, Video, PlayCircle
+    Megaphone, Calendar, Play, Pause, Trash, Copy, Video, PlayCircle, CheckCircle
 } from 'lucide-react';
 import './DashboardStyles.css';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
@@ -1242,6 +1242,31 @@ const SellerDashboard = () => {
                             )}
                         </div>
 
+                        {/* Desktop Tab Navigation */}
+                        <div className="dashboard-tabs desktop-only" style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid #e2e8f0', marginBottom: '2rem', overflowX: 'auto', paddingBottom: '2px' }}>
+                            {['overview', 'products', 'orders', 'marketing', 'categories', 'settings', 'analytics'].map(tab => (
+                                <button 
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        borderBottom: activeTab === tab ? '2px solid var(--primary)' : '2px solid transparent',
+                                        padding: '0.75rem 1rem',
+                                        fontSize: '0.95rem',
+                                        fontWeight: activeTab === tab ? '700' : '500',
+                                        color: activeTab === tab ? 'var(--primary)' : 'var(--text-muted)',
+                                        cursor: 'pointer',
+                                        textTransform: 'capitalize',
+                                        whiteSpace: 'nowrap',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {tab}
+                                </button>
+                            ))}
+                        </div>
+
                         {/* Dashboard Content Swapper */}
                         {activeTab === 'overview' && (
                             <div className="overview-content">
@@ -2293,11 +2318,52 @@ const SellerDashboard = () => {
                                                 </div>
                                             </div>
                                             <div className="settings-input-group light-bg">
-                                                <label className="settings-label">Physical Address</label>
-                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                                    <input className="settings-input-light" style={{ width: '100%' }} value={editedStore.address} onChange={e => setEditedStore({ ...editedStore, address: e.target.value })} />
-                                                    <MapPin size={18} color="#94a3b8" />
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                                    <label className="settings-label" style={{ margin: 0 }}>Physical Address</label>
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            if (navigator.geolocation) {
+                                                                navigator.geolocation.getCurrentPosition((position) => {
+                                                                    setEditedStore(prev => ({
+                                                                        ...prev,
+                                                                        lat: position.coords.latitude,
+                                                                        lng: position.coords.longitude
+                                                                    }));
+                                                                    alert('Location updated successfully! Please click "Save All Changes" at the top to save it.');
+                                                                }, (error) => {
+                                                                    alert('Could not get location. Please ensure location access is allowed in your browser settings.');
+                                                                });
+                                                            } else {
+                                                                alert('Geolocation is not supported by your browser.');
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            background: editedStore.lat ? 'var(--primary)' : 'none',
+                                                            border: '1px solid var(--primary)',
+                                                            color: editedStore.lat ? 'white' : 'var(--primary)',
+                                                            padding: '0.3rem 0.6rem',
+                                                            borderRadius: '6px',
+                                                            fontSize: '0.75rem',
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px',
+                                                            fontWeight: '600'
+                                                        }}
+                                                    >
+                                                        <MapPin size={14} /> {editedStore.lat ? 'Location Attached' : 'Auto-Locate Shop'}
+                                                    </button>
                                                 </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                    <input className="settings-input-light" style={{ width: '100%' }} placeholder="e.g. Shop No. 12, Main Street" value={editedStore.address} onChange={e => setEditedStore({ ...editedStore, address: e.target.value })} />
+                                                    <MapPin size={18} color="#94a3b8" style={{ marginLeft: '10px' }} />
+                                                </div>
+                                                {editedStore.lat && editedStore.lng && (
+                                                    <p style={{ fontSize: '0.75rem', color: '#10b981', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                        <CheckCircle size={12} /> Store map coordinates saved for local search discovery
+                                                    </p>
+                                                )}
                                             </div>
 
                                             <div className="form-row-pro-responsive" style={{ marginTop: '1.5rem' }}>
