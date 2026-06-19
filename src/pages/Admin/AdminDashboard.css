@@ -91,6 +91,7 @@
     padding: 30px 0;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
 }
 
 .admin-logo {
@@ -543,6 +544,7 @@
 
 .banner-tag.admin { background: #333; }
 .banner-tag.seller { background: #FF4D4D; }
+.banner-tag.category { background: #6366f1; }
 
 .banner-card-footer {
     padding: 15px;
@@ -1192,8 +1194,8 @@ input:checked + .slider:before { transform: translateX(26px); }
 
 .category-management-grid {
     display: grid;
-    grid-template-columns: 1fr 1.5fr;
-    gap: 30px;
+    grid-template-columns: 1fr 1.2fr 1.2fr;
+    gap: 20px;
     margin-top: 20px;
     min-height: 500px;
 }

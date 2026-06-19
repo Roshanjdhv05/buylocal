@@ -1601,7 +1601,7 @@ const CategoryIconItem = ({ cat }) => {
     
     return (
         <Link
-            to={`/?search=${encodeURIComponent(cat.name)}`}
+            to={`/category/${encodeURIComponent(cat.name)}`}
             className="category-icon-item"
         >
             <div className="category-base">

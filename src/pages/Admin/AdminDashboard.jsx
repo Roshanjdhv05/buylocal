@@ -4,9 +4,10 @@ import {
     Users, Store, Package, ShoppingBag, IndianRupee, LogOut, 
     TrendingUp, Search, ChevronLeft, ShieldCheck, UserPlus, 
     ShieldAlert, Edit, Trash2, CheckCircle, XCircle, Settings,
-    Lock, Unlock, Clock, Database, Plus, Eye, EyeOff, Pencil, Check, X
+    Lock, Unlock, Clock, Database, Plus, Eye, EyeOff, Pencil, Check, X, AlertCircle
 } from 'lucide-react';
 import LoadingSpinner from '../../components/LoadingSpinner/LoadingSpinner';
+import AdminSupport from './AdminSupport';
 import './AdminDashboard.css';
 
 const AdminDashboard = ({ onLogout }) => {
@@ -40,18 +41,24 @@ const AdminDashboard = ({ onLogout }) => {
     const [mobileBanner, setMobileBanner] = useState(null);
     const [desktopPreview, setDesktopPreview] = useState(null);
     const [mobilePreview, setMobilePreview] = useState(null);
+    const [bannerPageLocation, setBannerPageLocation] = useState('home');
     const [categories, setCategories] = useState([]);
     const [sections, setSections] = useState([]);
     const [subsections, setSubsections] = useState([]);
+    const [subSubsections, setSubSubsections] = useState([]);
     const [selectedSectionId, setSelectedSectionId] = useState(null);
+    const [selectedSubsectionId, setSelectedSubsectionId] = useState(null);
     const [newSection, setNewSection] = useState({ name: '' });
     const [newSubsection, setNewSubsection] = useState({ name: '', section_id: null });
+    const [newSubSubsection, setNewSubSubsection] = useState({ name: '' });
 
     // Category Image Upload State
     const [sectionFile, setSectionFile] = useState(null);
     const [sectionPreview, setSectionPreview] = useState(null);
     const [subsectionFile, setSubsectionFile] = useState(null);
     const [subsectionPreview, setSubsectionPreview] = useState(null);
+    const [subSubFile, setSubSubFile] = useState(null);
+    const [subSubPreview, setSubSubPreview] = useState(null);
     const [categoryUploading, setCategoryUploading] = useState(false);
 
     // Editing States
@@ -64,6 +71,11 @@ const AdminDashboard = ({ onLogout }) => {
     const [editingSubsectionName, setEditingSubsectionName] = useState('');
     const [editSubsectionFile, setEditSubsectionFile] = useState(null);
     const [editSubsectionPreview, setEditSubsectionPreview] = useState(null);
+
+    const [editingSubSubsectionId, setEditingSubSubsectionId] = useState(null);
+    const [editingSubSubsectionName, setEditingSubSubsectionName] = useState('');
+    const [editSubSubFile, setEditSubSubFile] = useState(null);
+    const [editSubSubPreview, setEditSubSubPreview] = useState(null);
 
 
     // Subscription Control State
@@ -160,8 +172,32 @@ const AdminDashboard = ({ onLogout }) => {
     useEffect(() => {
         if (selectedSectionId) {
             fetchSubsections(selectedSectionId);
+            setSelectedSubsectionId(null);
         }
     }, [selectedSectionId]);
+
+    const fetchSubSubsections = async (subsectionId) => {
+        if (!subsectionId) return;
+        try {
+            const { data, error } = await supabase
+                .from('category_sub_subsections')
+                .select('*')
+                .eq('subsection_id', subsectionId)
+                .order('name');
+            if (error) throw error;
+            setSubSubsections(data || []);
+        } catch (error) {
+            console.error('Error fetching sub-subsections:', error.message);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedSubsectionId) {
+            fetchSubSubsections(selectedSubsectionId);
+        } else {
+            setSubSubsections([]);
+        }
+    }, [selectedSubsectionId]);
 
 
     const fetchCategories = async () => {
@@ -569,7 +605,8 @@ const AdminDashboard = ({ onLogout }) => {
                     banner_url: desktopUrl,
                     mobile_banner_url: mobileUrl,
                     is_active: true,
-                    store_id: null
+                    store_id: null,
+                    page_location: bannerPageLocation
                 }])
                 .select();
 
@@ -580,6 +617,7 @@ const AdminDashboard = ({ onLogout }) => {
             setMobileBanner(null);
             setDesktopPreview(null);
             setMobilePreview(null);
+            setBannerPageLocation('home');
             alert('Responsive banners uploaded successfully!');
         } catch (error) {
             alert('Upload failed: ' + error.message);
@@ -694,6 +732,26 @@ const AdminDashboard = ({ onLogout }) => {
         finally { setCategoryUploading(false); }
     };
 
+    const handleEditSaveSubSubsection = async (subSubId) => {
+        if (!editingSubSubsectionName) return;
+        setCategoryUploading(true);
+        try {
+            let imgUrl = editSubSubPreview;
+            if (editSubSubFile) {
+                const uploadedUrl = await uploadCategoryImage(editSubSubFile);
+                if (uploadedUrl) imgUrl = uploadedUrl;
+            }
+            const { error } = await supabase
+                .from('category_sub_subsections')
+                .update({ name: editingSubSubsectionName, image_url: imgUrl })
+                .eq('id', subSubId);
+            if (error) throw error;
+            setEditingSubSubsectionId(null);
+            if (selectedSubsectionId) fetchSubSubsections(selectedSubsectionId);
+        } catch (e) { alert(e.message); }
+        finally { setCategoryUploading(false); }
+    };
+
     return (
 
         <div className="admin-dashboard-layout">
@@ -759,6 +817,13 @@ const AdminDashboard = ({ onLogout }) => {
                         <ShoppingBag size={20} />
                         <span>Banners</span>
                     </div>
+                    <div 
+                        className={`nav-item ${activeTab === 'support' ? 'active' : ''}`}
+                        onClick={() => { setActiveTab('support'); setSelectedStore(null); }}
+                    >
+                        <AlertCircle size={20} />
+                        <span>Help Center</span>
+                    </div>
                 </nav>
                 <button className="admin-logout-btn" onClick={onLogout}>
                     <LogOut size={20} />
@@ -783,7 +848,11 @@ const AdminDashboard = ({ onLogout }) => {
                                                     ? 'Global Product Management'
                                                     : activeTab === 'shops'
                                                         ? 'Shop Management'
-                                                        : 'Banner Management'
+                                                        : activeTab === 'categories'
+                                                            ? 'Category Hierarchy Management'
+                                                            : activeTab === 'banners'
+                                                                ? 'Banner Management'
+                                                                : 'Help Center & Support'
                         }
                     </h1>
                     {!selectedStore && (activeTab === 'overview' || activeTab === 'shops' || activeTab === 'all-products') && (
@@ -1840,9 +1909,13 @@ const AdminDashboard = ({ onLogout }) => {
 
                                                 <div className="panel-list">
                                                     {subsections.length > 0 ? subsections.map(sub => (
-                                                        <div key={sub.id} className="panel-item no-hover">
+                                                        <div 
+                                                            key={sub.id} 
+                                                            className={`panel-item ${selectedSubsectionId === sub.id ? 'active' : ''}`}
+                                                            onClick={() => setSelectedSubsectionId(sub.id)}
+                                                        >
                                                             {editingSubsectionId === sub.id ? (
-                                                                <div className="item-edit-form">
+                                                                <div className="item-edit-form" onClick={(e) => e.stopPropagation()}>
                                                                     <div className="edit-img-mini" onClick={() => document.getElementById(`edit-sub-img-${sub.id}`).click()}>
                                                                         {editSubsectionPreview ? <img src={editSubsectionPreview} alt="" /> : <span className="item-icon-text">🖼️</span>}
                                                                         <input 
@@ -1884,12 +1957,14 @@ const AdminDashboard = ({ onLogout }) => {
                                                                             setEditSubsectionPreview(sub.image_url);
                                                                             setEditSubsectionFile(null);
                                                                         }}><Pencil size={14} /></button>
-                                                                        <button className="item-delete" onClick={async () => {
+                                                                        <button className="item-delete" onClick={async (e) => {
+                                                                            e.stopPropagation();
                                                                             if (!window.confirm(`Delete sub-section "${sub.name}"?`)) return;
                                                                             try {
                                                                                 const { error } = await supabase.from('category_subsections').delete().eq('id', sub.id);
                                                                                 if (error) throw error;
                                                                                 fetchSubsections(selectedSectionId);
+                                                                                if (selectedSubsectionId === sub.id) setSelectedSubsectionId(null);
                                                                             } catch (err) { alert(err.message); }
                                                                         }}><Trash2 size={14} /></button>
                                                                     </div>
@@ -1911,16 +1986,150 @@ const AdminDashboard = ({ onLogout }) => {
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* RIGHTMOST PANEL: SUB-SUB-SECTIONS */}
+                                    <div className="management-panel subsubsections-panel">
+                                        <div className="panel-header">
+                                            <h3>3. {subsections.find(s => s.id === selectedSubsectionId)?.name || 'Select Sub-section'} Sub-subsections</h3>
+                                            <span className="count-badge">{subSubsections.length}</span>
+                                        </div>
+
+                                        {selectedSubsectionId ? (
+                                            <>
+                                                <div className="panel-form">
+                                                    <div className="cat-upload-wrapper">
+                                                        <div className="cat-upload-preview" onClick={() => document.getElementById('subsub-img').click()}>
+                                                            {subSubPreview ? <img src={subSubPreview} alt="" /> : <span>🖼️</span>}
+                                                        </div>
+                                                        <input id="subsub-img" type="file" accept="image/*" hidden onChange={(e) => {
+                                                            const file = e.target.files[0];
+                                                            if(file) { setSubSubFile(file); setSubSubPreview(URL.createObjectURL(file)); }
+                                                        }} />
+                                                        <div className="cat-inputs">
+                                                            <input 
+                                                                type="text" 
+                                                                placeholder="Sub-sub Name" 
+                                                                value={newSubSubsection.name}
+                                                                onChange={(e) => setNewSubSubsection({ ...newSubSubsection, name: e.target.value })}
+                                                            />
+                                                        </div>
+                                                        <button className="btn-add-circle" disabled={categoryUploading} onClick={async () => {
+                                                            if (!newSubSubsection.name) return;
+                                                            setCategoryUploading(true);
+                                                            try {
+                                                                const imgUrl = await uploadCategoryImage(subSubFile);
+                                                                const { error } = await supabase.from('category_sub_subsections').insert([{
+                                                                    name: newSubSubsection.name,
+                                                                    subsection_id: selectedSubsectionId,
+                                                                    image_url: imgUrl
+                                                                }]);
+                                                                if (error) throw error;
+                                                                setNewSubSubsection({ name: '' });
+                                                                setSubSubFile(null); setSubSubPreview(null);
+                                                                fetchSubSubsections(selectedSubsectionId);
+                                                            } catch (e) { alert(e.message); }
+                                                            finally { setCategoryUploading(false); }
+                                                        }}>{categoryUploading ? '...' : <Plus size={20} />}</button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="panel-list">
+                                                    {subSubsections.length > 0 ? subSubsections.map(subsub => (
+                                                        <div key={subsub.id} className="panel-item no-hover">
+                                                            {editingSubSubsectionId === subsub.id ? (
+                                                                <div className="item-edit-form" onClick={(e) => e.stopPropagation()}>
+                                                                    <div className="edit-img-mini" onClick={() => document.getElementById(`edit-subsub-img-${subsub.id}`).click()}>
+                                                                        {editSubSubPreview ? <img src={editSubSubPreview} alt="" /> : <span className="item-icon-text">🖼️</span>}
+                                                                        <input 
+                                                                            id={`edit-subsub-img-${subsub.id}`} 
+                                                                            type="file" 
+                                                                            accept="image/*" 
+                                                                            hidden 
+                                                                            onChange={(e) => {
+                                                                                const file = e.target.files[0];
+                                                                                if(file) { setEditSubSubFile(file); setEditSubSubPreview(URL.createObjectURL(file)); }
+                                                                            }} 
+                                                                        />
+                                                                    </div>
+                                                                    <input 
+                                                                        type="text" 
+                                                                        className="edit-name-input"
+                                                                        value={editingSubSubsectionName}
+                                                                        onChange={(e) => setEditingSubSubsectionName(e.target.value)}
+                                                                        autoFocus
+                                                                    />
+                                                                    <div className="edit-actions">
+                                                                        <button className="btn-save-sm" onClick={() => handleEditSaveSubSubsection(subsub.id)}><Check size={14} /></button>
+                                                                        <button className="btn-cancel-sm" onClick={() => setEditingSubSubsectionId(null)}><X size={14} /></button>
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                <>
+                                                                    <div className="item-main">
+                                                                        <div className="item-img-mini">
+                                                                            {subsub.image_url ? <img src={subsub.image_url} alt="" /> : <div className="dot"></div>}
+                                                                        </div>
+                                                                        <span className="item-name">{subsub.name}</span>
+                                                                    </div>
+                                                                    <div className="item-actions">
+                                                                        <button className="item-edit" onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            setEditingSubSubsectionId(subsub.id);
+                                                                            setEditingSubSubsectionName(subsub.name);
+                                                                            setEditSubSubPreview(subsub.image_url);
+                                                                            setEditSubSubFile(null);
+                                                                        }}><Pencil size={14} /></button>
+                                                                        <button className="item-delete" onClick={async (e) => {
+                                                                            e.stopPropagation();
+                                                                            if (!window.confirm(`Delete sub-subsection "${subsub.name}"?`)) return;
+                                                                            try {
+                                                                                const { error } = await supabase.from('category_sub_subsections').delete().eq('id', subsub.id);
+                                                                                if (error) throw error;
+                                                                                fetchSubSubsections(selectedSubsectionId);
+                                                                            } catch (err) { alert(err.message); }
+                                                                        }}><Trash2 size={14} /></button>
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    )) : (
+                                                        <div className="empty-panel-state">
+                                                            <Database size={40} opacity={0.1} />
+                                                            <p>No sub-subsections found for this sub-section.</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <div className="empty-panel-state central">
+                                                <ChevronLeft size={48} opacity={0.2} />
+                                                <p>Select a sub-section from the middle to manage its sub-subsections.</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             )}
                         </section>
                     </div>
-                ) : (
+                ) : activeTab === 'banners' ? (
                     <div className="admin-banners-view">
                         <section className="admin-section banner-upload-card">
                             <div className="section-header">
                                 <h2>Post Global Banner</h2>
-                                <p>Global banners will be shown on the home page hero section without store redirection.</p>
+                                <p>Upload a desktop + phone banner and choose which page it appears on.</p>
+                            </div>
+                            <div className="banner-page-selector">
+                                <label style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: 6, display: 'block' }}>Show banner on:</label>
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', padding: '0.5rem 1rem', border: `2px solid ${bannerPageLocation === 'home' ? '#6366f1' : '#e2e8f0'}`, borderRadius: 8, background: bannerPageLocation === 'home' ? '#eef2ff' : '#fff', fontWeight: bannerPageLocation === 'home' ? 700 : 400 }}>
+                                        <input type="radio" name="page_location" value="home" checked={bannerPageLocation === 'home'} onChange={() => setBannerPageLocation('home')} style={{ accentColor: '#6366f1' }} />
+                                        🏠 Home Page
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', padding: '0.5rem 1rem', border: `2px solid ${bannerPageLocation === 'category' ? '#6366f1' : '#e2e8f0'}`, borderRadius: 8, background: bannerPageLocation === 'category' ? '#eef2ff' : '#fff', fontWeight: bannerPageLocation === 'category' ? 700 : 400 }}>
+                                        <input type="radio" name="page_location" value="category" checked={bannerPageLocation === 'category'} onChange={() => setBannerPageLocation('category')} style={{ accentColor: '#6366f1' }} />
+                                        🗂️ Category Page
+                                    </label>
+                                </div>
                             </div>
                             <div className="banner-form-content">
                                 <div className="banner-upload-grid">
@@ -1987,15 +2196,20 @@ const AdminDashboard = ({ onLogout }) => {
                                     </div>
                                 </div>
 
-                                {desktopPreview && (
-                                    <button 
-                                        className="btn-upload-banner" 
-                                        onClick={handleBannerUpload}
-                                        disabled={uploading}
-                                    >
-                                        {uploading ? 'Uploading...' : 'Publish Responsive Banner'}
-                                    </button>
-                                )}
+                                <button 
+                                    className="btn-upload-banner" 
+                                    onClick={handleBannerUpload}
+                                    disabled={uploading || !desktopBanner}
+                                    style={{
+                                        marginTop: 20,
+                                        width: '100%',
+                                        maxWidth: 400,
+                                        opacity: (!desktopBanner || uploading) ? 0.6 : 1,
+                                        cursor: (!desktopBanner || uploading) ? 'not-allowed' : 'pointer'
+                                    }}
+                                >
+                                    {uploading ? 'Uploading...' : 'Publish Responsive Banner'}
+                                </button>
                             </div>
                         </section>
 
@@ -2009,8 +2223,8 @@ const AdminDashboard = ({ onLogout }) => {
                                     <div key={banner.id} className="admin-banner-card">
                                         <div className="banner-card-img">
                                             <img src={banner.banner_url} alt="Banner" />
-                                            <div className={`banner-tag ${banner.store_id ? 'seller' : 'admin'}`}>
-                                                {banner.store_id ? `SELLER: ${banner.stores?.name}` : 'ADMIN GLOBAL'}
+                                            <div className={`banner-tag ${banner.store_id ? 'seller' : banner.page_location === 'category' ? 'category' : 'admin'}`}>
+                                                {banner.store_id ? `SELLER: ${banner.stores?.name}` : banner.page_location === 'category' ? 'CATEGORY PAGE' : 'HOME PAGE'}
                                             </div>
                                         </div>
                                         <div className="banner-card-footer">
@@ -2042,7 +2256,9 @@ const AdminDashboard = ({ onLogout }) => {
                             </div>
                         </section>
                     </div>
-                )}
+                ) : activeTab === 'support' && !selectedStore ? (
+                    <AdminSupport />
+                ) : null}
             </main>
 
             {showProductModal && (

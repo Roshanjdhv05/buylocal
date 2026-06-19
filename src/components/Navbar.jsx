@@ -19,7 +19,6 @@ const Navbar = () => {
     const [upgrading, setUpgrading] = useState(false);
     const [visible, setVisible] = useState(true);
     const [lastScrollY, setLastScrollY] = useState(0);
-    const [showLangMenu, setShowLangMenu] = useState(false);
     const locationPath = useRouterLocation(); // To avoid collision with location context
     const currentPath = locationPath.pathname;
     const isSellerDashboard = currentPath.startsWith('/seller/dashboard');
@@ -29,16 +28,6 @@ const Navbar = () => {
         setIsSellerMenuExpanded(isSellerDashboard);
     }, [isSellerDashboard]);
 
-    const changeLanguage = (lng) => {
-        i18n.changeLanguage(lng);
-        setShowLangMenu(false);
-    };
-
-    const languages = [
-        { code: 'en', name: 'English' },
-        { code: 'hi', name: 'हिंदी' },
-        { code: 'mr', name: 'मराठी' }
-    ];
 
     React.useEffect(() => {
         const handleScroll = () => {
@@ -85,6 +74,7 @@ const Navbar = () => {
         { name: t('nav.stores'), path: '/stores', icon: <Store size={20} /> },
         ...(user ? [{ name: t('nav.followed'), path: '/followed-stores', icon: <Heart size={20} /> }] : []),
         { name: t('nav.categories'), path: '/categories', icon: <Layers size={20} /> },
+        { name: t('nav.help') || 'Help', path: '/support', icon: <LifeBuoy size={20} /> },
     ];
 
     const authLinks = user ? [
@@ -160,26 +150,6 @@ const Navbar = () => {
                                 </button>
                             )}
 
-                            <div className="lang-switcher-container desktop-only">
-                                <button className="icon-btn" onClick={() => setShowLangMenu(!showLangMenu)}>
-                                    <Globe size={20} />
-                                    <span style={{ fontSize: '0.75rem', fontWeight: '700', marginLeft: '2px', textTransform: 'uppercase' }}>{i18n.language.split('-')[0]}</span>
-                                    <ChevronDown size={14} />
-                                </button>
-                                {showLangMenu && (
-                                    <div className="lang-dropdown glass-card">
-                                        {languages.map(lang => (
-                                            <button 
-                                                key={lang.code}
-                                                className={`lang-option ${i18n.language === lang.code ? 'active' : ''}`}
-                                                onClick={() => changeLanguage(lang.code)}
-                                            >
-                                                {lang.name}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
 
                             {/* Mobile Search Icon */}
                             <Link to="/search" className="icon-btn mobile-search-btn">
@@ -215,23 +185,6 @@ const Navbar = () => {
                 </div>
 
                 <div className="drawer-body">
-                    {/* Language Switcher in Drawer */}
-                    <div className="drawer-section">
-                        <div className="drawer-lang-selector">
-                            <p className="section-title"><Globe size={16} /> {t('common.language')}</p>
-                            <div className="lang-buttons">
-                                {languages.map(lang => (
-                                    <button
-                                        key={lang.code}
-                                        onClick={() => changeLanguage(lang.code)}
-                                        className={`lang-btn ${i18n.language === lang.code ? 'active' : ''}`}
-                                    >
-                                        {lang.name}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
 
                     {/* Secondary Navigation Items */}
                     <div className="drawer-section">
@@ -277,8 +230,8 @@ const Navbar = () => {
                             <Layers size={20} /> {t('nav.categories')}
                         </Link>
 
-                        <Link to="/help" onClick={toggleMenu}>
-                            <LifeBuoy size={20} /> {t('nav.help')}
+                        <Link to="/support" onClick={toggleMenu}>
+                            <LifeBuoy size={20} /> {t('nav.help') || 'Help & Support'}
                         </Link>
                     </div>
 

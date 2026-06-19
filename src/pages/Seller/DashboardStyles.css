@@ -2695,7 +2695,7 @@ button:disabled {
     gap: 12px;
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
     border-top: 1px solid #f1f5f9;
-    z-index: 100;
+    z-index: 1005;
 }
 
 .btn-mobile-footer {
@@ -2739,7 +2739,7 @@ button:disabled {
     color: var(--primary) !important;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .add-product-container {
         padding-bottom: 100px;
         /* Extra room for mobile nav if any */
@@ -3577,23 +3577,41 @@ input:checked+.slider:before {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    /* Prevent any child from overflowing */
+    overflow: hidden;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
 }
 
 .so-card:hover {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
-.so-header-row {
+/* New stacked header block — 3 rows: ID+Badge / Price+Payment / Time */
+.so-header-block {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
 }
 
-.so-id-row {
+/* Row 1: Order ID + Status badge */
+.so-header-top {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 4px;
+    gap: 10px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+/* Row 2: Price + Payment pill (directly below status badge) */
+.so-price-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
 .so-id {
@@ -3601,6 +3619,7 @@ input:checked+.slider:before {
     font-weight: 800;
     color: #111827;
     letter-spacing: -0.02em;
+    word-break: break-all;
 }
 
 .so-badge {
@@ -3610,6 +3629,7 @@ input:checked+.slider:before {
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
+    white-space: nowrap;
 }
 
 .so-badge-new, .so-badge-pending {
@@ -3631,6 +3651,7 @@ input:checked+.slider:before {
     display: flex;
     align-items: center;
     gap: 6px;
+    flex-wrap: wrap;
 }
 
 .so-time {
@@ -3639,25 +3660,24 @@ input:checked+.slider:before {
     font-weight: 500;
 }
 
-.so-header-right {
-    text-align: right;
-}
-
 .so-price {
-    display: block;
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     font-weight: 800;
     color: #6d28d9;
     line-height: 1;
-    margin-bottom: 4px;
+    white-space: nowrap;
 }
 
 .so-payment-status {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    color: #6b7280;
+    color: #ffffff;
+    background: #6b7280;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    padding: 3px 8px;
+    border-radius: 999px;
 }
 
 /* Items Section */
@@ -3668,6 +3688,15 @@ input:checked+.slider:before {
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+@media (max-width: 768px) {
+    .so-items-container {
+        background: transparent;
+        border-radius: 0;
+        padding: 0;
+        gap: 10px;
+    }
 }
 
 .so-item-row {
@@ -3824,18 +3853,43 @@ input:checked+.slider:before {
 
 @media (max-width: 640px) {
     .so-card {
-        padding: 20px;
+        padding: 16px;
+        border-radius: 16px;
+        overflow: hidden;
+        max-width: 100%;
+        box-sizing: border-box;
     }
-    
+
+    .so-header-top {
+        gap: 8px;
+    }
+
+    .so-id {
+        font-size: 1.05rem;
+    }
+
+    .so-header-bottom {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .so-price-group {
+        flex-wrap: nowrap;
+    }
+
     .so-price {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
     }
-    
+
     .so-actions-row {
         grid-template-columns: 1fr;
     }
 
     .btn-so-completed {
+        grid-column: span 1;
+    }
+
+    .btn-so-cancelled {
         grid-column: span 1;
     }
 }
@@ -3861,3 +3915,91 @@ input:checked+.slider:before {
 /* Fix for Unified Dashboard Layout */
 .dashboard-wrapper { flex-direction: column !important; }
 .dashboard-main-unified { flex: 1; padding: 2rem; width: 100%; max-width: 1400px; margin: 0 auto; box-sizing: border-box; }
+
+@media (max-width: 768px) {
+    .dashboard-main-unified.adding-product-mode {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+}
+
+/* ============================================
+   Orders Grid Container & Global Overflow Fix
+   ============================================ */
+.orders-grid-pro {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+/* Prevent horizontal scroll on the whole page on mobile */
+@media (max-width: 768px) {
+    .dashboard-main-unified {
+        padding: 1rem;
+        overflow-x: hidden;
+    }
+
+    .orders-grid-pro {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .so-card {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    /* Ensure items inside the card don't overflow */
+    .so-items-container,
+    .so-customer-row,
+    .so-actions-row {
+        width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+    }
+
+    .so-item-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 430px) {
+    .dashboard-main-unified {
+        padding: 0.75rem;
+    }
+
+    .so-card {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .so-id {
+        font-size: 0.95rem;
+    }
+
+    .so-price {
+        font-size: 1.1rem;
+    }
+
+    .so-badge {
+        font-size: 0.68rem;
+        padding: 4px 8px;
+    }
+
+    .btn-so-primary,
+    .btn-so-secondary {
+        padding: 12px;
+        font-size: 0.85rem;
+    }
+}

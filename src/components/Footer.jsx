@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Linkedin, Globe } from 'lucide-react';
+import { Instagram, Linkedin, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const Footer = () => {
@@ -18,23 +18,18 @@ const Footer = () => {
                         <div className="footer-column">
                             <h3>Company</h3>
                             <Link to="/about">About Us</Link>
-                            <Link to="/careers">Careers</Link>
-                            <Link to="/press">Press</Link>
                             <Link to="/blog">Blog</Link>
                         </div>
                         <div className="footer-column">
                             <h3>Support</h3>
                             <Link to="/help">Help Center</Link>
-                            <Link to="/safety">Safety</Link>
                             <Link to="/terms">Terms of Service</Link>
                             <Link to="/privacy">Privacy Policy</Link>
                         </div>
                         <div className="footer-column">
                             <h3>Social</h3>
                             <div className="social-icons">
-                                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="social-icon"><Facebook size={20} /></a>
                                 <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="social-icon"><Instagram size={20} /></a>
-                                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="social-icon"><Twitter size={20} /></a>
                             </div>
                         </div>
                     </div>

@@ -39,7 +39,8 @@ import PageTransitionLoader from './components/PageTransitionLoader';
 const Terms = lazy(() => import('./pages/Legal/Terms.jsx'));
 const Privacy = lazy(() => import('./pages/Legal/Privacy.jsx'));
 const Refunds = lazy(() => import('./pages/Legal/Refunds.jsx'));
-
+const AboutUs = lazy(() => import('./pages/About/AboutUs.jsx'));
+const HelpSupport = lazy(() => import('./pages/Support/HelpSupport.jsx'));
 // Fallback Page
 const NotFound = lazy(() => import('./components/NotFound.jsx'));
 
@@ -235,10 +236,13 @@ const AppContent = () => {
                     } />
 
 
+                    {/* About & Support */}
+                    <Route path="/about" element={<AboutUs />} />
+                    <Route path="/support" element={<HelpSupport />} />
                     <Route path="/:storeName" element={<PublicStore />} />
                     <Route path="/:storeName/section/:sectionName" element={<StoreSection />} />
                     <Route path="/:storeName/category/:categoryName" element={<StoreCategoryView />} />
-                    
+
                     {/* Legal Routes */}
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/privacy" element={<Privacy />} />

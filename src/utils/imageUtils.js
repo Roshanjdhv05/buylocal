@@ -4,8 +4,8 @@
 export const PLACEHOLDERS = {
     PRODUCT: 'https://placehold.co/600x600/f3f4f6/64748b?text=Product',
     CATEGORY: 'https://placehold.co/400x400/e5e7eb/4b5563?text=Category',
-    BANNER: 'https://placehold.co/1200x500/f1f5f9/94a3b8?text=BuyLocal+Boutique',
-    STORE_LOGO: 'https://placehold.co/200x200/f8fafc/cbd5e1?text=Store'
+    BANNER: '/defaultbanner.png',
+    STORE_LOGO: '/defaultprofile.png'
 };
 
 // The Netlify proxy is currently returning 503 Service Unavailable for stored API image requests.

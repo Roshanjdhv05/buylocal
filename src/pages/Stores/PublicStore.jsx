@@ -271,6 +271,35 @@ const PublicStore = () => {
         };
     }
 
+    const renderStatsItems = () => (
+        <>
+            <div className="stat-item-minimal">
+                <Package size={14} />
+                <span>{products.length} {t('publicStore.stats.products', 'Products')}</span>
+            </div>
+            {store.free_delivery && (
+                <div className="stat-item-minimal">
+                    <Truck size={14} />
+                    <span>{t('publicStore.stats.freeDelivery', 'Free Delivery')}</span>
+                </div>
+            )}
+            {store.cod_available !== false && (
+                <div className="stat-item-minimal">
+                    <CreditCard size={14} />
+                    <span>{t('publicStore.stats.codAvailable', 'COD Available')}</span>
+                </div>
+            )}
+            {store.custom_highlights && Array.isArray(store.custom_highlights) && store.custom_highlights.length > 0 &&
+                store.custom_highlights.map((h, idx) => (
+                    <div key={`custom-h-${idx}`} className="stat-item-minimal" style={{ border: '1px solid #bc8a5f33' }}>
+                        <Award size={14} style={{ color: '#bc8a5f' }} />
+                        <span>{h}</span>
+                    </div>
+                ))
+            }
+        </>
+    );
+
     return (
         <div className="luxury-store-wrapper">
             <SEO 
@@ -367,34 +396,14 @@ const PublicStore = () => {
             {/* STATS BAR - Pill Style Below Categories */}
             <div className="stats-bar-luxury">
                 <div className="stats-row-luxury">
-                    <div className="stat-item-minimal">
-                        <Package size={14} />
-                        <span>{products.length} {t('publicStore.stats.products', 'Products')}</span>
+                    <div className="stats-marquee-track">
+                        <div className="stats-marquee-content">
+                            {renderStatsItems()}
+                        </div>
+                        <div className="stats-marquee-content mobile-clone" aria-hidden="true">
+                            {renderStatsItems()}
+                        </div>
                     </div>
-                    {store.free_delivery && (
-                        <div className="stat-item-minimal">
-                            <Truck size={14} />
-                            <span>{t('publicStore.stats.freeDelivery', 'Free Delivery')}</span>
-                        </div>
-                    )}
-                    {store.cod_available !== false && (
-                        <div className="stat-item-minimal">
-                            <CreditCard size={14} />
-                            <span>{t('publicStore.stats.codAvailable', 'COD Available')}</span>
-                        </div>
-                    )}
-                    
-                    {/* Render Custom Highlights */}
-                    {store.custom_highlights && Array.isArray(store.custom_highlights) && store.custom_highlights.length > 0 &&
-                        store.custom_highlights.map((h, idx) => (
-                            <div key={`custom-h-${idx}`} className="stat-item-minimal" style={{ border: '1px solid #bc8a5f33' }}>
-                                <Award size={14} style={{ color: '#bc8a5f' }} />
-                                <span>{h}</span>
-                            </div>
-                        ))
-                    }
-                    
-                    {/* Hidden debug log for developer console */}
                     {process.env.NODE_ENV === 'development' && console.log('Store Highlights Data:', store.custom_highlights)}
                 </div>
             </div>
@@ -638,13 +647,16 @@ const PublicStore = () => {
                 /* PHASE 3: LEFT-ALIGNED SWIPEABLE */
                 .luxury-hero { 
                     position: relative; 
-                    width: 100%;
+                    width: calc(100% - 2rem);
+                    margin: 1rem auto 2rem auto;
+                    border-radius: 24px;
                     height: 380px; 
                     background: #fdfaf7; 
                     display: flex;
                     align-items: flex-end;
                     justify-content: center;
                     overflow: hidden;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
                 }
                 .hero-banner-wrap { position: absolute; inset: 0; z-index: 1; }
                 .hero-banner-img { 
@@ -787,29 +799,87 @@ const PublicStore = () => {
                     font-size: 0.6rem; 
                     letter-spacing: 0.1em; 
                 }
+                
+                @media (min-width: 1024px) {
+                    .category-boxes-wrap {
+                        max-width: 1200px;
+                        margin-left: auto;
+                        margin-right: auto;
+                    }
+                    .category-boxes-scroll {
+                        padding: 0;
+                        gap: 1.5rem;
+                    }
+                    .category-box-card { flex: 0 0 160px; }
+                    .category-box-img-wrap { 
+                        width: 160px; 
+                        height: 216px; 
+                        border-radius: 16px;
+                    }
+                    .category-box-name {
+                        font-size: 0.8rem;
+                        bottom: 1rem;
+                    }
+                }
 
                 /* STATS BAR - Pill Style */
-                .stats-bar-luxury { margin-bottom: 2rem; }
+                .stats-bar-luxury { margin-bottom: 2rem; overflow: hidden; }
                 .stats-row-luxury { 
                     display: flex; 
-                    gap: 0.6rem; 
-                    overflow-x: auto; 
+                    width: 100%;
                     padding: 0 1rem;
-                    scrollbar-width: none;
                 }
-                .stats-row-luxury::-webkit-scrollbar { display: none; }
+                
+                .stats-marquee-track {
+                    display: flex;
+                    gap: 0.6rem;
+                    width: max-content;
+                }
+
+                .stats-marquee-content {
+                    display: flex;
+                    gap: 0.6rem;
+                }
+
+                .stats-marquee-content.mobile-clone {
+                    display: none;
+                }
+
+                @media (max-width: 768px) {
+                    .stats-row-luxury {
+                        padding: 0;
+                    }
+                    .stats-marquee-content.mobile-clone {
+                        display: flex;
+                    }
+                    .stats-marquee-track {
+                        animation: scrollStats 15s linear infinite;
+                    }
+                }
+
+                @keyframes scrollStats {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(calc(-50% - 0.3rem)); }
+                }
+
                 .stat-item-minimal { 
                     display: flex; 
                     align-items: center; 
-                    gap: 0.4rem; 
+                    gap: 0.5rem; 
                     color: #000000; 
-                    font-size: 0.7rem; 
+                    font-size: 0.8rem; 
                     font-weight: 700; 
-                    background: #f8f8f8;
-                    padding: 0.6rem 0.9rem;
-                    border-radius: 8px;
+                    background: #ffffff;
+                    padding: 0.75rem 1.25rem;
+                    border-radius: 12px;
                     white-space: nowrap;
-                    border: 1px solid #eee;
+                    border: 1px solid #f0f0f0;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                }
+                .stat-item-minimal:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(0,0,0,0.1);
                 }
                 .stat-item-minimal svg { color: #bc8a5f; }
 

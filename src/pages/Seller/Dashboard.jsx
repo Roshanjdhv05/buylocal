@@ -1211,7 +1211,7 @@ const SellerDashboard = () => {
             <Navbar />
 
             {/* Main Content */}
-            <main className="dashboard-main-unified container">
+            <main className={`dashboard-main-unified container ${isAddingProduct ? 'adding-product-mode' : ''}`}>
                 {isAddingProduct ? (
                     <AddProduct
                         onBack={() => {
@@ -1782,11 +1782,11 @@ const SellerDashboard = () => {
                                                     return (
                                                     <div key={order.id} className="so-card">
                                                         {/* Header Part */}
-                                                        <div className="so-header-row">
-                                                            <div className="so-header-left">
-                                                                <div className="so-id-row">
-                                                                    <span className="so-id">{order.display_id ? `#${order.display_id}` : `#ORD-${order.id?.substring(0,6).toUpperCase()}`}</span>
-                                                                    <span className={`so-badge so-badge-${order.status || 'new'}`}>
+                                                        <div className="so-header-block">
+                                                            {/* Row 1: Order ID + Status */}
+                                                            <div className="so-header-top">
+                                                                <span className="so-id">{order.display_id ? `#${order.display_id}` : `#ORD-${order.id?.substring(0,6).toUpperCase()}`}</span>
+                                                                <span className={`so-badge so-badge-${order.status || 'new'}`}>
                                                                     {
                                                                         order.status === 'pending' ? 'NEW' :
                                                                         order.status === 'cancelled' ? 'CANCELLED' :
@@ -1794,17 +1794,19 @@ const SellerDashboard = () => {
                                                                         order.status
                                                                     }
                                                                 </span>
-                                                                </div>
-                                                                <div className="so-time-row">
-                                                                    <Clock size={14} color="#6b7280" />
-                                                                    <span className="so-time">{getTimeAgo(order.created_at)}</span>
-                                                                </div>
                                                             </div>
-                                                            <div className="so-header-right">
+                                                            {/* Row 2: Price + Payment (below status) */}
+                                                            <div className="so-price-group">
                                                                 <span className="so-price">₹{order.total_amount}</span>
                                                                 <span className="so-payment-status">{order.payment_mode === 'cash_on_delivery' ? 'COD' : 'PREPAID'}</span>
                                                             </div>
+                                                            {/* Row 3: Time */}
+                                                            <div className="so-time-row">
+                                                                <Clock size={14} color="#6b7280" />
+                                                                <span className="so-time">{getTimeAgo(order.created_at)}</span>
+                                                            </div>
                                                         </div>
+
 
                                                         {/* Items Container */}
                                                         <div className="so-items-container">

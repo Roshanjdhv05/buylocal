@@ -115,6 +115,9 @@ const Profile = () => {
                         </div>
 
                         <div className="sidebar-actions">
+                            <Link to="/orders" className="action-btn" style={{ marginBottom: '0.5rem', backgroundColor: 'var(--primary)', color: 'white', textDecoration: 'none' }}>
+                                <Package size={18} /> My Orders
+                            </Link>
                             <button
                                 className={`action-btn ${pushEnabled ? 'enabled' : ''}`}
                                 onClick={handleToggleNotifications}

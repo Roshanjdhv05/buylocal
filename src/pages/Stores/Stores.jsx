@@ -92,21 +92,19 @@ const Stores = () => {
                             filteredStores.map(store => (
                                 <div key={store.id} className="store-card glass-card">
                                     <div className="store-banner">
-                                        {store.banner_url ? (
-                                            <img src={store.banner_url} alt={store.name} />
-                                        ) : (
-                                            <div className="banner-placeholder"></div>
-                                        )}
+                                        <img 
+                                            src={store.banner_url || '/defaultbanner.png'} 
+                                            alt={store.name} 
+                                            onError={(e) => { e.target.onerror = null; e.target.src = '/defaultbanner.png'; }}
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        />
                                         <div className="store-avatar">
-                                            {store.profile_picture_url ? (
-                                                <img
-                                                    src={store.profile_picture_url}
-                                                    alt={store.name}
-                                                    style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
-                                                />
-                                            ) : (
-                                                store.name.substring(0, 2).toUpperCase()
-                                            )}
+                                            <img
+                                                src={store.profile_picture_url || '/defaultprofile.png'}
+                                                alt={store.name}
+                                                style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', background: '#fff' }}
+                                                onError={(e) => { e.target.onerror = null; e.target.src = '/defaultprofile.png'; }}
+                                            />
                                         </div>
                                     </div>
 

@@ -90,7 +90,12 @@
     "noOrders": "No orders found.",
     "orderNumber": "Order #",
     "store": "Store",
-    "totalAmount": "Total Amount"
+    "totalAmount": "Total Amount",
+    "accepted": "Accepted",
+    "dispatched": "Dispatched",
+    "delivered": "Delivered",
+    "pending": "Pending",
+    "cancelled": "Cancelled"
   },
   "orderDetails": {
     "title": "Order Details",
